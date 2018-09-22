@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 const passportJWT = require('passport-jwt')
-const cache = require('memory-cache')
+const _cache = require('memory-cache')
+const cache = new _cache.Cache()
 const db = require('./db.js')
 
 const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {

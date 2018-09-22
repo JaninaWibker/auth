@@ -6,8 +6,9 @@ const config = require('dotenv').config().parsed
 const fs = require('fs')
 const db = require('./db.js')
 const _fetch = require('node-fetch')
-const cache = require('memory-cache')
-const default_services = require('./default_services.json')
+const _cache = require('memory-cache')
+const cache = new _cache.Cache()
+const default_services = require('./example.default_services.json')
 const private_key = fs.readFileSync('private.key', 'utf8')
 const public_key = fs.readFileSync('public.key', 'utf8')
 const { JWTStrategy, Login, Logout } = require('./auth.js')(private_key, public_key, (id, token) => onAdd(id, token), (id) => onDelete(id))
@@ -24,7 +25,7 @@ const fetch = (url, method='POST', body, headers) => _fetch(url, {
 
 const onAdd = (id, token) => {
   cache.keys().forEach(key => (
-    console.log(key, cache.get(key)),
+    console.log(key, cache.get(key), cache.get(key).url + '/login'),
     fetch(cache.get(key).url + '/login', 'POST', { id: id, token: token }, { Authorization: 'Bearer ' + jwt.sign({ id: id, isAuthProvider: true }, private_key, { algorithm: 'RS256' }) })
       .then(res => res.status === 401 ? res.text() : res.json())
       .then(text_or_json => console.log('[fetch]', text_or_json))
@@ -71,11 +72,13 @@ internal.get('/', (req, res) => res.send('internal server is up and running'))
 internal.post('/register', (req, res) => {
   if(cache.get(req.body.data.name) !== undefined) {
     cache.put(req.body.data.name, req.body.data)
-    res.send('ok')
+    res.json({ message: 'registration successful', public_key: public_key })
   } else {
-    res.send('failed')
+    res.json({ message: 'registration failed', public_key: public_key })
   }
 })
+
+internal.get('/public_key', (req, res) => res.send(public_key))
 
 app.get('/', (req, res) => res.send('server is up and running'))
 

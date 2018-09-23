@@ -20,7 +20,7 @@ const authenticateUserIfExists = (username, password, code_2fa, cb) => {
         if(!row) return cb(null, false)
         const hash = hash_password(password, row.salt)
 
-        db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date FROM users WHERE (username = ? OR email = ?) AND password = ?', username, username, hash)
+        db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users WHERE (username = ? OR email = ?) AND password = ?', username, username, hash)
           .then(row => cb(null, row ? row : false))
           .catch(err => cb(null, false, { message: 'incorrect password' }))
       })
@@ -53,11 +53,13 @@ const validateTwoFactorCode = (username_or_email, code, cb) => {
 
 const getUserIfExists = (username, cb) => {
   dbPromise.then(db =>
-    db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date FROM users WHERE username = ?', username)
+    db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users WHERE username = ?', username)
       .then(row => cb(null, row ? row : false))
       .catch(err => cb(null, false, { message: 'user not found' }))
   )
 }
+
+const getUserFromIdIfExists = (id, cb) => IdToUserData(id, cb)
 
 const getUserLimitedIfExists = (username, cb) => {
   dbPromise.then(db =>
@@ -70,18 +72,18 @@ const getUserLimitedIfExists = (username, cb) => {
 const UserDataToId = (userData, cb) => cb(null, userData.id)
 
 const IdToUserData = (id, cb) => dbPromise.then(db =>
-  db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date FROM users WHERE rowid = ?', id)
+  db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users WHERE rowid = ?', id)
     .then(row => cb(null, row ? row : false))
     .catch(err => cb(null, false, { message: 'user not found' }))
 )
 
-const addUser = (username, password, first_name, last_name, email, cb) => { // check against duplicates
+const addUser = (username, password, first_name, last_name, email, cb) => {
   const salt = gen_salt()
   dbPromise.then(db => {
     db.get('SELECT rowid as id, * FROM users WHERE username = ? OR email = ?', username, email)
       .then(existingUser => {
         if(existingUser === undefined) {
-          db.run('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, datetime("now"), datetime("now"))', first_name, last_name, email, username, hash_password(password, salt), salt)
+          db.run('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, datetime("now"), datetime("now"), ?, ?, ?, ?)', first_name, last_name, email, username, hash_password(password, salt), salt, 'default', '{}', 0, '')
             .then(x => cb(null, x))
             .catch(x => cb(x, null))
         } else {
@@ -94,7 +96,7 @@ const addUser = (username, password, first_name, last_name, email, cb) => { // c
 
 const modifyUser = (id, { username, password, first_name, last_name, email }, cb) => {
   dbPromise.then(db =>
-    db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date FROM users WHERE rowid = ?', id)
+    db.get('SELECT username, rowid as id, first_name, last_name, email, salt, password, creation_date, modification_date FROM users WHERE rowid = ?', id)
       .then(row => {
         const salt = gen_salt()
         db.run(
@@ -105,6 +107,29 @@ const modifyUser = (id, { username, password, first_name, last_name, email }, cb
           email || row.email,
           password ? salt : row.salt,
           password ? hash_password(password, salt) : row.password,
+          id
+        )
+          .then(x => cb(null, x))
+          .catch(x => cb(x, null))
+      })
+  )
+}
+
+const privilegedModifyUser = (id, { username, password, first_name, last_name, email, account_type, metadata }, cb) => {
+  dbPromise.then(db => 
+    db.get('SELECT username, rowid as id, first_name, last_name, email, salt, password, creation_date, modification_date, account_type, metadata FROM users WHERE rowid = ?', id)
+      .then(row => {
+        const salt = gen_salt()
+        db.run(
+          'UPDATE users SET username = ?, first_name = ?, last_name = ?, email = ?, salt = ?, password = ?, modification_date = datetime("now"), account_type = ?, metadata = ? WHERE rowid = ?',
+          username || row.username,
+          first_name || row.first_name,
+          last_name || row.last_name,
+          email || row.email,
+          password ? salt : row.salt,
+          password ? hash_password(password, salt) : row.password,
+          account_type || row.account_type,
+          metadata ? (typeof metadata === 'string' ? metadata : JSON.stringify(metadata)) : row.metadata,
           id
         )
           .then(x => cb(null, x))
@@ -124,11 +149,13 @@ const deleteUser = (id, cb) => {
 module.exports = {
   authenticateUserIfExists,
   getUserIfExists,
+  getUserFromIdIfExists,
   getUserLimitedIfExists,
   UserDataToId,
   IdToUserData,
   addUser,
   modifyUser,
+  privilegedModifyUser,
   deleteUser,
   activateTwoFactorAuthentication,
   deactivateTwoFactorAuthentication,

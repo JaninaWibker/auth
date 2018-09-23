@@ -9,6 +9,8 @@ CREATE TABLE 'users' (
     'salt' VARCHAR(64) NOT NULL, -- salt that is appended to the password before it is hashed
     'creation_date' DATETIME NOT NULL DEFAULT CURRENT_DATETIME,
     'modification_date' DATETIME NOT NULL DEFAULT CURRENT_DATETIME,
+    'account_type' VARCHAR(16) NOT NULL DEFAULT \"normal\", -- account type can be: 'default', 'privileged', 'admin'
+    'metadata' VARCHAR(1024) NOT NULL DEFAULT \"{}\", -- custom metadata that can be used in the future
     '2fa' BOOLEAN DEFAULT 0, -- wether 2 factor authentication is enabled or not
     '2fa_secret' VARCHAR(32) DEFAULT \"\" -- 2 factor authentication secret
 );
@@ -25,6 +27,8 @@ INSERT INTO 'users' VALUES (
   \"guest\",
   datetime('now'),
   datetime('now'),
+  \"default\",
+  \"{}\",
   0,
   \"\"
 );
@@ -37,6 +41,8 @@ INSERT INTO 'users' VALUES (
   \"pnkBEKh7/Vug7mTLG9loEbl0DfO6b/sIAPPUJtxSYpSe0zQLlC3czGTkMLHyJr2I\",
   datetime('now'),
   datetime('now'),
+  \"admin\",
+  \"{}\",
   0,
   \"\"
 );

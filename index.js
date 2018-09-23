@@ -43,8 +43,6 @@ const onDelete = (id, token) => {
 
 const app = express()
 
-const internal = express()
-
 default_services.forEach(service => cache.put(service.name, service))
 
 passport.use(JWTStrategy)
@@ -62,15 +60,11 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(passport.initialize())
 
-internal.use(cors)
-internal.use(bodyParser.urlencoded({ extended: true }))
-internal.use(bodyParser.json())
+app.get('/', (req, res) => res.send('server is up and running'))
 
-
-internal.get('/', (req, res) => res.send('internal server is up and running'))
-
-internal.post('/register', (req, res) => {
-  if(cache.get(req.body.data.name) !== undefined) {
+app.post('/register', (req, res) => {
+  console.log(req.get('Authorization').substr('Bearer '.length), Buffer.from(config.SECRET.toString(), 'binary').toString('base64'))
+  if(req.get('Authorization').substr('Bearer '.length) === Buffer.from(config.SECRET.toString(), 'binary').toString('base64') && cache.get(req.body.data.name) !== undefined) {
     cache.put(req.body.data.name, req.body.data)
     res.json({ message: 'registration successful', public_key: public_key })
   } else {
@@ -78,11 +72,9 @@ internal.post('/register', (req, res) => {
   }
 })
 
-internal.get('/public_key', (req, res) => res.send(public_key))
+app.get('/public_key', (req, res) => res.send(public_key))
 
-app.get('/', (req, res) => res.send('server is up and running'))
-
-app.post('/login', (req, res) => {
+app.post(['/login', '/users/login'], (req, res) => {
   console.log('[login] ', { password: req.body.password, username: req.body.username })
   if(req.body.username && req.body.password) {
     const username = req.body.username
@@ -96,15 +88,14 @@ app.post('/login', (req, res) => {
   }
 })
 
-app.post('/logout', passport.authenticate('jwt', { session: false }), (req, res) => {
+app.post(['/logout', '/users/logout'], passport.authenticate('jwt', { session: false }), (req, res) => {
   Logout(req.user.id, bool => res.json({ message: bool ? 'log out successful' : 'log out failed' }))
 })
 
-app.post('/add', (req, res) => {
+app.post(['/add', '/users/add'], (req, res) => {
   const data = req.body
   if(data.username && data.password && data.first_name && data.last_name && data.email) {
     db.addUser(data.username, data.password, data.first_name, data.last_name, data.email, (err, row) => {
-      console.log(err, row) // auto login?
       if(err) res.json({ message: err })
       else res.json({ message: 'account creation successful' }) // is this always true? what about errors? need to check for duplicate usernames in db.addUser
     })
@@ -113,27 +104,37 @@ app.post('/add', (req, res) => {
   }
 })
 
-app.post('/modify', passport.authenticate('jwt', { session: false }), (req, res) => {
-  if(data.id) {
-    db.modifyUser(req.user.id, req.body, (err, x) => {
-      if(err) res.json({ message: 'account modification failed' })
-      else Logout(req.user.id, bool => res.json({ message: 'account modification ' + (bool ? 'successful' : 'failed') }))
+app.post(['/modify', '/users/modify'], passport.authenticate('jwt', { session: false }), (req, res) => {
+  if(req.body.id || req.user.id) {
+    db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
+      if(err) return res.status(500).json(info)
+      if(user.account_type === 'admin') {
+        db.privilegedModifyUser(req.body.id, req.body, (err, x) => {
+          if(err) res.json({ message: 'privileged account modification failed' })
+          else Logout(req.user.id, bool => res.json({ message: 'account modification ' + (bool ? 'successful' : 'failed') }))
+        })
+      } else {
+        db.modifyUser(req.user.id, req.body, (err, x) => {
+          if(err) res.json({ message: 'account modification failed' })
+          else Logout(req.user.id, bool => res.json({ message: 'account modification ' + (bool ? 'successful' : 'failed') }))
+        })
+      }
     })
   }
 })
 
-app.post('/delete', passport.authenticate('jwt', { session: false }), (req, res) => {
+app.post(['/delete', '/users/delete'], passport.authenticate('jwt', { session: false }), (req, res) => {
   db.deleteUser(req.user.id, (err, rows_affected) => {
     if(err) res.json({ message: 'account deletion failed' })
     else res.json({ message: 'account deletion successful' })
   })
 })
 
-app.post('/test', passport.authenticate('jwt', { session: false }), (req, res) => {
+app.post(['/test', '/users/test'], passport.authenticate('jwt', { session: false }), (req, res) => {
   res.json({ message: 'authenticated', user: req.user })
 })
 
-app.post('/info', passport.authenticate('jwt', { session: false }), (req, res) => {
+app.post(['/info', '/users/info'], passport.authenticate('jwt', { session: false }), (req, res) => {
   if(req.body.username === req.user.username) {
     db.getUserIfExists(req.body.username, (err, user) => {
       res.json({ message: '', user: user })
@@ -146,4 +147,3 @@ app.post('/info', passport.authenticate('jwt', { session: false }), (req, res) =
 })
 
 app.listen(config.PORT || 3003, () => console.log('server started on port ' + (config.PORT || 3003)))
-internal.listen(config.INTERNAL_SERVER_PORT || 3004, () => console.log('internal server started on port ' + (config.INTERNAL_SERVER_PORT || 3004)))

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Login</title>
+    <link rel="stylesheet" href="./main.css"
+  </head>
+  <body class="theme-light">
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <div>
+      <div class="container">
+        <div class="login-box margin-center">
+          <div class="login_welcome">Welcome!</div>
+          <div class="login-container">
+            <form class="login" id="login" method="POST" action="/login">
+              <div class="form-group">
+                <label for="login-username">Username or email: </label>
+                <input name="username" autocomplete="off" class="text-input input-big" id="login-username" type="text" />
+              </div>
+              <div class="form-group">
+                <label for="login-password">Password: </label>
+                <input name="password" autocomplete="off" class="text-input input-big" id="login-password" type="password" />
+              </div>
+              <input type="submit" style="display: none;">
+              <button type="submit" class="btn btn-big btn-standard center">Login</button>
+              <p class="subtext">
+                Don't have an account? <a class="login-sublink" href="/register.html">Create one now!</a>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+      };
+
+      document.querySelector('form.login#login').addEventListener('submit', function (evt) {
+        evt.preventDefault()
+        const username = document.querySelector('form.login#login #login-username').value
+        const password = document.querySelector('form.login#login #login-password').value
+        console.log(username, password)
+        window.fetch('/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            username: username,
+            password: password
+          }),
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        })
+          .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
+          .then(function(res) { 
+            return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + res.token ) 
+          })
+          .catch(console.log)
+      })
+    </script>
+  </body>
+</html>

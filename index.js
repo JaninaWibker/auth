@@ -55,6 +55,8 @@ const cors = (req, res, next) => {
   next()
 }
 
+app.use(express.static('public', { index: 'index.html', extensions: ['html'] }))
+
 app.use(cors)
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())

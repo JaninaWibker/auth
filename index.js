@@ -13,6 +13,14 @@ const private_key = fs.readFileSync('private.key', 'utf8')
 const public_key = fs.readFileSync('public.key', 'utf8')
 const { JWTStrategy, Login, Logout } = require('./auth.js')(private_key, public_key, (id, token) => onAdd(id, token), (id) => onDelete(id))
 
+const fetchTimeout = (url, method, body, headers, timeout=50) => new Promise((resolve, reject) => {
+  const timer = setTimeout(() => reject(new Error('Request timed out')), timeout)
+  fetch(url, method, body, headers)
+    .then(resolve)
+    .catch(reject)
+    .finally(() => clearTimeout(timer))
+})
+
 const fetch = (url, method='POST', body, headers) => _fetch(url, {
   body: method === 'POST' ? JSON.stringify(body) : null,
   method: method,
@@ -24,21 +32,21 @@ const fetch = (url, method='POST', body, headers) => _fetch(url, {
 })
 
 const onAdd = (id, token) => {
-  cache.keys().forEach(key => (
-    console.log(key, cache.get(key), cache.get(key).url + '/login'),
-    fetch(cache.get(key).url + '/login', 'POST', { id: id, token: token }, { Authorization: 'Bearer ' + jwt.sign({ id: id, isAuthProvider: true }, private_key, { algorithm: 'RS256' }) })
+  return Promise.all(cache.keys().map(key => {
+    console.log(key, cache.get(key), cache.get(key).url + '/login')
+    return fetchTimeout(cache.get(key).url + '/login', 'POST', { id: id, token: token }, { Authorization: 'Bearer ' + jwt.sign({ id: id, isAuthProvider: true }, private_key, { algorithm: 'RS256' }) })
       .then(res => res.status === 401 ? res.text() : res.json())
       .then(text_or_json => console.log('[fetch]', text_or_json))
-  ))
+  }))
 }
 
 const onDelete = (id, token) => {
-  cache.keys().forEach(key => (
-    console.log(key, cache.get(key)), 
-    fetch(cache.get(key).url + '/logout', 'POST', { id: id, token: token }, { Authorization: 'Bearer ' + jwt.sign({ id: id, isAuthProvider: true }, private_key, { algorithm: 'RS256' }) })
+  return Promise.all(cache.keys().forEach(key => {
+    console.log(key, cache.get(key))
+    return fetchTimeout(cache.get(key).url + '/logout', 'POST', { id: id, token: token }, { Authorization: 'Bearer ' + jwt.sign({ id: id, isAuthProvider: true }, private_key, { algorithm: 'RS256' }) })
       .then(res => res.status === 401 ? res.text() : res.json())
       .then(text_or_json => console.log('[fetch]', text_or_json))
-  ))
+  }))
 }
 
 const app = express()
@@ -82,6 +90,7 @@ app.post(['/login', '/users/login'], (req, res) => {
     const username = req.body.username
     const password = req.body.password
     Login(username, password, (err, token) => {
+      console.log(err, token)
       if(err || !token) res.status(401).json({ message: 'authentication failed' })
       else res.json({ message: 'authentication successful', token: token })
     })
@@ -99,7 +108,7 @@ app.post(['/add', '/users/add'], (req, res) => {
   if(data.username && data.password && data.first_name && data.last_name && data.email) {
     db.addUser(data.username, data.password, data.first_name, data.last_name, data.email, (err, row) => {
       if(err) res.json({ message: err })
-      else res.json({ message: 'account creation successful' }) // is this always true? what about errors? need to check for duplicate usernames in db.addUser
+      else res.json({ message: 'account creation successful' })
     })
   } else {
     res.json({ message: 'supply "username", "password", "first_name", "last_name" and "email"' })

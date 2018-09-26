@@ -15,9 +15,10 @@
           <div class="register-box margin-center">
               <div class="register_welcome">Welcome!</div>
               <div class="register-container">
-                <form class="register"><div class="form-group">
-                  <label for="register-username">Username: </label>
-                  <input autocomplete="username" class="text-input input-big" id="register-username" type="text">
+                <form class="register" id="register" method="POST" action="/register">
+                  <div class="form-group">
+                    <label for="register-username">Username: </label>
+                    <input autocomplete="username" class="text-input input-big" id="register-username" type="text">
                   </div>
                   <div class="form-group">
                     <label for="register-email">Email: </label>
@@ -43,14 +44,61 @@
                   </div>
                   <input type="submit" style="display: none;">
                   <button type="submit" class="btn btn-big btn-standard center">Register</button>
-                  <p class="subtext">Already have an account? <a class="register-sublink" href="/login.html">Log in!</a></p>
+                  <p class="subtext">Already have an account? <a class="register-sublink" style="cursor:pointer;" onclick="window.location.replace('/login' + window.location.search)">Log in!</a></p>
                 </form>
               </div>
             </div>
       </div>
     </div>
     <script>
-      
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+      };
+
+      function post(url, body, headers) {
+        return window.fetch(url, {
+          method: 'POST',
+          body: JSON.stringify(body),
+          headers: Object.assign({
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }, headers)
+        })
+      }
+
+      document.querySelector('form.register#register').addEventListener('submit', function (evt) {
+        evt.preventDefault()
+
+        const username = document.querySelector('form.register#register #register-username').value
+        const email = document.querySelector('form.register#register #register-email').value
+        const password = document.querySelector('form.register#register #register-password').value
+        const password_repeat = document.querySelector('form.register#register #register-repeat-password').value
+        const first_name = document.querySelector('form.register#register #register-firstname').value
+        const last_name = document.querySelector('form.register#register #register-lastname').value
+
+        console.log({ username, email, password, password_repeat, first_name, last_name })
+
+        if(password === password_repeat) {
+          post('/add', { username, email, password, first_name, last_name })
+            .then(function (res) { return res.json })
+            .then(function (json) { return json.message === 'account creation successful' 
+              ? Promise.resolve(json)
+              : Promise.reject(json)
+            })
+            .then(post('/login', { username: username, password: password })
+            .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
+              .then(function(res) { 
+                return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + res.token ) 
+              })
+              .catch(console.log)
+            )
+            .catch(console.log)
+        }
+        
+      })
     </script>
   </body>
 </html>

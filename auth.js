@@ -22,15 +22,14 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
   }
 
   const addToCache = (id, token, time) => {
-    const rtn = cache.put(id, token, time)
-    onAdd(id, token)
-    return rtn
+    return onAdd(id, token)
+      .then(() => cache.put(id, token, time))
+      .catch(console.log)
   }
 
   const removeFromCache = (id) => {
-    const rtn = cache.del(id)
-    onDelete(id, cache.get(id))
-    return rtn
+    return onDelete(id, cache.get(id))
+      .then(() => caceh.del(id))
   }
 
   const strategy = new JWTStrategy(jwtOptions, (jwt_payload, cb) => {
@@ -48,15 +47,15 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
       if(user) {
         const payload = { id: user.id, username: user.username, iss: 'accounts.jannik.ml', partial_key: false, enabled_2fa: user['2fa_enabled'] === 1 ? true : false }
         const token = jwt.sign(payload, jwtOptions.privateKey, { algorithm: jwtOptions.algorithm})
+        console.log('[cache] add *' + user.id + '*: ' + token.substring(0, 96))
         addToCache(user.id, token, 30 * 60 * 1000)
-        console.log('[cache] add *' + user.id + '*: ' + cache.get(user.id).substring(0, 96))
-        cb(err, token)
+        .then(() => cb(err, token))
       } else {
         cb(err, false)
       }
     })
 
-  const Logout = (id, cb) => cb(removeFromCache(id))
+  const Logout = (id, cb) => removeFromCache(id).then(cb)
 
   return {
     JWTStrategy: strategy,

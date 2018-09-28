@@ -21,15 +21,15 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
     algorithms: ['RS256']
   }
 
-  const addToCache = (id, token, time) => {
-    return onAdd(id, token)
+  const addToCache = (id, token, payload, time) => {
+    return onAdd(id, token, payload)
       .then(() => cache.put(id, token, time))
       .catch(console.log)
   }
 
-  const removeFromCache = (id) => {
-    return onDelete(id, cache.get(id))
-      .then(() => caceh.del(id))
+  const removeFromCache = (id, payload={account_type: 'default'}) => {
+    return onDelete(id, cache.get(id), payload)
+      .then(() => cache.del(id))
   }
 
   const strategy = new JWTStrategy(jwtOptions, (jwt_payload, cb) => {
@@ -45,10 +45,10 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
     db.authenticateUserIfExists(username, password, null, (err, user) => {
       console.log('[auth/login]', err, { id: user.id, username: user.username })
       if(user) {
-        const payload = { id: user.id, username: user.username, iss: 'accounts.jannik.ml', partial_key: false, enabled_2fa: user['2fa_enabled'] === 1 ? true : false }
+        const payload = { id: user.id, username: user.username, iss: 'accounts.jannik.ml', partial_key: false, enabled_2fa: user['2fa_enabled'] === 1 ? true : false, account_type: user.account_type }
         const token = jwt.sign(payload, jwtOptions.privateKey, { algorithm: jwtOptions.algorithm})
         console.log('[cache] add *' + user.id + '*: ' + token.substring(0, 96))
-        addToCache(user.id, token, 30 * 60 * 1000)
+        addToCache(user.id, token, payload, 30 * 60 * 1000)
         .then(() => cb(err, token))
       } else {
         cb(err, false)

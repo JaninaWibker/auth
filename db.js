@@ -69,6 +69,14 @@ const getUserLimitedIfExists = (username, cb) => {
   )
 }
 
+const getUserList = (cb) => {
+  dbPromise.then(db =>
+    db.all('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users')
+      .then(rows => cb(null, rows ? rows : false))
+      .catch(err => cb(null, false, { message: 'error while retrieving all users', err: err }))
+  )
+}
+
 const UserDataToId = (userData, cb) => cb(null, userData.id)
 
 const IdToUserData = (id, cb) => dbPromise.then(db =>
@@ -151,6 +159,7 @@ module.exports = {
   getUserIfExists,
   getUserFromIdIfExists,
   getUserLimitedIfExists,
+  getUserList,
   UserDataToId,
   IdToUserData,
   addUser,

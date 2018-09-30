@@ -11,7 +11,7 @@ const cache = new _cache.Cache()
 const default_services = require('./example.default_services.json')
 const private_key = fs.readFileSync('private.key', 'utf8')
 const public_key = fs.readFileSync('public.key', 'utf8')
-const { JWTStrategy, Login, Logout } = require('./auth.js')(private_key, public_key, (id, token, payload) => onAdd(id, token, payload), (id) => onDelete(id))
+const { JWTStrategy, Login, Logout, signJwtNoCheck } = require('./auth.js')(private_key, public_key, (id, token, payload) => onAdd(id, token, payload), (id) => onDelete(id))
 
 const account_types = ['default', 'privileged', 'admin']
 
@@ -44,15 +44,6 @@ const onAdd = (id, token, payload) =>
       .then(text_or_json => console.log('[fetch]', text_or_json))
     )
   )
-
-// const onAdd = (id, token) => {
-//   return Promise.all(cache.keys().map(key => {
-//     console.log(key, cache.get(key), cache.get(key).url + '/login')
-//     return fetchTimeout(cache.get(key).url + '/login', 'POST', { id: id, token: token }, { Authorization: 'Bearer ' + jwt.sign({ id: id, isAuthProvider: true }, private_key, { algorithm: 'RS256' }) })
-//       .then(res => res.status === 401 ? res.text() : res.json())
-//       .then(text_or_json => console.log('[fetch]', text_or_json))
-//   }))
-// }
 
 const onDelete = (id, token, payload) =>
   Promise.all(cache.keys()
@@ -124,7 +115,10 @@ app.post(['/add', '/users/add'], (req, res) => {
   if(data.username && data.password && data.first_name && data.last_name && data.email) {
     db.addUser(data.username, data.password, data.first_name, data.last_name, data.email, (err, row) => {
       if(err) res.json({ message: err })
-      else res.json({ message: 'account creation successful' })
+      else res.json({ 
+        message: 'account creation successful', 
+        token: signJwtNoCheck({ id: row.rowid, username: row.username, account_type: row.account_type, '2fa_enabled': row['2fa_enabled'] })
+      })
     })
   } else {
     res.json({ message: 'supply "username", "password", "first_name", "last_name" and "email"' })

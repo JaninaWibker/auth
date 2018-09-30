@@ -41,6 +41,15 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
     })
   })
 
+  const signJwtNoCheck = (user) => jwt.sign({ 
+    id: user.id, 
+    username: user.username,
+    account_type: user.account_type,
+    iss: 'accounts.jannik.ml', 
+    partial_key: false, 
+    enabled_2fa: user['2fa_enabled'] === 1 ? true : false
+  }, jwtOptions.privateKey, { algorithm: jwtOptions.algorithm })
+
   const login = (username, password, cb) =>
     db.authenticateUserIfExists(username, password, null, (err, user, info) => {
       console.log('[auth/login]', err, { id: user.id, username: user.username })
@@ -61,6 +70,7 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
     JWTStrategy: strategy,
     Login: login,
     Logout: Logout,
+    signJwtNoCheck: signJwtNoCheck
   }
 }
 

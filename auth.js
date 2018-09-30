@@ -42,7 +42,7 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
   })
 
   const login = (username, password, cb) =>
-    db.authenticateUserIfExists(username, password, null, (err, user) => {
+    db.authenticateUserIfExists(username, password, null, (err, user, info) => {
       console.log('[auth/login]', err, { id: user.id, username: user.username })
       if(user) {
         const payload = { id: user.id, username: user.username, iss: 'accounts.jannik.ml', partial_key: false, enabled_2fa: user['2fa_enabled'] === 1 ? true : false, account_type: user.account_type }

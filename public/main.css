@@ -1,3 +1,24 @@
+@font-face {
+  font-family: 'AvenirLTStd';
+  font-weight: 300;
+  src: local('Avenir'), local('AvenirLTStd'), local('Avenir Next'), url('/fonts/AvenirLTStd-Light.woff')
+}
+@font-face {
+  font-family: 'AvenirLTStd';
+  font-weight: 400;
+  src: local('Avenir'), local('AvenirLTStd'), local('Avenir Next'), url('/fonts/AvenirLTStd-Book.woff');
+}
+@font-face {
+  font-family: 'AvenirLTStd';
+  font-weight: 500;
+  src: local('Avenir'), local('AvenirLTStd'), local('Avenir Next'), url('/fonts/AvenirLTStd-Medium.woff');;
+}
+@font-face {
+  font-family: 'AvenirLTStd';
+  font-weight: 900;
+  src: local('Avenir'), local('AvenirLTStd'), local('Avenir Next'), url('/fonts/AvenirLTStd-Black.woff');
+}
+
 body.theme-light, body:not([class]) {
   --accent-color-opacity: #4A54C733;
   --accent-color: #4A54C7;

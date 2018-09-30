@@ -22,7 +22,7 @@ const authenticateUserIfExists = (username, password, code_2fa, cb) => {
 
         db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users WHERE (username = ? OR email = ?) AND password = ?', username, username, hash)
           .then(row => cb(null, row ? row : false))
-          .catch(err => cb(null, false, { message: 'incorrect password' }))
+          .catch(err => cb(err, false, { message: 'incorrect password' }))
       })
       .catch(err => (console.log(err), cb(null, false, { message: 'user not found' }))))
 }
@@ -95,7 +95,7 @@ const addUser = (username, password, first_name, last_name, email, cb) => {
             .then(x => cb(null, x))
             .catch(x => cb(x, null))
         } else {
-          cb({ message: 'username or email already exists'}, null)
+          cb({ message: 'username or email already exists' }, null)
         }
       })
 

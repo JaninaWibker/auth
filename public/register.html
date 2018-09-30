@@ -4,7 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Login</title>
-    <link rel="stylesheet" href="./main.css"
+    <link rel="stylesheet" href="./main.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="mask-icon" href="/static/safari-pinned-tab.svg" color="#42b983">
+    <meta name="msapplication-TileColor" content="#42b983">
+    <meta name="theme-color" content="#ffffff">
   </head>
   <body class="theme-light">
     <noscript>
@@ -89,8 +96,8 @@
               : Promise.reject(json)
             })
             .then(post('/login', { username: username, password: password })
-            .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
-              .then(function(res) { 
+              .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
+              .then(function(res) {
                 return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + res.token ) 
               })
               .catch(console.log)

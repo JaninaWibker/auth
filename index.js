@@ -4,6 +4,7 @@ const bodyParser = require('body-parser')
 const passport = require('passport')
 const config = require('dotenv').config().parsed
 const fs = require('fs')
+const URL = require('url')
 const db = require('./db.js')
 const _fetch = require('node-fetch')
 const _cache = require('memory-cache')
@@ -67,7 +68,7 @@ const cors = (req, res, next) => {
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
-  const url = new URL(req.protocol + '://' + req.get('host'))
+  const url = URL.parse(req.protocol + '://' + req.get('host'))
   const url_reversed_arr = url.hostname.split('.').reverse()
 
   if((url_reversed_arr[0] === 'ml' && url_reversed_arr[1] === 'jannik') 

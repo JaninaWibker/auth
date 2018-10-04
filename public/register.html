@@ -96,7 +96,7 @@
               : Promise.reject(json)
             })
             .then(function(json) {
-              return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + json.token )
+              return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + json.token + window.location.hash )
             })
             .catch(console.log)
         }

@@ -67,7 +67,7 @@
         })
           .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
           .then(function(res) { 
-            return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + res.token ) 
+            return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + res.token + window.location.hash ) 
           })
           .catch(console.log)
       })

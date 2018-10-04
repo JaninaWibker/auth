@@ -17,7 +17,7 @@ const account_types = ['default', 'privileged', 'admin']
 
 const fetchTimeout = (url, method, body, headers, timeout=50) => new Promise((resolve, reject) => {
   const timer = setTimeout(() => reject(new Error('Request timed out')), timeout)
-  fetch(url, method, body, headers)
+  return fetch(url, method, body, headers)
     .then(resolve)
     .catch(reject)
     .finally(() => clearTimeout(timer))
@@ -63,10 +63,23 @@ default_services.forEach(service => cache.put(service.name, service))
 passport.use(JWTStrategy)
 
 const cors = (req, res, next) => {
-  const allowed = ['http://jannik.ddns.net', 'http://jannik.ddns.net:3000', 'http://jannik.ddns.net:9129', 'http://jannik-mbp-2017:3000', 'http://notes.jannik.ml', 'http://dev.jannik.ml', 'http://localhost', 'http://localhost:3000']
-  res.header('Access-Control-Allow-Origin', allowed.indexOf(req.get('origin')) !== -1 ? req.get('origin') : '')
+
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE')
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+
+  const url = new URL(req.protocol + '://' + req.get('host'))
+  const url_reversed_arr = url.hostname.split('.').reverse()
+
+  if((url_reversed_arr[0] === 'ml' && url_reversed_arr[1] === 'jannik') 
+  || (url_reversed_arr[0] === 'net' && url_reversed_arr[1] === 'ddns' && url_reversed_arr[2] === 'jannik')
+  || (url_reversed_arr[3] === '192' && url_reversed_arr[2] === '168' && url_reversed_arr[1] === '178')
+  || (url_reversed_arr[0] === 'jannik-rpi3')
+  || (url_reversed_arr[0] === 'jannik-mbp-2017')
+  || (url_reversed_arr[0] === 'samba-server')
+  || (url_reversed_arr[0] === 'localhost')) {
+    res.header('Access-Control-Allow-Origin', req.get('origin'))
+  } else res.header('Access-Control-Allow-Origin', '')
+
   next()
 }
 

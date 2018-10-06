@@ -178,7 +178,12 @@ app.post(['/test', '/users/test'], passport.authenticate('jwt', { session: false
 
 app.post(['/info', '/users/info'], passport.authenticate('jwt', { session: false }), (req, res) => {
   db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(req.body.username === req.user.username || user.account_type === 'admin') {
+    if(req.body.username === undefined) {
+      db.getUserIfExists(req.user.username, (err, user) => {
+        res.json({ message: '', user: user })
+      })
+    }
+    else if(req.body.username === req.user.username || user.account_type === 'admin') {
       db.getUserIfExists(req.body.username, (err, user) => {
         res.json({ message: '', user: user })
       })

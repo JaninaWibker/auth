@@ -23,7 +23,7 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
 
   const addToCache = (id, token, payload, time) => {
     return onAdd(id, token, payload)
-      .then(() => cache.put(id, token, time))
+      .then(() => cache.put(id, token, time)) // TODO - order
       .catch(console.log)
   }
 
@@ -35,9 +35,15 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
   const strategy = new JWTStrategy(jwtOptions, (jwt_payload, cb) => {
     console.log('payload received: ', jwt_payload)
     db.getUserIfExists(jwt_payload.username, (err, user) => {
-      console.log('[cache] add *' + user.id + '*: ' + cache.get(user.id).substring(0, 96))
-      const checkCache = false
-      cb(null, user && (checkCache ? cache.get(user.id) !== null : true) ? user : false, { message: cache.get(user.id) === null ? 'token expired' : 'user not found' })
+      if(err || !user) {
+        console.log('[strategy] authorization failed. JWT expired or user not found')
+        cb(err, null, null)
+      } else {
+        console.log('[strategy] authorization successful (' + user.id + ': ' + cache.get(user.id).substring(0, 96) + ' )')
+        const checkCache = true
+        if(!checkCache || cache.get(user.id) !== null) cb(null, user, null)
+        else cb(null, false, { message: 'token expired' })
+      }
     })
   })
 

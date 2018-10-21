@@ -9,7 +9,7 @@ const db = require('./db.js')
 const _fetch = require('node-fetch')
 const _cache = require('memory-cache')
 const cache = new _cache.Cache()
-const default_services = require('./example.default_services.json')
+const default_services = require('./default_services.json')
 const private_key = fs.readFileSync('private.key', 'utf8')
 const public_key = fs.readFileSync('public.key', 'utf8')
 const { JWTStrategy, Login, Logout, signJwtNoCheck } = require('./auth.js')(private_key, public_key, (id, token, payload) => onAdd(id, token, payload), (id) => onDelete(id))
@@ -21,7 +21,7 @@ const fetchTimeout = (url, method, body, headers, timeout=50) => new Promise((re
   return fetch(url, method, body, headers)
     .then(resolve)
     .catch(reject)
-    .finally(() => clearTimeout(timer))
+    .finally((x) => (console.log(x), clearTimeout(timer), x))
 })
 
 const fetch = (url, method='POST', body, headers) => _fetch(url, {
@@ -42,6 +42,7 @@ const onAdd = (id, token, payload) =>
     .map(json => (console.log('[onAdd]', {name: json.name, account_type: json.account_type}, {id: payload.id, account_type: payload.account_type}, account_types.indexOf(payload.account_type), account_types.indexOf(json.account_type)), json))
     .map(json => fetchTimeout(json.url + '/login', 'POST', { id: id, token: token }, { Authorization: 'Bearer ' + jwt.sign({ id: id, isAuthProvider: true }, private_key, { algorithm: 'RS256' }) })
       .then(res => res.status === 401 ? res.text() : res.json())
+      .catch(err => (console.log('[onAdd] server not responding (' + json.name + ')'), err))
       .then(text_or_json => console.log('[fetch]', text_or_json))
     )
   )
@@ -96,8 +97,12 @@ app.get('/', (req, res) => res.send('server is up and running'))
 app.post('/register', (req, res) => {
   console.log(req.get('Authorization').substr('Bearer '.length), Buffer.from(config.SECRET.toString(), 'binary').toString('base64'))
   if(req.get('Authorization').substr('Bearer '.length) === Buffer.from(config.SECRET.toString(), 'binary').toString('base64') && cache.get(req.body.data.name) !== undefined) {
-    cache.put(req.body.data.name, req.body.data)
-    res.json({ message: 'registration successful', public_key: public_key })
+    if(cache.keys().includes(req.body.data.name)) {
+      res.json({ message: 'already registered', public_key: public_key })
+    } else {
+      cache.put(req.body.data.name, req.body.data)
+      res.json({ message: 'registration successful', public_key: public_key })
+    }
   } else {
     res.json({ message: 'registration failed', public_key: public_key })
   }
@@ -177,6 +182,7 @@ app.post(['/test', '/users/test'], passport.authenticate('jwt', { session: false
 })
 
 app.post(['/info', '/users/info'], passport.authenticate('jwt', { session: false }), (req, res) => {
+  console.log(req.body, req.user)
   db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
     if(req.body.username === undefined) {
       db.getUserIfExists(req.user.username, (err, user) => {

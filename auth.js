@@ -47,12 +47,12 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
     })
   })
 
-  const signJwtNoCheck = (user) => jwt.sign({ 
-    id: user.id, 
+  const signJwtNoCheck = (user) => jwt.sign({
+    id: user.id,
     username: user.username,
     account_type: user.account_type,
-    iss: 'accounts.jannik.ml', 
-    partial_key: false, 
+    iss: 'accounts.jannik.ml',
+    partial_key: false,
     enabled_2fa: user['2fa_enabled'] === 1 ? true : false
   }, jwtOptions.privateKey, { algorithm: jwtOptions.algorithm })
 

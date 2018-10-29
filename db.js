@@ -59,6 +59,14 @@ const getUserIfExists = (username, cb) => {
   )
 }
 
+const getUserFromEmailIfExists = (email, cb) => {
+  dbPromise.then(db =>
+    db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users WHERE email = ?', email)
+      .then(row => cb(null, row ? row : false))
+      .catch(err => cb(null, false, { message: 'user not found' }))
+  )
+}
+
 const getUserFromIdIfExists = (id, cb) => IdToUserData(id, cb)
 
 const getUserLimitedIfExists = (username, cb) => {
@@ -157,6 +165,7 @@ const deleteUser = (id, cb) => {
 module.exports = {
   authenticateUserIfExists,
   getUserIfExists,
+  getUserFromEmailIfExists,
   getUserFromIdIfExists,
   getUserLimitedIfExists,
   getUserList,

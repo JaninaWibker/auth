@@ -61,7 +61,7 @@ if(args._[0] === 'modify-account') {
 
       const cb = (err, user, info) => {
         if(err || info) console.log(err, info)
-        else db.modifyUser(user.id, modifications, console.log)
+        else db.priviligedModifyUser(user.id, modifications, console.log)
       }
 
       if(args['--id']) db.getUserFromIdIfExists(args['--id'], cb)

@@ -54,6 +54,7 @@ const onDelete = (id, token, payload) =>
     .map(json => (console.log(json), json))
     .map(json => fetchTimeout(json.url + '/logout', 'POST', { id: id, token: token }, { Authorization: 'Bearer ' + jwt.sign({ id: id, isAuthProvider: true }, private_key, { algorithm: 'RS256' }) })
       .then(res => res.status === 401 ? res.text() : res.json())
+      .catch(({ message }) => ({ message }))
       .then(text_or_json => console.log('[fetch]', text_or_json))
     )
   )
@@ -147,22 +148,45 @@ app.post(['/add', '/users/add'], (req, res) => {
   }
 })
 
-app.post(['/modify', '/users/modify'], passport.authenticate('jwt', { session: false }), (req, res) => {
+app.post(['/modify-self', '/users/modify-self'], passport.authenticate('jwt', { session: false }), (req, res) => {
   if(req.body.id || req.user.id) {
+
     db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
       if(err) return res.status(500).json(info)
-      if(user.account_type === 'admin') {
-        db.privilegedModifyUser(req.body.id || req.user.id, req.body, (err, x) => {
+      if(user.account_type === 'admin') db.privilegedModifyUser(req.body.id || req.user.id, req.body, (err, x) => {
           if(err) res.json({ message: 'privileged account modification failed' })
-          else Logout(req.body.id || req.user.id, bool => res.json({ message: 'account modification ' + (bool ? 'successful' : 'failed') }))
+          else Logout(req.body.id || req.user.id, bool => res.json({ message: 'privileged account modification ' + (bool ? 'successful' : 'failed') }))
         })
-      } else {
-        db.modifyUser(req.user.id, req.body, (err, x) => {
+      else db.modifyUser(req.user.id, req.body, (err, x) => {
           if(err) res.json({ message: 'account modification failed' })
           else Logout(req.user.id, bool => res.json({ message: 'account modification ' + (bool ? 'successful' : 'failed') }))
         })
-      }
     })
+
+  } else {
+    res.json({ message: 'supply id' })
+  }
+})
+
+app.post(['/modify', '/users/modify'], passport.authenticate('jwt', { session: false }), (req, res) => {
+  if(req.body.id || req.body.username) {
+
+    const cb = (err, user, info) => {
+      if(err) return res.status(500).json(info)
+      if(user.account_type === 'admin') db.privilegedModifyUser(req.body.id, req.body, (err, x) => {
+          if(err) res.status(500).json({ message: 'account modification failed' })
+          else Logout(req.body.id, bool => res.json({ message: 'account modification ' + (bool ? 'successful' : 'failed') }))
+        })
+      else db.modifyUser(req.body.id, req.body, (err, x) => {
+          if(err) res.status(500).json({ message: 'account modification failed' })
+          else Logout(req.body.id, bool => res.json({ message: 'account modification ' + (bool ? 'successful' : 'failed') }))
+        })
+    }
+
+    if(req.body.id) db.getUserFromIdIfExists(req.body.id, cb)
+    else if(req.body.username) db.getUserIfExists(req.body.username, cb)
+  } else {
+    res.status(500).json({ message: 'supply username or id' })
   }
 })
 

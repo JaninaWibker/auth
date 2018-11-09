@@ -29,7 +29,9 @@ authcli list-accounts
   console.log('auth service version ' + version)
 } else if(args._[0] === 'add-account') {
   if(args._.length >= 6) {
-    db.addUser(...args._.slice(1, 6), console.log)
+    const [username, first_name, last_name, email, password] = args._.slice(1, 6)
+    console.log(`adding account with\n\tusername:\t"${username}",\n\tpassword:\t"${password}",\n\tfirst_name:\t"${first_name}",\n\tlast_name:\t"${last_name}",\n\temail:\t\t"${email}"`)
+    db.addUser(username, password, first_name, last_name, email, console.log)
   } else {
     console.log('error, too few arguments:\nauthcli add-account <username> <first_name> <last_name> <email> <password>')
   }
@@ -41,7 +43,7 @@ authcli list-accounts
       else db.deleteUser(user.id, console.log)
     }
 
-    if(args['--id']) db.getUserFromIdIfExists(args['--id'], cb)
+    if(args['--id']) db.getUserFromIdIfExists(parseInt(args['--id'], 10), cb)
     if(args['--username']) db.getUserIfExists(args['--username'], cb)
     if(args['--email']) db.getUserFromEmailIfExists(args['--email'], cb)
 
@@ -49,9 +51,7 @@ authcli list-accounts
   } else {
     console.log('error, no user selected\nauthcli remove-account --id <id> --username <username> --email <email>')
   }
-}
-
-if(args._[0] === 'modify-account') {
+} else if(args._[0] === 'modify-account') {
   if(args['--id'] || args['--username'] || args['--email']) {
     if(args._[1] === 'set') {
       
@@ -61,10 +61,10 @@ if(args._[0] === 'modify-account') {
 
       const cb = (err, user, info) => {
         if(err || info) console.log(err, info)
-        else db.modifyUser(user.id, modifications, console.log)
+        else db.privilegedModifyUser(user.id, modifications, console.log)
       }
 
-      if(args['--id']) db.getUserFromIdIfExists(args['--id'], cb)
+      if(args['--id']) db.getUserFromIdIfExists(parseInt(args['--id'], 10), cb)
       if(args['--username']) db.getUserIfExists(args['--username'], cb)
       if(args['--email']) db.getUserFromEmailIfExists(args['--email'], cb)
     } else {
@@ -75,7 +75,7 @@ if(args._[0] === 'modify-account') {
   }
 } else if(args._[0] === 'get-account') {
   if(args['--id'] || args['--username'] || args['--email']) {
-    if(args['--id']) db.getUserFromIdIfExists(args['--id'], console.log)
+    if(args['--id']) db.getUserFromIdIfExists(parseInt(args['--id'], 10), console.log)
     if(args['--username']) db.getUserIfExists(args['--username'], console.log)
     if(args['--email']) db.getUserFromEmailIfExists(args['--email'], console.log)
   } else {

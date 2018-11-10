@@ -111,6 +111,34 @@ body.theme-dark {
   margin: 10px 0;
 }
 
+.login-info-box, .register-info-box {
+  font-size: 14px;
+  margin: 0px 20px;
+  padding-left: 10px;
+  border-left: 4px solid #a36ad8;
+}
+
+.login-info-box.hidden, .register-info-box.hidden {
+  display: none;
+}
+
+.login-info-box .service-name, .register-info-box .service-name {
+  font-size: 14px;
+  color: #a36ad8;
+  white-space: pre-wrap;
+}
+
+.login-info-box .service-account_type, .register-info-box .service-account_type {
+  background-color: #f8f8f8;
+  font-size: 12px;
+  border-radius: 2px;
+  color: #a36ad8;
+  padding: 3px 5px;
+  margin: 0 2px;
+  white-space: pre-wrap;
+  font-family: Roboto Mono,Monaco,courier,monospace;
+}
+
 .login-container, .register-container {
   padding: 20px;
   box-sizing: border-box;

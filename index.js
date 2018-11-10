@@ -61,7 +61,7 @@ const onDelete = (id, token, payload) =>
 
 const app = express()
 
-default_services.forEach(service => cache.put(service.name, service))
+default_services.forEach(service => cache.put(service.id, service))
 
 passport.use(JWTStrategy)
 
@@ -98,7 +98,7 @@ app.use(passport.initialize())
 
 app.get('/', (req, res) => res.send('server is up and running'))
 
-app.post('/register', (req, res) => {
+app.post(['/register', '/service/register'], (req, res) => {
   console.log(req.get('Authorization').substr('Bearer '.length), Buffer.from(config.SECRET.toString(), 'binary').toString('base64'))
   if(req.get('Authorization').substr('Bearer '.length) === Buffer.from(config.SECRET.toString(), 'binary').toString('base64') && cache.get(req.body.data.name) !== undefined) {
     if(cache.keys().includes(req.body.data.name)) {
@@ -112,7 +112,23 @@ app.post('/register', (req, res) => {
   }
 })
 
-app.get('/public_key', (req, res) => res.send(public_key))
+app.get(['/public_key', '/service/public_key'], (req, res) => res.send(public_key))
+
+app.get(['/:method/:id?', '/service/:method/:id?'], (req, res) => {
+
+  if(!req.params.id) res.json({ message: 'supply id/name/app/cb (/service/:method/:id)' })
+
+  const find_match = (field) => cache.keys()
+    .map(key => cache.get(key))
+    .filter(service => service[field] === req.params.id)[0]
+
+       if(req.params.method === 'by-id')   res.json(find_match('id')   || ({ message: 'service not found' }))
+  else if(req.params.method === 'by-name') res.json(find_match('name') || ({ message: 'service not found' }))
+  else if(req.params.method === 'by-app')  res.json(find_match('app')  || ({ message: 'service not found' }))
+  else if(req.params.method === 'by-cb')   res.json(find_match('url')  || ({ message: 'service not found' }))
+  else                                     res.json({ message: 'supply method and id/name/app/cb' })
+
+})
 
 app.post(['/login', '/users/login'], (req, res) => {
   console.log('[login] ', { password: req.body.password, username: req.body.username })

@@ -21,6 +21,9 @@
       <div class="container">
         <div class="login-box margin-center">
           <div class="login_welcome">Welcome!</div>
+          <div class="login-info-box hidden">
+            <span class="service-name">...</span> requires a minimum account status of <span class="service-account_type">...</span>. You may not be allowed access.
+          </div>
           <div class="login-container">
             <form class="login" id="login" method="POST" action="/login">
               <div class="form-group">
@@ -48,6 +51,25 @@
         var results = regex.exec(location.search);
         return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
       };
+
+      function getServiceInfo(id, cb) {
+        window.fetch('/service/by-id/' + id)
+          .then(function(res) { return res.json() })
+          .then(cb)
+      }
+
+      getServiceInfo(getUrlParameter('id'), function(json) {
+        if(json.message) {
+
+        } else {
+          if(json.account_type !== 'default') {
+            const loginInfoBox = document.body.querySelector('.login-info-box')
+            loginInfoBox.querySelector('.service-name').innerText = json.name
+            loginInfoBox.querySelector('.service-account_type').innerText = json.account_type || 'default'
+            loginInfoBox.classList.toggle('hidden')
+          }
+        }
+      })
 
       document.querySelector('form.login#login').addEventListener('submit', function (evt) {
         evt.preventDefault()

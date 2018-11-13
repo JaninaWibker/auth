@@ -33,6 +33,7 @@
               <div class="form-group">
                 <label for="login-password">Password: </label>
                 <input name="password" autocomplete="off" class="text-input input-big" id="login-password" type="password" />
+                <div class="login-incorrect-credentials hidden">Incorrect username or password</div>
               </div>
               <input type="submit" style="display: none;">
               <button type="submit" class="btn btn-big btn-standard center">Login</button>
@@ -91,7 +92,10 @@
           .then(function(res) { 
             return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + res.token + window.location.hash ) 
           })
-          .catch(console.log)
+          .catch(res => {
+            console.log(res)
+            document.body.querySelector('.login-incorrect-credentials').classList.toggle('hidden')
+          })
       })
     </script>
   </body>

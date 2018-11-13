@@ -52,6 +52,7 @@
                   <div class="form-group">
                     <label for="register-repeat-password">Repeat password: </label>
                     <input autocomplete="new-password" class="text-input input-big" id="register-repeat-password" type="password">
+                    <div class="register-incorrect-repeat hidden">Passwords don't match!</div>
                   </div>
                   <input type="submit" style="display: none;">
                   <button type="submit" class="btn btn-big btn-standard center">Register</button>
@@ -122,6 +123,8 @@
               return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + json.token + window.location.hash )
             })
             .catch(console.log)
+        } else {
+          document.body.querySelector('.register-incorrect-repeat').classList.toggle('hidden')
         }
         
       })

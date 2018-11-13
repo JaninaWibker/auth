@@ -139,6 +139,16 @@ body.theme-dark {
   font-family: Roboto Mono,Monaco,courier,monospace;
 }
 
+.login-incorrect-credentials, .register-incorrect-repeat {
+  color: red;
+  font-size: 14px;
+  margin: 4px 6px;
+}
+
+.login-incorrect-credentials.hidden, .register-incorrect-repeat.hidden {
+  display: none;
+}
+
 .login-container, .register-container {
   padding: 20px;
   box-sizing: border-box;

@@ -90,16 +90,16 @@ const UserDataToId = (userData, cb) => cb(null, userData.id)
 const IdToUserData = (id, cb) => dbPromise.then(db =>
   db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users WHERE rowid = ?', id)
     .then(row => cb(null, row ? row : false))
-    .catch(err => cb(null, false, { message: 'user not found' }))
+    .catch(err => cb(null, false, { message: 'user not found', err: err }))
 )
 
-const addUser = (username, password, first_name, last_name, email, cb) => {
+const addUser = (username, password, first_name, last_name, email, account_type = 'default', metadata = {}, cb) => {
   const salt = gen_salt()
   dbPromise.then(db => {
     db.get('SELECT rowid as id, * FROM users WHERE username = ? OR email = ?', username, email)
       .then(existingUser => {
         if(existingUser === undefined) {
-          db.run('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, datetime("now"), datetime("now"), ?, ?, ?, ?)', first_name, last_name, email, username, hash_password(password, salt), salt, 'default', '{}', 0, '')
+          db.run('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, datetime("now"), datetime("now"), ?, ?, ?, ?)', first_name, last_name, email, username, hash_password(password, salt), salt, account_type, JSON.stringify(metadata) || '{}', 0, '')
             .then(x => cb(null, x))
             .catch(x => cb(x, null))
         } else {

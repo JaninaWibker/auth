@@ -9,12 +9,15 @@ const db = require('./db.js')
 const _fetch = require('node-fetch')
 const _cache = require('memory-cache')
 const cache = new _cache.Cache()
+const registerTokenCache = new _cache.Cache()
 const default_services = require('./default_services.json')
 const private_key = fs.readFileSync('private.key', 'utf8')
 const public_key = fs.readFileSync('public.key', 'utf8')
-const { JWTStrategy, Login, Logout, signJwtNoCheck } = require('./auth.js')(private_key, public_key, (id, token, payload) => onAdd(id, token, payload), (id) => onDelete(id))
+const { JWTStrategy, Login, Logout, signJwtNoCheck, validateRegisterToken, generateRegisterToken } = require('./auth.js')(private_key, public_key, (id, token, payload) => onAdd(id, token, payload), (id) => onDelete(id))
 
 const account_types = ['default', 'privileged', 'admin']
+
+let registerTokenCacheIndex = 0
 
 const fetchTimeout = (url, method, body, headers, timeout=50) => new Promise((resolve, reject) => {
   const timer = setTimeout(() => reject(new Error('Request timed out')), timeout)
@@ -149,14 +152,59 @@ app.post(['/logout', '/users/logout'], passport.authenticate('jwt', { session: f
   Logout(req.user.id, bool => res.json({ message: bool ? 'log out successful' : 'log out failed' }))
 })
 
+app.post('/generate-register-token', passport.authenticate('jwt', { session: false }), (req, res) => {
+  db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
+    if(err) res.status(500).json({ message: 'failed to validate user'})
+    if(user.account_type === 'admin') {
+      const permanent = req.body.permanent !== undefined ? req.body.permanent : false
+      const register_token = generateRegisterToken({
+        id: registerTokenCacheIndex,
+        timestamp: Date.now(),
+        ...req.body,
+        permanent: permanent,
+        expireAt: permanent ? 0 : (req.body.expireAt || 30 * 60 * 1000),
+      })
+
+      registerTokenCache.put(registerTokenCacheIndex, register_token)
+
+      res.json({ register_token: register_token, id: registerTokenCacheIndex++ })
+
+    } else {
+      res.status(403).json({ message: 'account not permitted' })
+    }
+  })
+})
+
+app.post('/validate-register-token', passport.authenticate('jwt', { session: false }), (req, res) => {
+  res.json(validateRegisterToken(req.body.register_token))
+})
+
 app.post(['/add', '/users/add'], (req, res) => {
   const data = req.body
   if(data.username && data.password && data.first_name && data.last_name && data.email) {
-    db.addUser(data.username, data.password, data.first_name, data.last_name, data.email, (err, row) => {
+
+    let account_type = 'default'
+    let registerTokenStatus
+    let metadata
+    
+    if(data.register_token) {
+      const registerTokenData = validateRegisterToken(data.register_token)
+      if(registerTokenCache.get(registerTokenData.id) !== null) {
+        account_type = registerTokenData.account_type || 'default'
+        metadata = registerTokenData.metadata || {}
+        registerTokenStatus = 'register token used successfully'
+        cache.del(registerTokenData.id)
+      } else {
+        registerTokenStatus = "supplied register token was not valid, could not be used"
+      }
+    }
+
+    db.addUser(data.username, data.password, data.first_name, data.last_name, data.email, account_type, metadata, (err, row) => {
       if(err) res.json({ message: err })
-      else res.json({ 
-        message: 'account creation successful', 
-        token: signJwtNoCheck({ id: row.rowid, username: row.username, account_type: row.account_type, '2fa_enabled': row['2fa_enabled'] })
+      else res.json({
+        message: 'account creation successful',
+        token: signJwtNoCheck({ id: row.rowid, username: row.username, account_type: row.account_type, '2fa_enabled': row['2fa_enabled'] }),
+        ...(registerTokenStatus ? {registerTokenStatus: registerTokenStatus} : {})
       })
     })
   } else {
@@ -248,9 +296,7 @@ app.post(['/list', '/users/list'], passport.authenticate('jwt', { session: false
   db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
     if(err) return res.status(500).json(info)
     if(user.account_type === 'admin') {
-      console.log(user)
       db.getUserList((err, users, info) => {
-        console.log(err, users, info)
         if(err || info) res.status(500).json({ message: info.message })
         else res.json({ users })
       })

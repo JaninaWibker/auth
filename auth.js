@@ -3,8 +3,12 @@ const passportJWT = require('passport-jwt')
 const _cache = require('memory-cache')
 const cache = new _cache.Cache()
 const db = require('./db.js')
+const RSA = require('node-rsa')
 
 const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
+
+  const rsa = new RSA(private_key)
+  rsa.importKey(public_key, 'public')
 
   console.log(private_key.substring(0, 96), '\n', public_key.substring(0, 96))
 
@@ -72,11 +76,24 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
 
   const Logout = (id, cb) => removeFromCache(id).then(cb)
 
+  const validateRegisterToken = (register_token) => {
+    const data = JSON.parse(Buffer.from(rsa.decryptPublic(Buffer.from(register_token.replace(/\-/g, '+').replace(/\_/g, '/'), 'base64')), 'base64').toString('ascii'))
+    if(data && data.account_type) return { message: 'successful', ...data }
+    else return { message: 'failure', ...data }
+  }
+
+  const generateRegisterToken = (data) => {
+    return Buffer.from(rsa.encryptPrivate(Buffer.from(JSON.stringify(data))))
+      .toString('base64').replace(/\+/g, '-').replace(/\//g, '_')
+  }
+
   return {
     JWTStrategy: strategy,
     Login: login,
     Logout: Logout,
-    signJwtNoCheck: signJwtNoCheck
+    signJwtNoCheck: signJwtNoCheck,
+    validateRegisterToken: validateRegisterToken,
+    generateRegisterToken: generateRegisterToken,
   }
 }
 

@@ -49,6 +49,10 @@ array-flatten@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/array-flatten/-/array-flatten-1.1.1.tgz#9a5f699051b1e7073328f2a008968b64ea2955d2"
 
+asn1@0.2.3:
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/asn1/-/asn1-0.2.3.tgz#dac8787713c9966849fc8180777ebe9c1ddf3b86"
+
 asn1@~0.2.3:
   version "0.2.4"
   resolved "https://registry.yarnpkg.com/asn1/-/asn1-0.2.4.tgz#8d2475dfab553bb33e77b54e59e880bb8ce23136"
@@ -677,6 +681,12 @@ node-pre-gyp@^0.10.3:
     rimraf "^2.6.1"
     semver "^5.3.0"
     tar "^4"
+
+node-rsa@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/node-rsa/-/node-rsa-1.0.1.tgz#6f7c883c4f1163f0782e7abff3cbc9d499d6bb96"
+  dependencies:
+    asn1 "0.2.3"
 
 nopt@^4.0.1:
   version "4.0.1"

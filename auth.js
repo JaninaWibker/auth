@@ -68,7 +68,7 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
         const token = jwt.sign(payload, jwtOptions.privateKey, { algorithm: jwtOptions.algorithm})
         console.log('[cache] add *' + user.id + '*: ' + token.substring(0, 96))
         addToCache(user.id, token, payload, 30 * 60 * 1000)
-        .then(() => cb(err, token))
+          .then(() => cb(err, token))
       } else {
         cb(err, false)
       }
@@ -92,6 +92,7 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
     Login: login,
     Logout: Logout,
     signJwtNoCheck: signJwtNoCheck,
+    manualAddToCache: addToCache,
     validateRegisterToken: validateRegisterToken,
     generateRegisterToken: generateRegisterToken,
   }

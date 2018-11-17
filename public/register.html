@@ -54,6 +54,10 @@
                     <input autocomplete="new-password" class="text-input input-big" id="register-repeat-password" type="password">
                     <div class="register-incorrect-repeat hidden">Passwords don't match!</div>
                   </div>
+                    <div class="spoiler-wrapper">
+                      <div class="spoiler-click-target" tabindex="0"><span class="spoiler-state" style="font-size: 12px; padding-right: 4px;" >▼</span><label class="spoiler-message" for="register-register-token">Have a code to enter? Click and enter it here:</label></div>
+                      <input class="text-input input-big spoiler-target spoiler-hide" style="font-size: 12px; line-height: 12px; height: 24px;" id="register-register-token" type="text">
+                    </div>
                   <input type="submit" style="display: none;">
                   <button type="submit" class="btn btn-big btn-standard center">Register</button>
                   <p class="subtext">Already have an account? <a class="register-sublink" style="cursor:pointer;" onclick="window.location.replace('/login' + window.location.search)">Log in!</a></p>
@@ -100,6 +104,28 @@
         })
       }
 
+      function toggleSpoiler(scope) {
+        if(scope.classList.contains('open')) {
+          scope.parentElement.querySelector('.spoiler-state').innerText = "▼"
+          scope.parentElement.querySelector('.spoiler-target').classList.toggle('spoiler-hide')
+        } else {
+          scope.parentElement.querySelector('.spoiler-state').innerText = "▲"
+          scope.parentElement.querySelector('.spoiler-target').classList.toggle('spoiler-hide')
+        }
+
+        scope.classList.toggle('open') 
+      }
+
+      document.querySelector('.spoiler-click-target').addEventListener('keypress', function (evt) {
+        if(evt.code === 'Space' || evt.code === 'Enter') {
+          toggleSpoiler(evt.target)
+        }
+      })
+
+      document.querySelector('.spoiler-click-target').addEventListener('click', function (evt) {
+        toggleSpoiler(this)
+      })
+
       document.querySelector('form.register#register').addEventListener('submit', function (evt) {
         evt.preventDefault()
 
@@ -109,11 +135,12 @@
         const password_repeat = document.querySelector('form.register#register #register-repeat-password').value
         const first_name = document.querySelector('form.register#register #register-firstname').value
         const last_name = document.querySelector('form.register#register #register-lastname').value
+        const register_token = document.querySelector('form.register#register #register-register-token').value || null
 
-        console.log({ username, email, password, password_repeat, first_name, last_name })
-
+        console.log({ username, email, password, password_repeat, first_name, last_name, register_token })
+        
         if(password === password_repeat) {
-          post('/add', { username, email, password, first_name, last_name })
+          post('/add', { username, email, password, first_name, last_name, register_token })
             .then(function (res) { return res.json() })
             .then(function (json) { return json.message === 'account creation successful' 
               ? Promise.resolve(json)

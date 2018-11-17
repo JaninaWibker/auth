@@ -53,11 +53,18 @@ body.theme-dark {
   width: 400px;
   background-color: var(--background-color);
   color: var(--text-color);
-  margin-top: 140px;
   padding: 20px;
   padding-bottom: 10px;
   box-shadow: 0 0 201px #020202;
   border-radius: 8px;
+}
+
+.login-box {
+  margin-top: 140px;
+}
+
+.register-box {
+  margin-top: 90px
 }
 
 @media (max-width: 1200px) {
@@ -159,6 +166,10 @@ body.theme-dark {
   font-weight: 700;
   background-color: #a36ad8!important;
   box-shadow: inset 0 -3px 0 0 #8650b9;
+}
+
+.spoiler-hide {
+  display: none!important;
 }
 
 .center {

@@ -13,7 +13,7 @@ const registerTokenCache = new _cache.Cache()
 const default_services = require('./default_services.json')
 const private_key = fs.readFileSync('private.key', 'utf8')
 const public_key = fs.readFileSync('public.key', 'utf8')
-const { JWTStrategy, Login, Logout, signJwtNoCheck, validateRegisterToken, generateRegisterToken } = require('./auth.js')(private_key, public_key, (id, token, payload) => onAdd(id, token, payload), (id) => onDelete(id))
+const { JWTStrategy, Login, Logout, signJwtNoCheck, manualAddToCache, validateRegisterToken, generateRegisterToken } = require('./auth.js')(private_key, public_key, (id, token, payload) => onAdd(id, token, payload), (id) => onDelete(id))
 
 const account_types = ['default', 'privileged', 'admin']
 
@@ -221,12 +221,22 @@ app.post(['/add', '/users/add'], (req, res) => {
     }
 
     db.addUser(data.username, data.password, data.first_name, data.last_name, data.email, account_type, metadata, (err, row) => {
-      if(err) res.json({ message: err })
-      else res.json({
-        message: 'account creation successful',
-        token: signJwtNoCheck({ id: row.rowid, username: row.username, account_type: row.account_type, '2fa_enabled': row['2fa_enabled'] }),
-        ...(registerTokenStatus ? {registerTokenStatus: registerTokenStatus} : {})
-      })
+      if(err) {
+        res.json({ message: err })
+      } else {
+        console.log('userAdd row', row, row.lastID)
+        const payload = { id: row.lastID, username: data.username, iss: 'accounts.jannik.ml', account_type: account_type, '2fa_enabled': row['2fa_enabled'] }
+        const token = signJwtNoCheck(payload)
+        console.log('userAdd', payload, token)
+        manualAddToCache(row.lastID, token, payload, 30 * 60 * 1000)
+          .then(() =>
+            res.json({
+              message: 'account creation successful',
+              token: token,
+              ...(registerTokenStatus ? {registerTokenStatus: registerTokenStatus} : {})
+            })
+          )
+      }
     })
   } else {
     res.json({ message: 'supply "username", "password", "first_name", "last_name" and "email"' })

@@ -61,7 +61,7 @@ authcli list-accounts
 
       const cb = (err, user, info) => {
         if(err || info) console.log(err, info)
-        else db.priviligedModifyUser(user.id, modifications, console.log)
+        else db.privilegedModifyUser(user.id, modifications, console.log)
       }
 
       if(args['--id']) db.getUserFromIdIfExists(parseInt(args['--id'], 10), cb)

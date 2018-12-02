@@ -163,6 +163,19 @@ const deleteUser = (id, cb) => {
 }
 
 module.exports = {
+  User: {
+    add: addUser,
+    modify: modifyUser,
+    privilegedModify: privilegedModifyUser,
+    remove: deleteUser,
+    get: {
+      byId: getUserFromIdIfExists,
+      byUsername: getUserIfExists,
+      byEmail: getUserFromEmailIfExists
+    },
+    list: getUserList,
+    authenticate: authenticateUserIfExists
+  },
   authenticateUserIfExists,
   getUserIfExists,
   getUserFromEmailIfExists,

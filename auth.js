@@ -5,12 +5,12 @@ const cache = new _cache.Cache()
 const db = require('./db.js')
 const RSA = require('node-rsa')
 
-const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
+const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {}}) => {
 
   const rsa = new RSA(private_key)
   rsa.importKey(public_key, 'public')
 
-  console.log(private_key.substring(0, 96), '\n', public_key.substring(0, 96))
+  console.log(private_key.substring(0, 96) + '\n' + public_key.substring(0, 91))
 
   const extractJWT = passportJWT.ExtractJwt
   const JWTStrategy = passportJWT.Strategy
@@ -87,6 +87,34 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
       .toString('base64').replace(/\+/g, '-').replace(/\//g, '_')
   }
 
+  validateService = (tokenBuffer, service) => {
+    let payload = {}
+    /*
+      payload = {
+        secret: <SECRET>,
+        name: <SERVICE NAME>,
+        id: <SERVICE ID>,
+        timestamp: <TIMESTAMP (max age: 5s)> 
+      }
+    */
+    try {
+      payload = JSON.parse(rsa.decrypt(tokenBuffer))
+      // payload = JSON.parse(tokenBuffer)
+    } catch(e) {
+      console.log(e)
+      return false
+    }
+
+    if(Object.keys(payload).length === 0) return false
+    if(payload.name !== service.name) return false
+    if(payload.id !== service.id) return false
+    if(payload.timestamp !== service.timestamp) return false
+    if(+new Date() - payload.timestamp > 5000) return false
+    if(payload.secret !== secret) return false
+
+    return true
+  }
+
   return {
     JWTStrategy: strategy,
     Login: login,
@@ -95,6 +123,7 @@ const auth = (private_key, public_key, onAdd=() => {}, onDelete=() => {}) => {
     manualAddToCache: addToCache,
     validateRegisterToken: validateRegisterToken,
     generateRegisterToken: generateRegisterToken,
+    validateService: validateService
   }
 }
 

@@ -1,6 +1,6 @@
 const _fetch = require('node-fetch')
 
-const fetchTimeout = (url, method, body, headers, timeout=50) => new Promise((resolve, reject) => {
+const fetchTimeout = (url, method, body, headers, timeout=100) => new Promise((resolve, reject) => {
   const timer = setTimeout(() => reject(new Error('Request timed out')), timeout)
   return fetch(url, method, body, headers)
     .then(resolve)

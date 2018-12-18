@@ -77,6 +77,20 @@ const getUserLimitedIfExists = (username, cb) => {
   )
 }
 
+const _doesUserExist = ({id = '', username = '', email = ''}, cb) => {
+  dbPromise.then(db =>
+    db.get('SELECT rowid as id FROM users WHERE id = ? OR username = ? OR email = ?', id, username, email)
+      .then(row => cb(true))
+      .catch(err => cb(false))
+  )
+}
+
+const doesUserExistById = (id, cb) => _doesUserExist({id: id}, cb)
+
+const doesUserExistByUsername = (username, cb) => _doesUserExist({username: username}, cb)
+
+const doesUserExistByEmail = (email, cb) => _doesUserExist({email: email}, cb)
+
 const getUserList = (cb) => {
   dbPromise.then(db =>
     db.all('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users')
@@ -167,11 +181,16 @@ module.exports = {
     add: addUser,
     modify: modifyUser,
     privilegedModify: privilegedModifyUser,
-    remove: deleteUser,
+    delete: deleteUser,
     get: {
       byId: getUserFromIdIfExists,
       byUsername: getUserIfExists,
       byEmail: getUserFromEmailIfExists
+    },
+    exist: {
+      byId: doesUserExistById,
+      byUsernaem: doesUserExistByUsername,
+      byEmail: doesUserExistByEmail
     },
     list: getUserList,
     authenticate: authenticateUserIfExists
@@ -182,6 +201,9 @@ module.exports = {
   getUserFromIdIfExists,
   getUserLimitedIfExists,
   getUserList,
+  doesUserExistById,
+  doesUserExistByUsername,
+  doesUserExistByEmail,
   UserDataToId,
   IdToUserData,
   addUser,

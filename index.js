@@ -2,55 +2,80 @@ const express = require('express')
 const jwt = require('jsonwebtoken')
 const bodyParser = require('body-parser')
 const passport = require('passport')
-const config = require('dotenv').config().parsed
 const fs = require('fs')
 const db = require('./db.js')
+const { fetchTimeout } = require('./utils/fetch.js')
+const cors = require('./utils/cors.js')
+const users = require('./users/index.js')
+const registertokens = require('./registertokens/index.js')
 const _cache = require('memory-cache')
-const cache = new _cache.Cache()
+
+const serviceCache = new _cache.Cache()
 const registerTokenCache = new _cache.Cache()
+
+const config = require('dotenv').config().parsed
 const default_services = require('./default_services.json')
 const private_key = fs.readFileSync('private.key', 'utf8')
 const public_key = fs.readFileSync('public.key', 'utf8')
-const { JWTStrategy, Login, Logout, signJwtNoCheck, manualAddToCache, validateRegisterToken, generateRegisterToken } = require('./auth.js')(private_key, public_key, (id, token, payload) => onAdd(id, token, payload), (id) => onDelete(id))
 
-const users = require('./users/index.js')
-const registertokens = require('./registertokens/index.js')
+const ldap = config.ENABLE_LDAP === 'true' ? require('./ldap/index.js') : null
 
-const { fetchTimeout } = require('./utils/fetch.js')
-const cors = require('./utils/cors.js')
+if(config.ENABLE_LDAP === 'true') {
+  ldap.listen(parseInt(config.LDAP_PORT, 10), (url) => console.log('LDAP server listening at ' + url))
+}
+
+const format_date = (date=new Date()) => 
+  date.toLocaleDateString().replace(/\//g, '-') + '@' + date.toLocaleTimeString()
+
+const { 
+  JWTStrategy,
+  Login,
+  Logout,
+  signJwtNoCheck,
+  manualAddToCache,
+  validateRegisterToken,
+  generateRegisterToken,
+  validateService
+} = require('./auth.js')({
+  private_key: private_key, 
+  public_key: public_key, 
+  secret: config.SECRET.toString(),
+  onAdd: (id, token, payload) => onAdd(id, token, payload), 
+  onDelete: (id) => onDelete(id)
+})
 
 const account_types = ['default', 'privileged', 'admin']
+
+default_services.forEach(service => serviceCache.put(service.id, service))
 
 let registerTokenCacheIndex = 0
 
 const onAdd = (id, token, payload) =>
-  Promise.all(cache.keys()
-    .map(key => cache.get(key))
-    .map(json => (console.log('[onAdd]', {name: json.name, account_type: json.account_type}, {id: payload.id, account_type: payload.account_type}), json))
+  Promise.all(serviceCache.keys()
+    .map(key => serviceCache.get(key))
+    .map(json => (console.log('[' + format_date() + '][onAdd]', {name: json.name, account_type: json.account_type}, {id: payload.id, account_type: payload.account_type}), json))
     .filter(json => (payload && json.account_type ? account_types.indexOf(payload.account_type) >= account_types.indexOf(json.account_type) : true))
-    .map(json => (console.log('[onAdd]', {name: json.name, account_type: json.account_type}, {id: payload.id, account_type: payload.account_type}, account_types.indexOf(payload.account_type), account_types.indexOf(json.account_type)), json))
+    .map(json => (console.log('[' + format_date() + '][onAdd]', {name: json.name, account_type: json.account_type}, {id: payload.id, account_type: payload.account_type}, account_types.indexOf(payload.account_type), account_types.indexOf(json.account_type)), json))
     .map(json => fetchTimeout(json.url + '/login', 'POST', { id: id, token: token }, { Authorization: 'Bearer ' + jwt.sign({ id: id, isAuthProvider: true }, private_key, { algorithm: 'RS256' }) })
       .then(res => res.status === 401 ? res.text() : res.json())
-      .catch(err => (console.log('[onAdd] server not responding (' + json.name + ')'), err))
-      .then(text_or_json => console.log('[fetch]', text_or_json))
+      .catch(err => (console.log('[' + format_date() + '][onAdd] server not responding (' + json.name + ')'), err))
+      .then(text_or_json => console.log('[' + format_date() + '][fetch]', text_or_json))
     )
   )
 
 const onDelete = (id, token, payload) =>
-  Promise.all(cache.keys()
-    .map(key => cache.get(key))
+  Promise.all(serviceCache.keys()
+    .map(key => serviceCache.get(key))
     .filter(json => (payload && json.account_type ? account_types.indexOf(payload.account_type) >= account_types.indexOf(json.account_type) : true))
     .map(json => (console.log(json), json))
     .map(json => fetchTimeout(json.url + '/logout', 'POST', { id: id, token: token }, { Authorization: 'Bearer ' + jwt.sign({ id: id, isAuthProvider: true }, private_key, { algorithm: 'RS256' }) })
       .then(res => res.status === 401 ? res.text() : res.json())
       .catch(({ message }) => ({ message }))
-      .then(text_or_json => console.log('[fetch]', text_or_json))
+      .then(text_or_json => console.log('[' + format_date() + '][fetch]', text_or_json))
     )
   )
 
 const app = express()
-
-default_services.forEach(service => cache.put(service.id, service))
 
 passport.use(JWTStrategy)
 
@@ -60,15 +85,14 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(passport.initialize())
 
-app.get('/', (req, res) => res.send('server is up and running'))
+app.get('/', (_, res) => res.send('server is up and running'))
 
 app.post(['/register', '/service/register'], (req, res) => {
-  console.log(req.get('Authorization').substr('Bearer '.length), Buffer.from(config.SECRET.toString(), 'binary').toString('base64'))
-  if(req.get('Authorization').substr('Bearer '.length) === Buffer.from(config.SECRET.toString(), 'binary').toString('base64') && cache.get(req.body.data.name) !== undefined) {
-    if(cache.keys().includes(req.body.data.name)) {
+  if(validateService(Buffer.from(req.get('Authorization').substr('Bearer '.length), 'base64'), {...req.body.data, timestamp: req.body.timestamp})) {
+    if(serviceCache.keys().includes(req.body.data.name)) {
       res.json({ message: 'already registered', public_key: public_key })
     } else {
-      cache.put(req.body.data.name, req.body.data)
+      serviceCache.put(req.body.data.name, req.body.data)
       res.json({ message: 'registration successful', public_key: public_key })
     }
   } else {
@@ -82,8 +106,8 @@ app.get(['/:method/:id?', '/service/:method/:id?'], (req, res) => {
 
   if(!req.params.id) res.json({ message: 'supply id/name/app/cb (/service/:method/:id)' })
 
-  const find_match = (field) => cache.keys()
-    .map(key => cache.get(key))
+  const find_match = (field) => serviceCache.keys()
+    .map(key => serviceCache.get(key))
     .filter(service => service[field] === req.params.id)[0]
 
        if(req.params.method === 'by-id')   res.json(find_match('id')   || ({ message: 'service not found' }))
@@ -139,7 +163,7 @@ app.post(['/add', '/users/add'], (req, res) => {
         account_type = registerTokenData.account_type || 'default'
         metadata = registerTokenData.metadata || {}
         registerTokenStatus = 'register token used successfully'
-        cache.del(registerTokenData.id)
+        serviceCache.del(registerTokenData.id)
       } else {
         registerTokenStatus = "supplied register token was not valid, could not be used"
       }
@@ -180,4 +204,4 @@ app.post(['/info', '/users/info'], passport.authenticate('jwt', { session: false
 
 app.post(['/list', '/users/list'], passport.authenticate('jwt', { session: false }), users.list)
 
-app.listen(config.PORT || 3003, () => console.log('server started on port ' + (config.PORT || 3003)))
+app.listen(config.PORT || 3003, () => console.log('HTTP server listening on port ' + (config.PORT || 3003)))

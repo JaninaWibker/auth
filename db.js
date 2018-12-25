@@ -108,6 +108,9 @@ const IdToUserData = (id, cb) => dbPromise.then(db =>
 )
 
 const addUser = (username, password, first_name, last_name, email, account_type = 'default', metadata = {}, cb) => {
+  if(password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token:')) {
+    return cb({ message: 'cannot set password to string starting with Refresh-Token or Get-Refresh-Token' }, null)
+  }
   const salt = gen_salt()
   dbPromise.then(db => {
     db.get('SELECT rowid as id, * FROM users WHERE username = ? OR email = ?', username, email)
@@ -129,6 +132,9 @@ const modifyUser = (id, { username, password, first_name, last_name, email }, cb
     db.get('SELECT username, rowid as id, first_name, last_name, email, salt, password, creation_date, modification_date FROM users WHERE rowid = ?', id)
       .then(row => {
         const salt = gen_salt()
+        if(password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token')) {
+          return cb({ message: 'cannot set password to string starting with isRefreshToken or getRefreshToken' }, null)
+        }
         db.run(
           'UPDATE users SET username = ?, first_name = ?, last_name = ?, email = ?, salt = ?, password = ?, modification_date = datetime("now") WHERE rowid = ?',
           username || row.username,
@@ -150,6 +156,9 @@ const privilegedModifyUser = (id, { username, password, first_name, last_name, e
     db.get('SELECT username, rowid as id, first_name, last_name, email, salt, password, creation_date, modification_date, account_type, metadata FROM users WHERE rowid = ?', id)
       .then(row => {
         const salt = gen_salt()
+        if(password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token')) {
+          return cb({ message: 'cannot set password to string starting with isRefreshToken or getRefreshToken' }, null)
+        }
         db.run(
           'UPDATE users SET username = ?, first_name = ?, last_name = ?, email = ?, salt = ?, password = ?, modification_date = datetime("now"), account_type = ?, metadata = ? WHERE rowid = ?',
           username || row.username,

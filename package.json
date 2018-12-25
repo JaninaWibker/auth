@@ -1,6 +1,6 @@
 {
   "name": "auth",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "main": "index.js",
   "author": "Jannik Wibker",
   "license": "MIT",

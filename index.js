@@ -9,6 +9,7 @@ const cors = require('./utils/cors.js')
 const users = require('./users/index.js')
 const registertokens = require('./registertokens/index.js')
 const _cache = require('memory-cache')
+const { version } = require('./package.json')
 
 const serviceCache = new _cache.Cache()
 const registerTokenCache = new _cache.Cache()
@@ -86,6 +87,8 @@ app.use(bodyParser.json())
 app.use(passport.initialize())
 
 app.get('/', (_, res) => res.send('server is up and running'))
+
+app.get('/current-version', (_, res) => res.send(version))
 
 app.post(['/register', '/service/register'], (req, res) => {
   console.log('[' + format_date() + '][service/register] "' + req.body.data.name + '" trying to register...')

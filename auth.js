@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken')
 const passportJWT = require('passport-jwt')
 const _cache = require('memory-cache')
-const cache = new _cache.Cache()
+const jwtCache = new _cache.Cache()
+const refreshTokenCache = new _cache.Cache()
 const db = require('./db.js')
 const RSA = require('node-rsa')
 
@@ -27,13 +28,13 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
 
   const addToCache = (id, token, payload, time) => {
     return onAdd(id, token, payload)
-      .then(() => cache.put(id, token, time)) // TODO - order
+      .then(() => jwtCache.put(id, token, time)) // TODO - order
       .catch(console.log)
   }
 
   const removeFromCache = (id, payload={account_type: 'default'}) => {
-    return onDelete(id, cache.get(id), payload)
-      .then(() => cache.del(id))
+    return onDelete(id, jwtCache.get(id), payload)
+      .then(() => jwtCache.del(id))
   }
 
   const strategy = new JWTStrategy(jwtOptions, (jwt_payload, cb) => {
@@ -43,9 +44,9 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
         console.log('[strategy] authorization failed. JWT expired or user not found')
         cb(err, null, null)
       } else {
-        console.log('[strategy] authorization successful (' + user.id + ': ' + cache.get(user.id).substring(0, 96) + ' )')
+        console.log('[strategy] authorization successful (' + user.id + ': ' + jwtCache.get(user.id).substring(0, 96) + ' )')
         const checkCache = true
-        if(!checkCache || cache.get(user.id) !== null) cb(null, user, null)
+        if(!checkCache || jwtCache.get(user.id) !== null) cb(null, user, null)
         else cb(null, false, { message: 'token expired' })
       }
     })
@@ -60,19 +61,44 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
     enabled_2fa: user['2fa_enabled'] === 1 ? true : false
   }, jwtOptions.privateKey, { algorithm: jwtOptions.algorithm })
 
-  const login = (username, password, cb) =>
-    db.authenticateUserIfExists(username, password, null, (err, user, info) => {
-      console.log('[auth/login]', err, { id: user.id, username: user.username })
-      if(user) {
-        const payload = { id: user.id, username: user.username, iss: 'accounts.jannik.ml', partial_key: false, enabled_2fa: user['2fa_enabled'] === 1 ? true : false, account_type: user.account_type }
-        const token = jwt.sign(payload, jwtOptions.privateKey, { algorithm: jwtOptions.algorithm})
-        console.log('[cache] add *' + user.id + '*: ' + token.substring(0, 96))
-        addToCache(user.id, token, payload, 30 * 60 * 1000)
-          .then(() => cb(err, token))
-      } else {
-        cb(err, false)
-      }
-    })
+  const login = (username, password, isRefreshToken=false, getRefreshToken=false, cb) => {
+
+    if(isRefreshToken && !getRefreshToken) {
+      return db.getUserIfExists(username, (err, user, info) => {
+        if(err || !user) {
+          cb(err, false)
+        } else if(user && password && refreshTokenCache.get(username) === password) {
+          const accessTokenPayload = { id: user.id, username: user.username, iss: 'accounts.jannik.ml', typ: 'JWT', partial_key: false, enabled_2fa: user['2fa_enabled'] === 1 ? true : false, account_type: user.account_type }
+          const accessToken = jwt.sign(accessTokenPayload, jwtOptions.privateKey, { algorithm: jwtOptions.algorithm })
+          addToCache(user.id, accessToken, accessTokenPayload, 30 * 60 * 1000)
+            .then(() => cb(err, accessToken))
+        } else {
+          cb({ message: 'invalid refresh token' }, false, false)
+        }
+      })
+    } else {
+      return db.authenticateUserIfExists(username, password, null, (err, user, info) => {
+        console.log('[auth/login]', err, { id: user.id, username: user.username })
+        if(user) {
+          const accessTokenPayload = { id: user.id, username: user.username, iss: 'accounts.jannik.ml', partial_key: false, enabled_2fa: user['2fa_enabled'] === 1 ? true : false, account_type: user.account_type }
+          const accessToken = jwt.sign(accessTokenPayload, jwtOptions.privateKey, { algorithm: jwtOptions.algorithm })
+          console.log('[cache] add *' + user.id + '*: ' + accessToken.substring(0, 96))
+
+          let refreshToken
+
+          if(getRefreshToken) {
+            const refreshTokenPayload = { typ: 'RefreshToken', iss: 'accounts.jannik.ml', iat: Date.now(), usr: user.username, id: user.id }
+            refreshToken = Buffer.from(rsa.encryptPrivate(Buffer.from(JSON.stringify(refreshTokenPayload)))).toString('base64')
+            refreshTokenCache.put(username, refreshToken)
+          }
+          addToCache(user.id, accessToken, accessTokenPayload, 30 * 60 * 1000)
+            .then(() => cb(err, accessToken, refreshToken))
+        } else {
+          cb(err, false, false)
+        }
+      })
+    } 
+  }
 
   const Logout = (id, cb) => removeFromCache(id).then(cb)
 

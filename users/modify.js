@@ -6,12 +6,12 @@ module.exports = (Logout) => (req, res) => {
     const cb = (err, user, info) => {
       if(err) return res.status(500).json(info)
       if(user.account_type === 'admin') db.privilegedModifyUser(req.body.id, req.body, (err, x) => {
-          if(err) res.status(500).json({ message: 'account modification failed' })
-          else Logout(req.body.id, bool => res.json({ message: 'account modification ' + (bool ? 'successful' : 'failed') }))
+          if(err) res.status(500).json({ message: 'account modification failed', status: 'failure' })
+          else Logout(req.body.id, bool => res.json({ message: 'account modification ' + (bool ? 'successful' : 'failed'), status: bool ? 'success' : 'failure' }))
         })
       else db.modifyUser(req.body.id, req.body, (err, x) => {
-          if(err) res.status(500).json({ message: 'account modification failed' })
-          else Logout(req.body.id, bool => res.json({ message: 'account modification ' + (bool ? 'successful' : 'failed') }))
+          if(err) res.status(500).json({ message: 'account modification failed', status: 'failure' })
+          else Logout(req.body.id, bool => res.json({ message: 'account modification ' + (bool ? 'successful' : 'failed'), status: bool ? 'success' : 'failure' }))
         })
     }
 

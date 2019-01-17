@@ -156,7 +156,7 @@ const privilegedModifyUser = (id, { username, password, first_name, last_name, e
     db.get('SELECT username, rowid as id, first_name, last_name, email, salt, password, creation_date, modification_date, account_type, metadata FROM users WHERE rowid = ?', id)
       .then(row => {
         const salt = gen_salt()
-        if(password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token')) {
+        if(password && (password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token'))) {
           return cb({ message: 'cannot set password to string starting with isRefreshToken or getRefreshToken' }, null)
         }
         db.run(

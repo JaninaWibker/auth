@@ -9,10 +9,11 @@ CREATE TABLE 'users' (
     'salt' VARCHAR(64) NOT NULL, -- salt that is appended to the password before it is hashed
     'creation_date' DATETIME NOT NULL DEFAULT CURRENT_DATETIME,
     'modification_date' DATETIME NOT NULL DEFAULT CURRENT_DATETIME,
-    'account_type' VARCHAR(16) NOT NULL DEFAULT \"normal\", -- account type can be: 'default', 'privileged', 'admin'
+    'account_type' VARCHAR(16) NOT NULL DEFAULT \"default\", -- account type can be: 'default', 'privileged', 'admin'
     'metadata' VARCHAR(1024) NOT NULL DEFAULT \"{}\", -- custom metadata that can be used in the future
     '2fa' BOOLEAN DEFAULT 0, -- wether 2 factor authentication is enabled or not
-    '2fa_secret' VARCHAR(32) DEFAULT \"\" -- 2 factor authentication secret
+    '2fa_secret' VARCHAR(32) DEFAULT \"\", -- 2 factor authentication secret
+    'temp_account' DATETIME DEFAULT 0 -- 0 for not a temporary account; date value for date the account expires. Upon expiring the account is disabled, deleted or has his account_type set to 'default'
 );
 " | sqlite3 Users.sqlite
 

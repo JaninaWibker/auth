@@ -28,12 +28,13 @@ if(config.ENABLE_LDAP === 'true') {
 const format_date = (date=new Date()) => 
   date.toLocaleDateString().replace(/\//g, '-') + '@' + date.toLocaleTimeString()
 
-const { 
+const {
   JWTStrategy,
   Login,
   Logout,
   signJwtNoCheck,
   manualAddToCache,
+  generateRefreshToken,
   validateRegisterToken,
   generateRegisterToken,
   validateService
@@ -131,7 +132,7 @@ app.get(['/:method/:id?', '/service/:method/:id?'], (req, res) => {
 
 app.post('/generate-register-token', passport.authenticate('jwt', { session: false }), (req, res) => {
   db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(err) res.status(500).json({ message: 'failed to validate user'})
+    if(err) res.status(500).json({ message: 'failed to validate user', status: 'failure' })
     if(user.account_type === 'admin') {
       const permanent = req.body.permanent !== undefined ? req.body.permanent : false
       const register_token = generateRegisterToken({
@@ -147,7 +148,7 @@ app.post('/generate-register-token', passport.authenticate('jwt', { session: fal
       res.json({ register_token: register_token, id: registerTokenCacheIndex++ })
 
     } else {
-      res.status(403).json({ message: 'account not permitted' })
+      res.status(403).json({ message: 'account not permitted', status: 'failure' })
     }
   })
 })
@@ -179,27 +180,50 @@ app.post(['/add', '/users/add'], (req, res) => {
         registerTokenStatus = "supplied register token was not valid, could not be used"
       }
     }
+    
+    let password = data.password
+    const getRefreshToken = req.body.getRefreshToken || password.startsWith('Get-Refresh-Token:')
 
-    db.addUser(data.username, data.password, data.first_name, data.last_name, data.email, account_type, metadata, (err, row) => {
+    if(getRefreshToken && password.startsWith('Get-Refresh-Token:'))
+      password = password.substring('Get-Refresh-Token:'.length)
+
+    // return created user information
+    db.addUser(data.username, password, data.first_name, data.last_name, data.email, account_type, metadata, (err, row) => {
       if(err) {
-        res.json({ message: err })
+        res.json({ message: err, status: 'failure' })
       } else {
+
         console.log('userAdd row', row, row.lastID)
+
         const payload = { id: row.lastID, username: data.username, iss: 'accounts.jannik.ml', account_type: account_type, '2fa_enabled': row['2fa_enabled'] }
         const token = signJwtNoCheck(payload)
+
+        let refreshToken
+        if(getRefreshToken) refreshToken = generateRefreshToken(data.username, row.lastID)
+
         console.log('userAdd', payload, token)
+
         manualAddToCache(row.lastID, token, payload, 30 * 60 * 1000)
           .then(() =>
             res.json({
               message: 'account creation successful',
+              status: 'success',
               token: token,
-              ...(registerTokenStatus ? {registerTokenStatus: registerTokenStatus} : {})
+              data: {
+                username: data.username,
+                first_name: data.first_name,
+                last_name: data.last_name,
+                email: data.email,
+                account_type: account_type
+              },
+              ...(getRefreshToken ? { refreshToken: refreshToken } : {}),
+              ...(registerTokenStatus ? { registerTokenStatus: registerTokenStatus } : {})
             })
           )
       }
     })
   } else {
-    res.json({ message: 'supply "username", "password", "first_name", "last_name" and "email"' })
+    res.json({ message: 'supply "username", "password", "first_name", "last_name" and "email"', status: 'failure' })
   }
 })
 

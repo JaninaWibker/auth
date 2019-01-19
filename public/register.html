@@ -18,6 +18,14 @@
       You need to enable JavaScript to run this app.
     </noscript>
     <div>
+      <div class="theme-chooser">
+          <a class="enable-dark-theme-a" href="#" onclick="$toggleTheme()">
+            <svg class="svg-theme enable-dark-theme" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          </a>
+          <a class="enable-light-theme-a" href="#" onclick="$toggleTheme()">
+            <svg class="svg-theme enable-light-theme" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sun"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </a>
+      </div>
       <div class="container">
           <div class="register-box margin-center">
               <div class="register_welcome">Welcome!</div>
@@ -54,10 +62,12 @@
                     <input autocomplete="new-password" class="text-input input-big" id="register-repeat-password" type="password">
                     <div class="register-incorrect-repeat hidden">Passwords don't match!</div>
                   </div>
-                    <div class="spoiler-wrapper">
-                      <div class="spoiler-click-target" tabindex="0"><span class="spoiler-state" style="font-size: 12px; padding-right: 4px;" >▼</span><label class="spoiler-message" for="register-register-token">Have a code to enter? Click and enter it here:</label></div>
-                      <input class="text-input input-big spoiler-target spoiler-hide" style="font-size: 12px; line-height: 12px; height: 24px;" id="register-register-token" type="text">
-                    </div>
+                  <div class="spoiler-wrapper">
+                    <div class="spoiler-click-target" tabindex="0"><span class="spoiler-state" style="font-size: 12px; padding-right: 4px;" >▼</span><label class="spoiler-message" for="register-register-token">Have a code to enter? Click and enter it here:</label></div>
+                    <input class="text-input input-big spoiler-target spoiler-hide" style="font-size: 12px; line-height: 12px; height: 24px;" id="register-register-token" type="text">
+                  </div>
+                  <br />
+                  <input id="remember-me-checkbox" type="checkbox" /><label for="remember-me-checkbox">remember me?</label>
                   <input type="submit" style="display: none;">
                   <button type="submit" class="btn btn-big btn-standard center">Register</button>
                   <p class="subtext">Already have an account? <a class="register-sublink" style="cursor:pointer;" onclick="window.location.replace('/login' + window.location.search)">Log in!</a></p>
@@ -78,6 +88,85 @@
         window.fetch('/service/by-id/' + id)
           .then(function(res) { return res.json() })
           .then(cb)
+      }
+
+      function getStorage(key) {
+        var st = window.localStorage.getItem('accounts.jannik.ml.storage')
+        if(st) {
+          st = JSON.parse(st)
+        } else {
+          st = {}
+          window.localStorage.setItem('accounts.jannik.ml.storage', '{}')
+        }
+
+        return st[key]
+      }
+
+      function getStorageObject() {
+        var st = window.localStorage.getItem('accounts.jannik.ml.storage')
+        if(st) {
+          return JSON.parse(st)
+        } else {
+          window.localStorage.setItem('accounts.jannik.ml.storage', '{}')
+          return {}
+        }
+      }
+
+      function setStorage(key, value) {
+        var st = window.localStorage.getItem('accounts.jannik.ml.storage')
+
+        if(st) st = JSON.parse(st)
+        else st = {}
+        
+        st[key] = value
+        window.localStorage.setItem('accounts.jannik.ml.storage', JSON.stringify(st))
+        return value
+      }
+
+      function setStorageObject(obj) {
+        var st = window.localStorage.getItem('accounts.jannik.ml.storage')
+
+        if(st) st = JSON.parse(st)
+        else st = {}
+
+        var keys = Object.keys(obj)
+        for(var i = 0; i < keys.length; i++) {
+          st[keys[i]] = obj[keys[i]]
+        }
+
+        window.localStorage.setItem('accounts.jannik.ml.storage', JSON.stringify(st))
+        return obj
+      }
+
+      function removeStorage(key) {
+        return setStorage(key, undefined)
+      }
+
+      function resetStorage() {
+        window.localStorage.setItem('accounts.jannik.ml.storage', '{}')
+      }
+
+      function $toggleTheme(theme, doSetStorage=true) {
+        if(theme) {
+          document.body.className = 'theme-' + theme
+          if(doSetStorage) setStorage('theme', theme)
+        } else {
+          if(document.body.className === 'theme-dark') {
+          document.body.className = 'theme-light'
+          if(doSetStorage) setStorage('theme', 'light')
+          } else {
+            document.body.className = 'theme-dark'
+            if(doSetStorage) setStorage('theme', 'dark')
+          }
+        }
+      }
+
+      const storageObject = getStorageObject()
+
+      if(storageObject.theme) {
+        $toggleTheme(storageObject.theme)
+      } else {
+        $toggleTheme('light')
       }
 
       getServiceInfo(getUrlParameter('id'), function(json) {
@@ -101,6 +190,22 @@
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           }, headers)
+        })
+      }
+
+      function login(username, passwordOrRefreshToken, isRefreshToken=false, getRefreshToken=false) {
+        return window.fetch('/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            username: username,
+            password: passwordOrRefreshToken,
+            isRefreshToken: isRefreshToken,
+            getRefreshToken: getRefreshToken
+          }),
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
         })
       }
 
@@ -129,24 +234,35 @@
       document.querySelector('form.register#register').addEventListener('submit', function (evt) {
         evt.preventDefault()
 
-        const username = document.querySelector('form.register#register #register-username').value
-        const email = document.querySelector('form.register#register #register-email').value
-        const password = document.querySelector('form.register#register #register-password').value
-        const password_repeat = document.querySelector('form.register#register #register-repeat-password').value
-        const first_name = document.querySelector('form.register#register #register-firstname').value
-        const last_name = document.querySelector('form.register#register #register-lastname').value
-        const register_token = document.querySelector('form.register#register #register-register-token').value || null
+        const form = document.querySelector('form.register#register')
 
-        console.log({ username, email, password, password_repeat, first_name, last_name, register_token })
+        const username = form.querySelector('#register-username').value
+        const email = form.querySelector('#register-email').value
+        const password = form.querySelector('#register-password').value
+        const password_repeat = form.querySelector('#register-repeat-password').value
+        const first_name = form.querySelector('#register-firstname').value
+        const last_name = form.querySelector('#register-lastname').value
+        const register_token = form.querySelector('#register-register-token').value || null
+        const remember_me = form.querySelector('#remember-me-checkbox').checked
+
+        console.log({ username, email, password, password_repeat, first_name, last_name, register_token, getRefreshToken: remember_me })
         
         if(password === password_repeat) {
-          post('/add', { username, email, password, first_name, last_name, register_token })
+          post('/add', { username, email, password, first_name, last_name, register_token, getRefreshToken: remember_me })
             .then(function (res) { return res.json() })
             .then(function (json) { return json.message === 'account creation successful' 
               ? Promise.resolve(json)
               : Promise.reject(json)
             })
             .then(function(json) {
+              if(remember_me && json.data) {
+                setStorageObject({
+                  theme: getStorage('theme'),
+                  username: json.data.username,
+                  refreshToken: json.refreshToken,
+                  fullname: json.data.first_name + ' ' + json.data.last_name
+                })
+              }
               return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + json.token + window.location.hash )
             })
             .catch(console.log)

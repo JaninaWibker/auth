@@ -61,6 +61,15 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
     enabled_2fa: user['2fa_enabled'] === 1 ? true : false
   }, jwtOptions.privateKey, { algorithm: jwtOptions.algorithm })
 
+  const generateRefreshToken = (username, id) => {
+
+    const refreshTokenPayload = { typ: 'RefreshToken', iss: 'accounts.jannik.ml', iat: Date.now(), usr: username, id: id }
+    refreshToken = Buffer.from(rsa.encryptPrivate(Buffer.from(JSON.stringify(refreshTokenPayload)))).toString('base64')
+    refreshTokenCache.put(username, refreshToken)
+
+    return refreshToken
+  }
+
   const login = (username, password, isRefreshToken=false, getRefreshToken=false, cb) => {
 
     if(isRefreshToken && !getRefreshToken) {
@@ -86,11 +95,8 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
 
           let refreshToken
 
-          if(getRefreshToken) {
-            const refreshTokenPayload = { typ: 'RefreshToken', iss: 'accounts.jannik.ml', iat: Date.now(), usr: user.username, id: user.id }
-            refreshToken = Buffer.from(rsa.encryptPrivate(Buffer.from(JSON.stringify(refreshTokenPayload)))).toString('base64')
-            refreshTokenCache.put(username, refreshToken)
-          }
+          if(getRefreshToken) refreshToken = generateRefreshToken(user.username, user.id)
+          
           addToCache(user.id, accessToken, accessTokenPayload, 30 * 60 * 1000)
             .then(() => cb(err, accessToken, refreshToken))
         } else {
@@ -147,6 +153,7 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
     Logout: Logout,
     signJwtNoCheck: signJwtNoCheck,
     manualAddToCache: addToCache,
+    generateRefreshToken: generateRefreshToken,
     validateRegisterToken: validateRegisterToken,
     generateRegisterToken: generateRegisterToken,
     validateService: validateService

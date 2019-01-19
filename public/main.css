@@ -28,6 +28,7 @@ body.theme-light, body:not([class]) {
   --grey-3-color: darkslategrey;
   --grey-2-color: lightgrey;
   --grey-1-color: darkgrey;
+  --grey-4-color: #f7f7f7;
 }
 
 body.theme-dark {
@@ -39,6 +40,7 @@ body.theme-dark {
   --grey-3-color: darkslategrey;
   --grey-2-color: #2c2c2c;
   --grey-1-color: darkgrey;
+  --grey-4-color: #080808;
 }
 
 .container {
@@ -118,6 +120,32 @@ body.theme-dark {
   margin: 10px 0;
 }
 
+.theme-chooser {
+  width: 32px;
+  height: 32px;
+  position: absolute;
+  top: 0px;
+  right: 0px;
+}
+
+body.theme-light .theme-chooser .svg-theme {
+  margin: 4px;
+  color: slateblue;
+}
+
+body.theme-dark .theme-chooser .svg-theme {
+  margin: 4px;
+  color: yellow;
+}
+
+body.theme-light .theme-chooser .enable-light-theme-a {
+  display: none;
+}
+
+body.theme-dark .theme-chooser .enable-dark-theme-a {
+  display: none;
+}
+
 .login-info-box, .register-info-box {
   font-size: 14px;
   margin: 0px 20px;
@@ -146,6 +174,128 @@ body.theme-dark {
   font-family: Roboto Mono,Monaco,courier,monospace;
 }
 
+.login-continue-as-container {
+  padding: 0px 20px;
+}
+
+.login-continue-as-flex-wrapper.hidden {
+  display: none;
+}
+
+.login-continue-as-box {
+  width: 100%;
+  height: 68px;
+  border: 1px solid var(--grey-2-color);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: row;
+}
+
+.login-continue-as-box:hover {
+  background-color: var(--grey-4-color);
+}
+
+login-continue-as-box:focus {
+  background-color: var(--grey-4-color);
+}
+
+.login-continue-as-profile-picture-container {
+  width: 56px;
+  height: 56px;
+  margin: 6px;
+}
+
+.login-continue-as-profile-picture-container .profile-picture {
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  background-color: var(--accent-color);
+  color: #fff;
+  text-align: center;
+  line-height: 56px;
+  font-size: 32px;
+  text-transform: uppercase;
+}
+
+.login-continue-as-user-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-continue-as-user-logout {
+  text-align: right;
+  height: 12px;
+  margin-top: -2px;
+  margin-right: 4px;
+}
+
+.login-continue-as-user-logout a {
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--accent-color-light);
+  text-decoration: none;
+}
+
+.login-continue-as-user-logout a:hover {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
+.login-continue-as-user-container {
+  display: inline-block;
+  width: calc(100% - 60px - 16px);
+  margin-left: 16px;
+  height: 100%;
+}
+
+.login-continue-as-fullname {
+  font-size: 18px;
+}
+
+.login-continue-as-username {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.login-or-divider-container {
+  width: 100%;
+  text-align: center;
+  margin-top: 12px;
+}
+
+.login-or-divider-container.hidden {
+  display: none;
+}
+
+.login-or-divider-container .line {
+  margin: 0px 8px 4px 8px;
+  width: calc(50% - 56px);
+  height: 2px;
+  display: inline-block;
+  background-color: var(--grey-2-color);
+}
+
+.login-or-divider {
+  width: 24px;
+  margin: 0px 8px;
+  display: inline-block;
+  color: var(--grey-3-color);
+}
+
+.login-header-container {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.login-header {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.login-header-container.hidden {
+  display: none;
+}
+
 .login-incorrect-credentials, .register-incorrect-repeat {
   color: red;
   font-size: 14px;
@@ -157,7 +307,8 @@ body.theme-dark {
 }
 
 .login-container, .register-container {
-  padding: 20px;
+  padding: 10px 20px 20px 20px;
+  /* padding: 20px; // this was here before implementing remember-me / continue-as */
   box-sizing: border-box;
 }
 
@@ -191,12 +342,10 @@ body.theme-dark {
   text-decoration: none;
 }
 
-
 body {
   margin: 0;
   padding: 0;
   font-family: "Avenir","AvenirLTStd";
-  overflow-y: hidden;
   color: var(--text-color);
   background-color: var(--background-color);
 }
@@ -252,6 +401,7 @@ body {
   outline: none;
   overflow: visible;
   margin: 0;
+  border-radius: 2px;
 }
 
 .text-input.input-big:focus {

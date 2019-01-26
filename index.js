@@ -12,7 +12,6 @@ const _cache = require('memory-cache')
 const { version } = require('./package.json')
 
 const serviceCache = new _cache.Cache()
-const registerTokenCache = new _cache.Cache()
 
 const config = require('dotenv').config().parsed
 const default_services = require('./default_services.json')
@@ -50,8 +49,6 @@ const account_types = ['default', 'privileged', 'admin']
 
 default_services.forEach(service => serviceCache.put(service.id, service))
 
-let registerTokenCacheIndex = 0
-
 const onAdd = (id, token, payload) =>
   Promise.all(serviceCache.keys()
     .map(key => serviceCache.get(key))
@@ -69,7 +66,7 @@ const onDelete = (id, token, payload) =>
   Promise.all(serviceCache.keys()
     .map(key => serviceCache.get(key))
     .filter(json => (payload && json.account_type ? account_types.indexOf(payload.account_type) >= account_types.indexOf(json.account_type) : true))
-    .map(json => (console.log(json), json))
+    .map(json => (console.log('[' + format_date() + '][onDelete]', json), json))
     .map(json => fetchTimeout(json.url + '/logout', 'POST', { id: id, token: token }, { Authorization: 'Bearer ' + jwt.sign({ id: id, isAuthProvider: true }, private_key, { algorithm: 'RS256' }) })
       .then(res => res.status === 401 ? res.text() : res.json())
       .catch(({ message }) => ({ message }))
@@ -130,102 +127,17 @@ app.get(['/:method/:id?', '/service/:method/:id?'], (req, res) => {
 
 })
 
-app.post('/generate-register-token', passport.authenticate('jwt', { session: false }), (req, res) => {
-  db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(err) res.status(500).json({ message: 'failed to validate user', status: 'failure' })
-    if(user.account_type === 'admin') {
-      const permanent = req.body.permanent !== undefined ? req.body.permanent : false
-      const register_token = generateRegisterToken({
-        id: registerTokenCacheIndex,
-        timestamp: Date.now(),
-        ...req.body,
-        permanent: permanent,
-        expireAt: permanent ? 0 : (req.body.expireAt || 30 * 60 * 1000),
-      })
-
-      registerTokenCache.put(registerTokenCacheIndex, register_token)
-
-      res.json({ register_token: register_token, id: registerTokenCacheIndex++ })
-
-    } else {
-      res.status(403).json({ message: 'account not permitted', status: 'failure' })
-    }
-  })
-})
+app.post('/generate-register-token', passport.authenticate('jwt', { session: false }), registertokens.generate(generateRegisterToken))
 
 app.post('/validate-register-token', passport.authenticate('jwt', { session: false }), registertokens.validate(validateRegisterToken))
 
-app.post('/invalidate-register-token', passport.authenticate('jwt', { session: false }), registertokens.invalidate(validateRegisterToken, registerTokenCache))
+app.post('/invalidate-register-token', passport.authenticate('jwt', { session: false }), registertokens.invalidate(validateRegisterToken))
 
 app.post(['/login', '/users/login'], users.login(Login))
 
 app.post(['/logout', '/users/logout'], passport.authenticate('jwt', { session: false }), users.logout(Logout))
 
-app.post(['/add', '/users/add'], (req, res) => {
-  const data = req.body
-  if(data.username && data.password && data.first_name && data.last_name && data.email) {
-
-    let account_type = 'default'
-    let registerTokenStatus
-    let metadata
-    
-    if(data.register_token) {
-      const registerTokenData = validateRegisterToken(data.register_token)
-      if(registerTokenCache.get(registerTokenData.id) !== null) {
-        account_type = registerTokenData.account_type || 'default'
-        metadata = registerTokenData.metadata || {}
-        registerTokenStatus = 'register token used successfully'
-        serviceCache.del(registerTokenData.id)
-      } else {
-        registerTokenStatus = "supplied register token was not valid, could not be used"
-      }
-    }
-    
-    let password = data.password
-    const getRefreshToken = req.body.getRefreshToken || password.startsWith('Get-Refresh-Token:')
-
-    if(getRefreshToken && password.startsWith('Get-Refresh-Token:'))
-      password = password.substring('Get-Refresh-Token:'.length)
-
-    // return created user information
-    db.addUser(data.username, password, data.first_name, data.last_name, data.email, account_type, metadata, (err, row) => {
-      if(err) {
-        res.json({ message: err, status: 'failure' })
-      } else {
-
-        console.log('userAdd row', row, row.lastID)
-
-        const payload = { id: row.lastID, username: data.username, iss: 'accounts.jannik.ml', account_type: account_type, '2fa_enabled': row['2fa_enabled'] }
-        const token = signJwtNoCheck(payload)
-
-        let refreshToken
-        if(getRefreshToken) refreshToken = generateRefreshToken(data.username, row.lastID)
-
-        console.log('userAdd', payload, token)
-
-        manualAddToCache(row.lastID, token, payload, 30 * 60 * 1000)
-          .then(() =>
-            res.json({
-              message: 'account creation successful',
-              status: 'success',
-              token: token,
-              data: {
-                username: data.username,
-                first_name: data.first_name,
-                last_name: data.last_name,
-                email: data.email,
-                account_type: account_type
-              },
-              ...(getRefreshToken ? { refreshToken: refreshToken } : {}),
-              ...(registerTokenStatus ? { registerTokenStatus: registerTokenStatus } : {})
-            })
-          )
-      }
-    })
-  } else {
-    res.json({ message: 'supply "username", "password", "first_name", "last_name" and "email"', status: 'failure' })
-  }
-})
+app.post(['/add', '/users/add'], users.add({ registerTokenCache: registertokens.registerTokenCache, validateRegisterToken, signJwtNoCheck, generateRefreshToken, manualAddToCache }))
 
 app.post(['/modify', '/users/modify'], passport.authenticate('jwt', { session: false }), users.modify(Logout))
 

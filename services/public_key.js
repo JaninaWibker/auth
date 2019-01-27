@@ -1,0 +1,1 @@
+module.exports = (public_key) => (req, res) => res.send(public_key)

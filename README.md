@@ -59,7 +59,7 @@ This generates a key pair and puts it into **a single file** (`private.key`). A 
 openssl genrsa -out private.key <bit length (512/1024/2048/4096/...)>
 ```
 
-This extracts the public key part from the previously generated file and puts it into ``. Online you will probably find that the public key is derived from the private key, **this is wrong**, the public key is embedded inside the private key file but **cannot ever** be derived from the real rsa private key. Openssl just puts both keys (or rather the numbers to calculate both of them) into a single file.
+This extracts the public key part from the previously generated file and puts it into `private.key`. Online you will probably find that the public key is derived from the private key, **this is wrong**, the public key is embedded inside the private key file but **cannot ever** be derived from the real rsa private key. Openssl just puts both keys (or rather the numbers to calculate both of them) into a single file.
 
 Extracting the public key into its own file is necessary:
 
@@ -76,3 +76,7 @@ node index.js
 ```
 
 > remember to run `npm install`.
+
+## Using auth
+
+// TODO: write about how the api works and what it provides

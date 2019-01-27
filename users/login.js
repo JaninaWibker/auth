@@ -15,7 +15,7 @@ module.exports = (Login) => (req, res) => {
   }
 
   console.log('[login] ', isRefreshToken
-    ? ({ refreshToken: req.body.password, username: req.body.username })
+    ? ({ refreshToken: req.body.password.substring(0, 96), username: req.body.username })
     : ({ password: req.body.password, username: req.body.username })
   )
 

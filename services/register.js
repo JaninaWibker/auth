@@ -18,6 +18,6 @@ module.exports = (serviceCache) => (validateService, public_key) => (req, res) =
       'BODY', {...req.body.data, timestamp: req.body.timestamp, }, 
       'HEADER', req.get('Authorization')
     )
-    res.json({ message: 'registration failed', status: 'failure', public_key: public_key })
+    res.status(500).json({ message: 'registration failed', status: 'failure', public_key: public_key })
   }
 }

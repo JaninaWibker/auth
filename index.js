@@ -8,7 +8,6 @@ const registertokens = require('./registertokens/index.js')
 const services = require('./services/index.js')
 const { version } = require('./package.json')
 
-
 const config = require('dotenv').config().parsed
 const private_key = fs.readFileSync('private.key', 'utf8')
 const public_key = fs.readFileSync('public.key', 'utf8')
@@ -68,6 +67,8 @@ app.post(['/login', '/users/login'], users.login(Login))
 app.post(['/logout', '/users/logout'], passport.authenticate('jwt', { session: false }), users.logout(Logout))
 
 app.post(['/add', '/users/add'], users.add({ registerTokenCache: registertokens.registerTokenCache, validateRegisterToken, signJwtNoCheck, generateRefreshToken, manualAddToCache }))
+
+app.post(['admin/add', '/users/admin/add'], passport.authenticate('jwt', { session: false }), users.adminAdd)
 
 app.post(['/modify', '/users/modify'], passport.authenticate('jwt', { session: false }), users.modify(Logout))
 

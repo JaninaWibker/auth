@@ -2,7 +2,7 @@ const db = require('../db.js')
 
 module.exports = (registerTokenCache) => (validateRegisterToken) => (req, res) => {
   db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(err) res.status(500).json({ message: 'failed to validate user' })
+    if(err) res.status(500).json({ message: 'failed to validate user', status: 'failure' })
     if(user.account_type === 'admin') {
       if(req.body.id || req.body.register_token) {
         if(req.body.id) {
@@ -10,13 +10,13 @@ module.exports = (registerTokenCache) => (validateRegisterToken) => (req, res) =
           res.json({ message: 'register token invalidated successfully' })
         } else {
           registerTokenCache.del(validateRegisterToken(req.body.register_token).id)
-          res.json({ message: 'register token invalidated successfully' })
+          res.json({ message: 'register token invalidated successfully', status: 'success' })
         }
       } else {
-        res.status(500).json({ message: 'supply register token id or token' })
+        res.status(500).json({ message: 'supply register token id or token', status: 'failure' })
       }
     } else {
-      res.status(403).json({ message: 'account not permitted' })
+      res.status(403).json({ message: 'account not permitted', status: 'failure' })
     }
   })
 }

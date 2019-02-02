@@ -23,9 +23,9 @@ module.exports = (Login) => (req, res) => {
     Login(req.body.username, passwordOrRefreshToken, isRefreshToken, getRefreshToken, (err, accessToken, refreshToken) => {
       console.log(err, accessToken)
       if(err || !accessToken) res.status(401).json({ message: 'authentication failed' })
-      else res.json({ message: 'authentication successful', token: accessToken, refreshToken: refreshToken })
+      else res.json({ message: 'authentication successful', status: 'success', token: accessToken, refreshToken: refreshToken })
     })
   } else {
-    res.status(401).json({ message: 'supply username and password' })
+    res.status(401).json({ message: 'supply username and password', status: 'failure' })
   }
 }

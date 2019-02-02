@@ -7,8 +7,8 @@ module.exports = (req, res) => {
     const userIdToBeDeleted = user.account_type ==='admin' && req.body.id !== undefined ? req.body.id : req.user.id 
 
     db.deleteUser(userIdToBeDeleted, (err, rows_affected) => {
-      if(err) res.json({ message: 'account deletion failed' })
-      else res.json({ message: 'account deletion successful' })
+      if(err) res.status(500).json({ message: 'account deletion failed', status: 'failure' })
+      else    res.json({ message: 'account deletion successful', status: 'success' })
     })
 
   })

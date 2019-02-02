@@ -10,7 +10,7 @@ module.exports = ({ registerTokenCache, validateRegisterToken, signJwtNoCheck, g
     
     if(data.register_token) {
       const registerTokenData = validateRegisterToken(data.register_token)
-      if(reigsterTokenData.status !== 'failure' && registerTokenCache.get(registerTokenData.id) !== null) {
+      if(registerTokenData.status !== 'failure' && registerTokenCache.get(registerTokenData.id) !== null) {
         account_type = registerTokenData.account_type || 'default'
         metadata = registerTokenData.metadata || {}
         registerTokenStatus = 'register token used successfully'
@@ -29,7 +29,7 @@ module.exports = ({ registerTokenCache, validateRegisterToken, signJwtNoCheck, g
       password = password.substring('Get-Refresh-Token:'.length)
 
     // return created user information
-    db.addUser(data.username, password, data.first_name, data.last_name, data.email, account_type, metadata, (err, row) => {
+    db.addUser(data.username, password, data.first_name, data.last_name, data.email, account_type, metadata, false, 0, (err, row) => {
       if(err) {
         res.json({ message: err, status: 'failure' })
       } else {

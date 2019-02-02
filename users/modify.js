@@ -18,6 +18,6 @@ module.exports = (Logout) => (req, res) => {
     if(req.body.id) db.getUserFromIdIfExists(req.body.id, cb)
     else if(req.body.username) db.getUserIfExists(req.body.username, cb)
   } else {
-    res.status(500).json({ message: 'supply username or id' })
+    res.status(500).json({ message: 'supply username or id', status: 'failure' })
   }
 }

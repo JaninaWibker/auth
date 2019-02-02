@@ -11,8 +11,9 @@ CREATE TABLE 'users' (
     'modification_date' DATETIME NOT NULL DEFAULT CURRENT_DATETIME,
     'account_type' VARCHAR(16) NOT NULL DEFAULT \"default\", -- account type can be: 'default', 'privileged', 'admin'
     'metadata' VARCHAR(1024) NOT NULL DEFAULT \"{}\", -- custom metadata that can be used in the future
-    '2fa' BOOLEAN DEFAULT 0, -- wether 2 factor authentication is enabled or not
+    '2fa' BOOLEAN DEFAULT 0, -- whether 2 factor authentication is enabled or not
     '2fa_secret' VARCHAR(32) DEFAULT \"\", -- 2 factor authentication secret
+    'passwordless' BOOLEAN DEFAULT 0, -- whether a password is set initially or not, if not the password needs to be set when first logging in
     'temp_account' DATETIME DEFAULT 0 -- 0 for not a temporary account; date value for date the account expires. Upon expiring the account is disabled, deleted or has his account_type set to 'default'
 );
 " | sqlite3 Users.sqlite
@@ -31,7 +32,9 @@ INSERT INTO 'users' VALUES (
   \"default\",
   \"{}\",
   0,
-  \"\"
+  \"\",
+  0,
+  0
 );
 INSERT INTO 'users' VALUES (
   \"Jannik\",
@@ -45,6 +48,8 @@ INSERT INTO 'users' VALUES (
   \"admin\",
   \"{}\",
   0,
-  \"\"
+  \"\",
+  0,
+  0
 );
 " | sqlite3 Users.sqlite

@@ -29,11 +29,11 @@ authcli list-accounts
   console.log('auth service version ' + version)
 } else if(args._[0] === 'add-account') {
   if(args._.length >= 6) {
-    const [username, first_name, last_name, email, password] = args._.slice(1, 6)
-    console.log(`adding account with\n\tusername:\t"${username}",\n\tpassword:\t"${password}",\n\tfirst_name:\t"${first_name}",\n\tlast_name:\t"${last_name}",\n\temail:\t\t"${email}"`)
-    db.addUser(username, password, first_name, last_name, email, console.log)
+    const [username, first_name, last_name, email, password, account_type='default', is_passwordless=false, temp_account=0] = args._.slice(1, 6)
+    console.log(`adding account with\n\tusername:\t"${username}",\n\tpassword:\t"${password}",\n\tfirst_name:\t"${first_name}",\n\tlast_name:\t"${last_name}",\n\temail:\t\t"${email}",\n\taccount_type:\t\t"${account_type}",\n\tis_passwordless:\t\t"${is_passwordless}",\n\ttemp_account:\t\t"${temp_account}"`)
+    db.addUser(username, password, first_name, last_name, email, 'default', {}, 0, "", is_passwordless, temp_account, console.log)
   } else {
-    console.log('error, too few arguments:\nauthcli add-account <username> <first_name> <last_name> <email> <password>')
+    console.log('error, too few arguments:\nauthcli add-account <username> <first_name> <last_name> <email> <password> <account_type?>, <is_passwordless?>, <temp_account?>')
   }
 } else if(args._[0] === 'remove-account') {
   if(args['--id'] || args['--username'] || args['--email']) {

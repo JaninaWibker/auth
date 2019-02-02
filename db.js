@@ -15,7 +15,7 @@ const hash_password = (password, salt) => {
 
 const authenticateUserIfExists = (username, password, code_2fa, cb) => {
   dbPromise.then(db =>
-    db.get('SELECT salt FROM users WHERE username = ? OR email = ?', username, username)
+    db.get('SELECT salt FROM users WHERE (username = ? OR email = ?) AND (temp_account = 0 OR temp_account < datetime("now"))', username, username)
       .then(row => {
         if(!row) return cb(null, false)
         const hash = hash_password(password, row.salt)
@@ -107,16 +107,41 @@ const IdToUserData = (id, cb) => dbPromise.then(db =>
     .catch(err => cb(null, false, { message: 'user not found', err: err }))
 )
 
-const addUser = (username, password, first_name, last_name, email, account_type = 'default', metadata = {}, cb) => {
+const addUser = (username, password, first_name, last_name, email, account_type = 'default', metadata = {}, is_passwordless=false, temp_account=0, cb) => {
   if(password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token:')) {
     return cb({ message: 'cannot set password to string starting with Refresh-Token or Get-Refresh-Token' }, null)
   }
+
   const salt = gen_salt()
+
+  const newUser = {
+    '@first_name': first_name,
+    '@last_name': last_name,
+    '@email': email,
+    '@username': username,
+    '@password': hash_password(password, salt),
+    '@salt': salt,
+    '@account_type': account_type,
+    '@metadata': JSON.stringify(metadata) || '{}',
+    '@2fa': 0,
+    '@2fa_secret': '',
+    '@is_passwordless': is_passwordless,
+    '@temp_account': temp_account
+  }
+
   dbPromise.then(db => {
     db.get('SELECT rowid as id, * FROM users WHERE username = ? OR email = ?', username, email)
       .then(existingUser => {
         if(existingUser === undefined) {
-          db.run('INSERT INTO users VALUES (?, ?, ?, ?, ?, ?, datetime("now"), datetime("now"), ?, ?, ?, ?)', first_name, last_name, email, username, hash_password(password, salt), salt, account_type, JSON.stringify(metadata) || '{}', 0, '')
+
+          db.run(`INSERT INTO users (
+              first_name, last_name, email, username, password, salt, creation_date, modification_date, account_type, metadata, \`2fa\`, \`2fa_secret\`, passwordless, temp_account
+            ) VALUES (
+            @first_name, @last_name, @email, @username,
+            @password, @salt,
+            datetime("now"), datetime("now"), @account_type, @metadata,
+            @2fa, @2fa_secret, @is_passwordless, @temp_account
+          )`, newUser)
             .then(x => cb(null, x))
             .catch(x => cb(x, null))
         } else {
@@ -151,7 +176,7 @@ const modifyUser = (id, { username, password, first_name, last_name, email }, cb
   )
 }
 
-const privilegedModifyUser = (id, { username, password, first_name, last_name, email, account_type, metadata }, cb) => {
+const privilegedModifyUser = (id, { username, password, first_name, last_name, email, account_type, metadata, temp_account }, cb) => {
   dbPromise.then(db => 
     db.get('SELECT username, rowid as id, first_name, last_name, email, salt, password, creation_date, modification_date, account_type, metadata FROM users WHERE rowid = ?', id)
       .then(row => {
@@ -160,7 +185,7 @@ const privilegedModifyUser = (id, { username, password, first_name, last_name, e
           return cb({ message: 'cannot set password to string starting with isRefreshToken or getRefreshToken' }, null)
         }
         db.run(
-          'UPDATE users SET username = ?, first_name = ?, last_name = ?, email = ?, salt = ?, password = ?, modification_date = datetime("now"), account_type = ?, metadata = ? WHERE rowid = ?',
+          'UPDATE users SET username = ?, first_name = ?, last_name = ?, email = ?, salt = ?, password = ?, modification_date = datetime("now"), account_type = ?, metadata = ?, temp_account = ? WHERE rowid = ?',
           username || row.username,
           first_name || row.first_name,
           last_name || row.last_name,
@@ -169,6 +194,7 @@ const privilegedModifyUser = (id, { username, password, first_name, last_name, e
           password ? hash_password(password, salt) : row.password,
           account_type || row.account_type,
           metadata ? (typeof metadata === 'string' ? metadata : JSON.stringify(metadata)) : row.metadata,
+          temp_account || row.temp_account || 0,
           id
         )
           .then(x => cb(null, x))

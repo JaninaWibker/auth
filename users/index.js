@@ -3,6 +3,7 @@ module.exports = {
   list: require('./list.js'),
   info: require('./info.js'),
   add:  require('./add.js'),
+  adminAdd: require('./admin-add.js'),
   delete:  require('./delete.js'),
   modify:  require('./modify.js'),
   modifySelf:  require('./modifySelf.js'),

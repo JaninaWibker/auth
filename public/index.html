@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="./main.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="manifest" href="/static/manifest.json">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="mask-icon" href="/static/safari-pinned-tab.svg" color="#6a77d8">
+    <meta name="msapplication-TileColor" content="#6a77d8">
+    <meta name="theme-color" content="#ffffff">
+  </head>
+  <body class="theme-light">
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <div>
+      <div class="theme-chooser">
+        <a class="enable-dark-theme-a" href="#" onclick="$toggleTheme()">
+          <svg class="svg-theme enable-dark-theme" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-moon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </a>
+        <a class="enable-light-theme-a" href="#" onclick="$toggleTheme()">
+          <svg class="svg-theme enable-light-theme" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-sun"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </a>
+      </div>
+    </div>
+    <div class="container">
+      Server up and running
+    </div>
+    <script src="./util.js"></script>
+    <script>
+      console.log(getStorageObject())
+
+      const storageObject = getStorageObject()
+
+      if(storageObject.theme) {
+        $toggleTheme(storageObject.theme)
+      } else {
+        $toggleTheme('light')
+      }
+
+      // first of all, it should be checked if a JWT is present (and if it is valid), 
+      // if not check if a refresh-token is present
+      // (or check if remember_me is turned on, because then a refresh token is also present)
+
+
+      function redirectToLogin() {
+        return window.location.replace('/login?id=auth')
+      }
+
+      function testIfJwtWorks(token, cb) {
+        window.fetch('/users/test', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          }
+        })
+          .then(function(res) { return res.json() })
+          .then(function(json) {
+            if(json.status === 'successful') {
+              setStorage('user', JSON.stringify(json.user))
+              return cb(null, true)
+            } else {
+              return cb(null, false)
+            }
+            
+          })
+          .catch(function(err) { return cb(err, false)})
+      }
+
+      function testIfRefreshTokenWorks(token, cb) {
+        login(storageObject.username, token, true, false)
+          .then(function(res) { return res.json() })
+          .then(function(json) {
+            if(json.status === 'failure') {
+              cb(null, false)
+            } else {
+              setStorage('jwt', json.token)
+              cb(null, true)
+            }
+          })
+        return cb(null, true)
+      }
+
+      function showMainPage() {
+        console.log('showing main page now')
+      }
+
+      if(storageObject.jwt) {
+        testIfJwtWorks(storageObject.jwt, (err, bool) => {
+          if(err) return redirectToLogin()
+
+          if(bool) {
+            return showMainPage()
+          } else {
+            if(storageObject.remember_me) {
+              testIfRefreshTokenWorks(storage.refreshToken, (err, bool) => {
+
+                if(err) return redirectToLogin()
+
+                if(bool) return showMainPage()
+                else return redirectToLogin()
+
+              })
+            } else {
+              return redirectToLogin()
+            }
+          }
+        })
+      } else {
+        if(storageObject.remember_me) {
+          testIfRefreshTokenWorks(storage.refreshToken, (err, bool) => {
+            if(err) return redirectToLogin()
+            if(bool) {
+              return doSomething()
+            } else {
+              return redirectToLogin()
+            }
+          })
+        } else {
+          redirectToLogin()
+        }
+      }
+    </script>
+  </body>
+</html>

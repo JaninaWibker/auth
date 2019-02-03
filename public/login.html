@@ -81,80 +81,15 @@
         </div>
       </div>
     </div>
+    <script src="./util.js"></script>
     <script>
-      function getUrlParameter(name) {
-        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-        var results = regex.exec(location.search);
-        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-      };
-
-      function getServiceInfo(id, cb) {
-        window.fetch('/service/by-id/' + id)
-          .then(function(res) { return res.json() })
-          .then(cb)
-      }
-
-      function getStorage(key) {
-        var st = window.localStorage.getItem('accounts.jannik.ml.storage')
-        if(st) {
-          st = JSON.parse(st)
-        } else {
-          st = {}
-          window.localStorage.setItem('accounts.jannik.ml.storage', '{}')
-        }
-
-        return st[key]
-      }
-
-      function getStorageObject() {
-        var st = window.localStorage.getItem('accounts.jannik.ml.storage')
-        if(st) {
-          return JSON.parse(st)
-        } else {
-          window.localStorage.setItem('accounts.jannik.ml.storage', '{}')
-          return {}
-        }
-      }
-
-      function setStorage(key, value) {
-        var st = window.localStorage.getItem('accounts.jannik.ml.storage')
-
-        if(st) st = JSON.parse(st)
-        else st = {}
-        
-        st[key] = value
-        window.localStorage.setItem('accounts.jannik.ml.storage', JSON.stringify(st))
-        return value
-      }
-
-      function setStorageObject(obj) {
-        var st = window.localStorage.getItem('accounts.jannik.ml.storage')
-
-        if(st) st = JSON.parse(st)
-        else st = {}
-
-        var keys = Object.keys(obj)
-        for(var i = 0; i < keys.length; i++) {
-          st[keys[i]] = obj[keys[i]]
-        }
-
-        window.localStorage.setItem('accounts.jannik.ml.storage', JSON.stringify(st))
-        return obj
-      }
-
-      function removeStorage(key) {
-        return setStorage(key, undefined)
-      }
-
-      function resetStorage() {
-        window.localStorage.setItem('accounts.jannik.ml.storage', '{}')
-      }
 
       getServiceInfo(getUrlParameter('id'), function(json) {
         if(json.message) {
 
         } else {
+          if(getUrlParameter('id') === 'auth') return
+
           if(json.account_type !== 'default') {
             const loginInfoBox = document.body.querySelector('.login-info-box')
             loginInfoBox.querySelector('.service-name').innerText = json.name
@@ -163,37 +98,6 @@
           }
         }
       })
-
-      function login(username, passwordOrRefreshToken, isRefreshToken=false, getRefreshToken=false) {
-        return window.fetch('/login', {
-          method: 'POST',
-          body: JSON.stringify({
-            username: username,
-            password: passwordOrRefreshToken,
-            isRefreshToken: isRefreshToken,
-            getRefreshToken: getRefreshToken
-          }),
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        })
-      }
-
-      function $toggleTheme(theme, doSetStorage=true) {
-        if(theme) {
-          document.body.className = 'theme-' + theme
-          if(doSetStorage) setStorage('theme', theme)
-        } else {
-          if(document.body.className === 'theme-dark') {
-          document.body.className = 'theme-light'
-          if(doSetStorage) setStorage('theme', 'light')
-          } else {
-            document.body.className = 'theme-dark'
-            if(doSetStorage) setStorage('theme', 'dark')
-          }
-        }
-      }
 
       const storageObject = getStorageObject()
 
@@ -234,20 +138,20 @@
 
         function useContinueAsUserBox() {
           login(storageObject.username, storageObject.refreshToken, true, false)
-              .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
-              .then(function(json) {
-                return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + json.token + window.location.hash ) 
+            .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
+            .then(function(json) {
+              return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + json.token + window.location.hash ) 
+            })
+            .catch(res => {
+              console.log(res)
+              setStorageObject({
+                theme: getStorage('theme')
               })
-              .catch(res => {
-                console.log(res)
-                setStorageObject({
-                  theme: getStorage('theme')
-                })
-                continueAsContainer.classList.toggle('hidden')
-                document.body.querySelector('.login-or-divider-container').classList.toggle('hidden')
-                document.body.querySelector('.login-container .login-header-container').classList.toggle('hidden')
-                document.body.querySelector('.login-incorrect-credentials').classList.toggle('hidden')
-              })
+              continueAsContainer.classList.toggle('hidden')
+              document.body.querySelector('.login-or-divider-container').classList.toggle('hidden')
+              document.body.querySelector('.login-container .login-header-container').classList.toggle('hidden')
+              document.body.querySelector('.login-incorrect-credentials').classList.toggle('hidden')
+            })
         }
 
         // registering event listeners
@@ -278,11 +182,15 @@
         login(username, password, false, remember_me)
           .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
           .then(function(json) {
+
+            setStorage('jwt', json.token)
+
             if(remember_me) {
               setStorageObject({
                 username: username,
                 refreshToken: json.refreshToken,
-                remember_me: true
+                remember_me: true,
+                jwt: json.token
               })
               window.fetch('/users/info', {
                 method: 'POST',
@@ -294,6 +202,11 @@
               .then(function(json) { if(json.user) setStorage('fullname', json.user.first_name + ' ' + json.user.last_name) })
               .catch(function(res) { console.log(res.message) })
             }
+
+            if(getUrlParameter('id') === 'auth') {
+              return window.location.replace('/')
+            }
+
             return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + json.token + window.location.hash ) 
           })
           .catch(res => {

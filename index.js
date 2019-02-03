@@ -46,8 +46,6 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 app.use(passport.initialize())
 
-app.get('/', (_, res) => res.send('server is up and running'))
-
 app.get('/current-version', (_, res) => res.send(version))
 
 app.post(['/register', '/service/register'], services.register(validateRegisterToken, public_key))

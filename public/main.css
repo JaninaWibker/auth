@@ -57,7 +57,8 @@ body.theme-dark {
   color: var(--text-color);
   padding: 20px;
   padding-bottom: 10px;
-  box-shadow: 0 0 201px #020202;
+  /* box-shadow: 0 0 201px #020202; */
+  border: 1px solid var(--grey-2-color);
   border-radius: 8px;
 }
 
@@ -67,6 +68,10 @@ body.theme-dark {
 
 .register-box {
   margin-top: 90px
+}
+
+.spoiler-message {
+  font-size: 14px;
 }
 
 @media (max-width: 1200px) {
@@ -308,7 +313,6 @@ login-continue-as-box:focus {
 
 .login-container, .register-container {
   padding: 10px 20px 20px 20px;
-  /* padding: 20px; // this was here before implementing remember-me / continue-as */
   box-sizing: border-box;
 }
 
@@ -364,6 +368,10 @@ body {
   height: 58px;
 }
 
+.form-group label {
+  font-size: 14px;
+}
+
 .form-group-2 {
   width: calc(50% - 8px);
   min-width: 156px;
@@ -390,22 +398,22 @@ body {
 
 .text-input.input-big {
   display: block;
-  width: calc(100% - 7px);
+  width: calc(100% - 17px);
   height: 32px;
+  padding: 1px 8px 1px 4px;
   font-size: 1rem;
   line-height: 24px;
   border: 1px solid var(--grey-2-color);
-  border-left: 4px solid var(--grey-2-color);
   background-color: var(--background-color);
   color: var(--text-color);
   outline: none;
   overflow: visible;
   margin: 0;
-  border-radius: 2px;
+  border-radius: 4px;
 }
 
 .text-input.input-big:focus {
-  border-left: 4px solid var(--accent-color);
+  border-color: var(--accent-color);
 }
 
 .text-input.input-small {

@@ -36,38 +36,37 @@
               <div class="register-container">
                 <form class="register" id="register" method="POST" action="/register">
                   <div class="form-group">
-                    <label for="register-username">Username: </label>
+                    <label for="register-username">Username </label>
                     <input autocomplete="username" class="text-input input-big" id="register-username" type="text">
                   </div>
                   <div class="form-group">
-                    <label for="register-email">Email: </label>
+                    <label for="register-email">Email </label>
                     <input class="text-input input-big" id="register-email" type="email">
                   </div>
                   <div class="form-group">
                     <div class="form-group-2">
-                      <label for="register-firstname">First name: </label>
+                      <label for="register-firstname">First name </label>
                       <input class="text-input input-big" id="register-firstname" type="text">
                     </div>
                     <div class="form-group-2">
-                      <label for="register-lastname">Last name: </label>
+                      <label for="register-lastname">Last name </label>
                       <input class="text-input input-big" id="register-lastname" type="text">
                     </div>
                   </div>
                   <div class="form-group">
-                    <label for="register-password">Password: </label>
+                    <label for="register-password">Password </label>
                     <input autocomplete="new-password" class="text-input input-big" id="register-password" type="password">
                   </div>
                   <div class="form-group">
-                    <label for="register-repeat-password">Repeat password: </label>
+                    <label for="register-repeat-password">Repeat password </label>
                     <input autocomplete="new-password" class="text-input input-big" id="register-repeat-password" type="password">
                     <div class="register-incorrect-repeat hidden">Passwords don't match!</div>
                   </div>
                   <div class="spoiler-wrapper">
-                    <div class="spoiler-click-target" tabindex="0"><span class="spoiler-state" style="font-size: 12px; padding-right: 4px;" >▼</span><label class="spoiler-message" for="register-register-token">Have a code to enter? Click and enter it here:</label></div>
+                    <div class="spoiler-click-target" tabindex="0"><span class="spoiler-state" style="font-size: 12px; padding-right: 4px;" >▼</span><label class="spoiler-message" for="register-register-token">Have a code to enter? Click and enter it below</label></div>
                     <input class="text-input input-big spoiler-target spoiler-hide" style="font-size: 12px; line-height: 12px; height: 24px;" id="register-register-token" type="text">
                   </div>
                   <br />
-                  <input id="remember-me-checkbox" type="checkbox" /><label for="remember-me-checkbox">remember me?</label>
                   <input type="submit" style="display: none;">
                   <button type="submit" class="btn btn-big btn-standard center">Register</button>
                   <p class="subtext">Already have an account? <a class="register-sublink" style="cursor:pointer;" onclick="window.location.replace('/login' + window.location.search)">Log in!</a></p>
@@ -163,12 +162,11 @@
         const first_name = form.querySelector('#register-firstname').value
         const last_name = form.querySelector('#register-lastname').value
         const register_token = form.querySelector('#register-register-token').value || null
-        const remember_me = form.querySelector('#remember-me-checkbox').checked
 
-        console.log({ username, email, password, password_repeat, first_name, last_name, register_token, getRefreshToken: remember_me })
+        console.log({ username, email, password, password_repeat, first_name, last_name, register_token, getRefreshToken: true })
         
         if(password === password_repeat) {
-          post('/add', { username, email, password, first_name, last_name, register_token, getRefreshToken: remember_me })
+          post('/add', { username, email, password, first_name, last_name, register_token, getRefreshToken: true })
             .then(function (res) { return res.json() })
             .then(function (json) { return json.message === 'account creation successful' 
               ? Promise.resolve(json)
@@ -178,7 +176,7 @@
 
               setStorage('jwt', json.token)
 
-              if(remember_me && json.data) {
+              if(json.data) {
                 setStorageObject({
                   theme: getStorage('theme'),
                   username: json.data.username,

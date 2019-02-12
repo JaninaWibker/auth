@@ -27,6 +27,52 @@ function login(username, passwordOrRefreshToken, isRefreshToken=false, getRefres
   })
 }
 
+function testIfJwtWorks(token, cb) {
+  window.fetch('/users/test', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    }
+  })
+    .then(function(res) { return res.json() })
+    .then(function(json) {
+      if(json.status === 'successful') {
+        setStorage('user', JSON.stringify(json.user))
+        return cb(null, true)
+      } else {
+        return cb(null, false)
+      }
+      
+    })
+    .catch(function catchTestIfJwtWorks(err) { console.log(err); return cb(err, false)})
+}
+
+function testIfRefreshTokenWorks(token, cb) {
+  login(storageObject.username, token, true, false)
+    .then(function(res) { return res.json() })
+    .then(function(json) {
+      if(json.status === 'failure') {
+        return cb(null, false)
+      } else {
+        setStorage('jwt', json.token)
+        return cb(null, true)
+      }
+    })
+    .catch(function catchTestIfRefreshTokenWorks(err) { return cb(err, false) })
+}
+
+function createElement(type, attributes) {
+  const el = document.createElement(type)
+
+  for(const key in attributes) {
+    el.setAttribute(key, attributes[key])
+  }
+
+  return el
+}
+
 function getStorage(key) {
   var st = window.localStorage.getItem('accounts.jannik.ml.storage')
   if(st) {

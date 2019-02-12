@@ -40,8 +40,11 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
   const strategy = new JWTStrategy(jwtOptions, (jwt_payload, cb) => {
     console.log('payload received: ', jwt_payload)
     db.getUserIfExists(jwt_payload.username, (err, user) => {
-      if(err || !user) {
-        console.log('[strategy] authorization failed. JWT expired or user not found')
+      if(err) {
+        console.log('[strategy] authorization failed. JWT expired')
+        cb(err, null, null)
+      } else if(!user) {
+        console.log('[strategy] authorization failed. User not found (' + jwt_payload.username + ')')
         cb(err, null, null)
       } else {
         console.log('[strategy] authorization successful (' + user.id + ': ' + jwtCache.get(user.id).substring(0, 96) + ' )')

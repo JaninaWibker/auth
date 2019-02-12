@@ -21,6 +21,8 @@ const mapService = (logStr, payload, service) => {
 
 const shouldNotifyService = (logStr, payload, service) => {
 
+  if(service.id === 'auth') return false
+
   const shouldNotifyServiceBool = payload && service.account_type
         ? account_types.indexOf(payload.account_type) >= account_types.indexOf(service.account_type) 
         : true

@@ -90,7 +90,7 @@
         if(json.message) {
 
         } else {
-          if(getUrlParameter('id') === 'auth') return
+          if(getUrlParameter('id') === 'auth' || getUrlParameter('id') === '') return
           
           if(json.account_type !== 'default') {
             const loginInfoBox = document.body.querySelector('.register-info-box')
@@ -181,14 +181,15 @@
                   theme: getStorage('theme'),
                   username: json.data.username,
                   refreshToken: json.refreshToken,
+                  remember_me: true,
                   fullname: json.data.first_name + ' ' + json.data.last_name,
                   jwt: json.token
                 })
               }
 
-              if(getUrlParameter('id') === 'auth') {
-                return window.location.replace('/')
-              }
+              if(getUrlParameter('id') === 'auth' || getUrlParameter('id') === '') {
+              return window.location.replace('/')
+            }
 
               return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + json.token + window.location.hash )
             })

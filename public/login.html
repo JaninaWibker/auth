@@ -87,7 +87,7 @@
         if(json.message) {
 
         } else {
-          if(getUrlParameter('id') === 'auth') return
+          if(getUrlParameter('id') === 'auth' || getUrlParameter('id') === '') return
 
           if(json.account_type !== 'default') {
             const loginInfoBox = document.body.querySelector('.login-info-box')
@@ -106,64 +106,78 @@
         $toggleTheme('light')
       }
 
-      const continueAsContainer = document.body.querySelector('.login-continue-as-flex-wrapper')
-      const profilePicture = document.body.querySelector('.login-continue-as-profile-picture-container .profile-picture')
-      const loginFullname = continueAsContainer.querySelector('.login-continue-as-fullname')
-      const loginUsername = continueAsContainer.querySelector('.login-continue-as-username')
+      if(storageObject.remember_me) {
+        const continueAsContainer = document.body.querySelector('.login-continue-as-flex-wrapper')
+        const profilePicture = document.body.querySelector('.login-continue-as-profile-picture-container .profile-picture')
+        const loginFullname = continueAsContainer.querySelector('.login-continue-as-fullname')
+        const loginUsername = continueAsContainer.querySelector('.login-continue-as-username')
 
-      // settings values
-      loginFullname.innerText = storageObject.fullname || '<no name available>'
-      loginUsername.innerText = storageObject.username
-      profilePicture.innerText = storageObject.username.substring(0, 1)
-      
-      // toggling hidden off
-      continueAsContainer.classList.toggle('hidden')
-      document.body.querySelector('.login-or-divider-container').classList.toggle('hidden')
-      document.body.querySelector('.login-container .login-header-container').classList.toggle('hidden')
-
-      // callback functions for event listeners
-      function logoutContinueAsUserBox() {
-        setStorageObject({
-          theme: getStorage('theme')
-        })
+        // settings values
+        loginFullname.innerText = storageObject.fullname || '<no name available>'
+        loginUsername.innerText = storageObject.username
+        profilePicture.innerText = (storageObject.username || '').substring(0, 1)
+        
+        // toggling hidden off
         continueAsContainer.classList.toggle('hidden')
         document.body.querySelector('.login-or-divider-container').classList.toggle('hidden')
         document.body.querySelector('.login-container .login-header-container').classList.toggle('hidden')
-      }
 
-      function useContinueAsUserBox() {
-        login(storageObject.username, storageObject.refreshToken, true, false)
-          .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
-          .then(function(json) {
-            return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + json.token + window.location.hash ) 
+        // callback functions for event listeners
+        function logoutContinueAsUserBox() {
+          setStorageObject({
+            theme: getStorage('theme'),
+            jwt: null,
+            refreshToken: null,
+            remember_me: false,
+            user: null,
+            username: null,
+            fullname: null,
           })
-          .catch(res => {
-            console.log(res)
-            setStorageObject({
-              theme: getStorage('theme')
-            })
-            continueAsContainer.classList.toggle('hidden')
-            document.body.querySelector('.login-or-divider-container').classList.toggle('hidden')
-            document.body.querySelector('.login-container .login-header-container').classList.toggle('hidden')
-            document.body.querySelector('.login-incorrect-credentials').classList.toggle('hidden')
-          })
-      }
-
-      // registering event listeners
-      continueAsContainer.querySelector('.login-continue-as-user-logout').addEventListener('click', logoutContinueAsUserBox)
-
-      continueAsContainer.querySelector('.login-continue-as-box').addEventListener('click', function(evt) {
-        if(evt.target.className !== 'logout') { useContinueAsUserBox() }
-      })
-
-      continueAsContainer.querySelector('.login-continue-as-box').addEventListener('keypress', function(evt) {
-        if(evt.code === 'Space' || evt.code === 'Enter') {
-          if(evt.target.className !== 'logout')
-            useContinueAsUserBox()
-          else
-            logoutContinueAsUserBox()
+          continueAsContainer.classList.toggle('hidden')
+          document.body.querySelector('.login-or-divider-container').classList.toggle('hidden')
+          document.body.querySelector('.login-container .login-header-container').classList.toggle('hidden')
         }
-      })
+
+        function useContinueAsUserBox() {
+          login(storageObject.username, storageObject.refreshToken, true, false)
+            .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
+            .then(function(json) {
+
+              if(getUrlParameter('id') === 'auth' || getUrlParameter('id') === '') {
+                return window.location.replace('/')
+              }
+
+              return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + json.token + window.location.hash ) 
+            })
+            .catch(res => {
+              console.log(res)
+              setStorageObject({
+                theme: getStorage('theme')
+              })
+              continueAsContainer.classList.toggle('hidden')
+              document.body.querySelector('.login-or-divider-container').classList.toggle('hidden')
+              document.body.querySelector('.login-container .login-header-container').classList.toggle('hidden')
+              document.body.querySelector('.login-incorrect-credentials').classList.toggle('hidden')
+            })
+        }
+
+        // registering event listeners
+        continueAsContainer.querySelector('.login-continue-as-user-logout').addEventListener('click', logoutContinueAsUserBox)
+
+        continueAsContainer.querySelector('.login-continue-as-box').addEventListener('click', function(evt) {
+          if(evt.target.className !== 'logout') { useContinueAsUserBox() }
+        })
+
+        continueAsContainer.querySelector('.login-continue-as-box').addEventListener('keypress', function(evt) {
+          if(evt.code === 'Space' || evt.code === 'Enter') {
+            if(evt.target.className !== 'logout')
+              useContinueAsUserBox()
+            else
+              logoutContinueAsUserBox()
+          }
+        })
+
+      }
 
       document.querySelector('form.login#login').addEventListener('submit', function (evt) {
         evt.preventDefault()
@@ -194,7 +208,7 @@
             .then(function(json) { if(json.user) setStorage('fullname', json.user.first_name + ' ' + json.user.last_name) })
             .catch(function(res) { console.log(res.message) })
 
-            if(getUrlParameter('id') === 'auth') {
+            if(getUrlParameter('id') === 'auth' || getUrlParameter('id') === '') {
               return window.location.replace('/')
             }
 

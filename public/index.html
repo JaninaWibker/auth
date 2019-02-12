@@ -28,6 +28,64 @@
     </div>
     <div class="container">
       Server up and running
+
+      <div class="index main hidden">
+        <div class="user-profile-info-wrapper">
+
+          <div class="user-profile-group-vertical">
+            <div class="user-profile-field-block">
+              <label class="user-profile-label" for="user-profile-username">Username</label>
+              <br />
+              <span class="user-profile-field" id="user-profile-username"></span>
+            </div>
+
+            <div class="user-profile-field-block">
+              <label class="user-profile-label" for="user-profile-email">Email</label>
+              <br />
+              <span class="user-profile-field" id="user-profile-email"></span>
+            </div>
+          </div>
+
+          <div class="user-profile-group-vertical">
+            <div class="user-profile-field-block">
+              <label class="user-profile-label" for="user-profile-first_name">First name</label>
+              <br />
+              <span class="user-profile-field" id="user-profile-first_name"></span>
+            </div>
+
+            <div class="user-profile-field-block">
+              <label class="user-profile-label" for="user-profile-last_name">Last name</label>
+              <br />
+              <span class="user-profile-field" id="user-profile-last_name"></span>
+            </div>
+          </div>
+
+          <div class="user-profile-group-horizontal">
+            <div class="user-profile-field-block">
+              <label class="user-profile-label" for="user-profile-password">Password</label>
+              <br />
+              <span class="user-profile-field" id="user-profile-password">********</span>
+            </div>
+            <div class="user-profile-field-block hidden">
+                <label class="user-profile-label" for="user-profile-repeat_password">Repeat password</label>
+                <br />
+                <span class="user-profile-field" id="user-profile-repeat_password"></span>
+              </div>
+          </div>
+
+          <div class="user-profile-btn-wrapper">
+            <button class="btn btn-normal btn-purple" id="user-profile-btn-edit">Edit</button>
+            <button class="btn btn-normal hidden" id="user-profile-btn-cancel">Cancel</button>
+            <button class="btn btn-normal btn-purple hidden" id="user-profile-btn-save">Save</button>
+          </div>
+
+          Your information
+
+          - Creation date
+          - Modification date?
+
+        </div>
+      </div>
     </div>
     <script src="./util.js"></script>
     <script>
@@ -50,44 +108,117 @@
         return window.location.replace('/login?id=auth')
       }
 
-      function testIfJwtWorks(token, cb) {
-        window.fetch('/users/test', {
+      function modifyUser(changes, cb) {
+
+        let bundled_changes = {
+          first_name: changes.first_name,
+          last_name: changes.last_name
+        }
+
+        if(changes.password === changes.repeat_password && changes.password !== '') {
+          bundled_changes.password = changes.password
+        }
+
+        window.fetch('/users/modify-self', {
           method: 'POST',
+          body: JSON.stringify(bundled_changes),
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
+            'Authorization': 'Bearer ' + getStorage('jwt')
           }
         })
           .then(function(res) { return res.json() })
-          .then(function(json) {
-            if(json.status === 'successful') {
-              setStorage('user', JSON.stringify(json.user))
-              return cb(null, true)
+          .then(function thenModifySelf(json) {
+            if(json.status === 'success') {
+              // testIfRefreshTokenWorks tries to log-in with the refresh-token, this is exactly what
+              // is needed here. The verb 'test' may be somewhat wrong but it is the wanted behaviour.
+              testIfRefreshTokenWorks(getStorage('refreshToken'), function(err, bool) {
+                if(bool) {
+                  // testIfJwtWorks updates the saved user data. This is again exactly what is wanted,
+                  // but also again somewhat misleading name-whise. The result of the test is unimportant
+                  // since it must true since the jwt has just been generated.
+                  testIfJwtWorks(getStorage('jwt'), function(err, bool) {
+                    if(bool) cb(null, JSON.parse(getStorage('user')))
+                    else cb(true, null)
+                  })
+                }
+              })
             } else {
-              return cb(null, false)
-            }
-            
-          })
-          .catch(function(err) { return cb(err, false)})
-      }
-
-      function testIfRefreshTokenWorks(token, cb) {
-        login(storageObject.username, token, true, false)
-          .then(function(res) { return res.json() })
-          .then(function(json) {
-            if(json.status === 'failure') {
-              cb(null, false)
-            } else {
-              setStorage('jwt', json.token)
-              cb(null, true)
+              cb(true, null) // this needs to become a real error instead of just 'true'
             }
           })
-        return cb(null, true)
+          .catch(function catchModifySelf() {
+            cb(true, null) // this needs to become a real error instead of just 'true'
+          })
       }
 
-      function showMainPage() {
-        console.log('showing main page now')
+      function registerEventListeners(spanElements, buttonElements, inputElements) {
+
+        buttonElements.edit.addEventListener('click', function(evt) {
+          buttonElements.edit.classList.toggle('hidden')
+          buttonElements.cancel.classList.toggle('hidden')
+          buttonElements.save.classList.toggle('hidden')
+
+          const userObject = JSON.parse(getStorage('user'))
+
+          inputElements.first_name.value = userObject.first_name
+          inputElements.last_name.value = userObject.last_name
+
+
+          spanElements.first_name.parentNode.replaceChild(inputElements.first_name, spanElements.first_name)
+          spanElements.last_name.parentNode.replaceChild(inputElements.last_name, spanElements.last_name)
+          spanElements.password.parentNode.replaceChild(inputElements.password, spanElements.password)
+          spanElements.repeat_password.parentNode.replaceChild(inputElements.repeat_password, spanElements.repeat_password)
+
+          inputElements.repeat_password.parentNode.classList.toggle('hidden')
+        })
+
+        buttonElements.cancel.addEventListener('click', function(evt) {
+          buttonElements.edit.classList.toggle('hidden')
+          buttonElements.cancel.classList.toggle('hidden')
+          buttonElements.save.classList.toggle('hidden')
+
+          inputElements.first_name.value = ''
+          inputElements.last_name.value = ''
+          inputElements.password.value = ''
+          inputElements.repeat_password.value = ''
+
+          inputElements.first_name.parentNode.replaceChild(spanElements.first_name, inputElements.first_name)
+          inputElements.last_name.parentNode.replaceChild(spanElements.last_name, inputElements.last_name)
+          inputElements.password.parentNode.replaceChild(spanElements.password, inputElements.password)
+          inputElements.repeat_password.parentNode.replaceChild(spanElements.repeat_password, inputElements.repeat_password)
+
+          spanElements.repeat_password.parentNode.classList.toggle('hidden')
+        })
+
+        buttonElements.save.addEventListener('click', function(evt) {
+          buttonElements.edit.classList.toggle('hidden')
+          buttonElements.cancel.classList.toggle('hidden')
+          buttonElements.save.classList.toggle('hidden')
+
+          const values = {
+            first_name: inputElements.first_name.value,
+            last_name: inputElements.last_name.value,
+            password: inputElements.password.value,
+            repeat_password: inputElements.repeat_password.value
+          }
+
+          inputElements.password.value = ''
+          inputElements.repeat_password.value = ''
+
+          inputElements.first_name.parentNode.replaceChild(spanElements.first_name, inputElements.first_name)
+          inputElements.last_name.parentNode.replaceChild(spanElements.last_name, inputElements.last_name)
+          inputElements.password.parentNode.replaceChild(spanElements.password, inputElements.password)
+          inputElements.repeat_password.parentNode.replaceChild(spanElements.repeat_password, inputElements.repeat_password)
+
+          spanElements.repeat_password.parentNode.classList.toggle('hidden')
+
+          modifyUser(values, function (err, userObject) {
+            spanElements.first_name.innerText = userObject.first_name
+            spanElements.last_name.innerText = userObject.last_name
+          })
+        })
       }
 
       if(storageObject.jwt) {
@@ -97,33 +228,76 @@
           if(bool) {
             return showMainPage()
           } else {
-            if(storageObject.remember_me) {
-              testIfRefreshTokenWorks(storage.refreshToken, (err, bool) => {
+            testIfRefreshTokenWorks(storageObject.refreshToken, (err, bool) => {
 
-                if(err) return redirectToLogin()
+              if(err) return redirectToLogin()
 
-                if(bool) return showMainPage()
-                else return redirectToLogin()
+              if(bool) return showMainPage()
+              else return redirectToLogin()
 
-              })
-            } else {
-              return redirectToLogin()
-            }
+            })
           }
         })
       } else {
-        if(storageObject.remember_me) {
-          testIfRefreshTokenWorks(storage.refreshToken, (err, bool) => {
-            if(err) return redirectToLogin()
-            if(bool) {
-              return doSomething()
-            } else {
-              return redirectToLogin()
-            }
-          })
-        } else {
-          redirectToLogin()
+        testIfRefreshTokenWorks(storageObject.refreshToken, (err, bool) => {
+          if(err) return redirectToLogin()
+          if(bool) {
+            return showMainPage()
+          } else {
+            return redirectToLogin()
+          }
+        })
+      }
+
+      function showMainPage() {
+        const mainEl = document.querySelector('.index.main')
+
+        const userObject = JSON.parse(getStorage('user'))
+
+        const spanElements = {
+          username: mainEl.querySelector('#user-profile-username'), 
+          email: mainEl.querySelector('#user-profile-email'),
+          first_name: mainEl.querySelector('#user-profile-first_name'),
+          last_name: mainEl.querySelector('#user-profile-last_name'),
+          password: mainEl.querySelector('#user-profile-password'),
+          repeat_password: mainEl.querySelector('#user-profile-repeat_password'),
         }
+
+        const buttonElements = {
+          edit: mainEl.querySelector('#user-profile-btn-edit'),
+          cancel: mainEl.querySelector('#user-profile-btn-cancel'),
+          save: mainEl.querySelector('#user-profile-btn-save'),
+        }
+
+        const inputElements = {
+          first_name: createElement('input', {
+            id: 'user-profile-first_name',
+            class: 'text-input input-small user-profile-input',
+          }),
+          last_name: createElement('input', {
+            id: 'user-profile-last_name',
+            class: 'text-input input-small user-profile-input',
+          }),
+          password: createElement('input', {
+            id: 'user-profile-password',
+            class: 'text-input input-small user-profile-input',
+            type: 'password'
+          }),
+          repeat_password: createElement('input', {
+            id: 'user-profile-repeat_password',
+            class: 'text-input input-small user-profile-input',
+            type: 'password'
+          })
+        }
+
+        spanElements.username.innerText = userObject.username
+        spanElements.email.innerText = userObject.email
+        spanElements.first_name.innerText = userObject.first_name
+        spanElements.last_name.innerText = userObject.last_name
+
+        registerEventListeners(spanElements, buttonElements, inputElements, userObject)
+
+        mainEl.classList.toggle('hidden')
       }
     </script>
   </body>

@@ -27,9 +27,10 @@
       </div>
     </div>
     <div class="container">
-      Server up and running
-
       <div class="index main hidden">
+
+        <div class="heading-sub">Your Information</div>
+
         <div class="user-profile-info-wrapper">
 
           <div class="user-profile-group-vertical">
@@ -79,10 +80,10 @@
             <button class="btn btn-normal btn-purple hidden" id="user-profile-btn-save">Save</button>
           </div>
 
-          Your information
-
-          - Creation date
-          - Modification date?
+          <div class="user-profile-indicator-wrapper">
+            <div class="info-text">account modification date: <span id="account-modification-date-info"></span></div>
+            <div class="info-text">account creation date: <span id="account-creation-date-info"></span></div>
+          </div>
 
         </div>
       </div>
@@ -153,7 +154,7 @@
           })
       }
 
-      function registerEventListeners(spanElements, buttonElements, inputElements) {
+      function registerEventListeners(spanElements, buttonElements, inputElements, indicatorElements) {
 
         buttonElements.edit.addEventListener('click', function(evt) {
           buttonElements.edit.classList.toggle('hidden')
@@ -217,6 +218,9 @@
           modifyUser(values, function (err, userObject) {
             spanElements.first_name.innerText = userObject.first_name
             spanElements.last_name.innerText = userObject.last_name
+
+            indicatorElements.modification_date.innerText = userObject.modification_date
+            indicatorElements.creation_date.innerText = userObject.creation_date
           })
         })
       }
@@ -253,6 +257,11 @@
         const mainEl = document.querySelector('.index.main')
 
         const userObject = JSON.parse(getStorage('user'))
+
+        const indicatorElements = {
+          creation_date: mainEl.querySelector('#account-creation-date-info'),
+          modification_date: mainEl.querySelector('#account-modification-date-info')
+        }
 
         const spanElements = {
           username: mainEl.querySelector('#user-profile-username'), 
@@ -295,7 +304,10 @@
         spanElements.first_name.innerText = userObject.first_name
         spanElements.last_name.innerText = userObject.last_name
 
-        registerEventListeners(spanElements, buttonElements, inputElements, userObject)
+        indicatorElements.modification_date.innerText = userObject.modification_date
+        indicatorElements.creation_date.innerText = userObject.creation_date
+
+        registerEventListeners(spanElements, buttonElements, inputElements, indicatorElements)
 
         mainEl.classList.toggle('hidden')
       }

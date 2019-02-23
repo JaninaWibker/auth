@@ -1,5 +1,8 @@
 const db = require('../db.js')
 
+const format_date = (date=new Date()) =>
+  date.toLocaleDateString().replace(/\//g, '-') + '@' + date.toLocaleTimeString()
+
 module.exports = ({ registerTokenCache, validateRegisterToken, signJwtNoCheck, generateRefreshToken, manualAddToCache }) => (req, res) => {
   const data = req.body
   if(data.username && data.password && data.first_name && data.last_name && data.email) {

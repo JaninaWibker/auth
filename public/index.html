@@ -33,13 +33,21 @@
 
         <div class="user-profile-info-wrapper">
 
-          <div class="user-profile-group-vertical">
+          <div class="user-profile-group-horizontal">
+            
             <div class="user-profile-field-block">
-              <label class="user-profile-label" for="user-profile-username">Username</label>
-              <br />
-              <span class="user-profile-field" id="user-profile-username"></span>
-            </div>
+                <label class="user-profile-label" for="user-profile-username">Username</label>
+                <br />
+                <span class="user-profile-field" id="user-profile-username"></span>
+              </div>
+          </div>
 
+          <div class="user-profile-group-vertical">
+              <div class="user-profile-field-block">
+                <label class="user-profile-label" for="user-profile-account_type">Account status</label>
+                <br />
+                <span class="user-profile-field" id="user-profile-account_type"></span>
+              </div>
             <div class="user-profile-field-block">
               <label class="user-profile-label" for="user-profile-email">Email</label>
               <br />
@@ -264,6 +272,7 @@
         }
 
         const spanElements = {
+          account_type: mainEl.querySelector('#user-profile-account_type'), 
           username: mainEl.querySelector('#user-profile-username'), 
           email: mainEl.querySelector('#user-profile-email'),
           first_name: mainEl.querySelector('#user-profile-first_name'),
@@ -299,6 +308,8 @@
           })
         }
 
+
+        spanElements.account_type.innerText = userObject.account_type
         spanElements.username.innerText = userObject.username
         spanElements.email.innerText = userObject.email
         spanElements.first_name.innerText = userObject.first_name

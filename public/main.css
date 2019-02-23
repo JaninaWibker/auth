@@ -383,7 +383,11 @@ body.theme-dark .theme-chooser .enable-dark-theme-a {
 }
 
 .user-profile-btn-wrapper .btn.hidden {
-  display: none;
+  display: none!important;
+}
+
+.user-profile-field#user-profile-username {
+  font-weight: bold;
 }
 
 .heading-sub {

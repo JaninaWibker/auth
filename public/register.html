@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Login</title>
+    <title>Register</title>
     <link rel="stylesheet" href="./main.css">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
@@ -28,51 +28,60 @@
       </div>
       <div class="container">
           <div class="register-box margin-center">
-              <div class="register_welcome">Welcome!</div>
-              <div class="register-info-box hidden">
-                <span class="service-name">...</span> requires a minimum account status of <span class="service-account_type">...</span>. You may not be allowed access.<br />
-                Newly created accounts have a status of <span class="service-account_type">default</span>.
-              </div>
-              <div class="register-container">
-                <form class="register" id="register" method="POST" action="/register">
-                  <div class="form-group">
-                    <label for="register-username">Username </label>
-                    <input autocomplete="username" class="text-input input-big" id="register-username" type="text">
-                  </div>
-                  <div class="form-group">
-                    <label for="register-email">Email </label>
-                    <input class="text-input input-big" id="register-email" type="email">
-                  </div>
-                  <div class="form-group">
-                    <div class="form-group-2">
-                      <label for="register-firstname">First name </label>
-                      <input class="text-input input-big" id="register-firstname" type="text">
-                    </div>
-                    <div class="form-group-2">
-                      <label for="register-lastname">Last name </label>
-                      <input class="text-input input-big" id="register-lastname" type="text">
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="register-password">Password </label>
-                    <input autocomplete="new-password" class="text-input input-big" id="register-password" type="password">
-                  </div>
-                  <div class="form-group">
-                    <label for="register-repeat-password">Repeat password </label>
-                    <input autocomplete="new-password" class="text-input input-big" id="register-repeat-password" type="password">
-                    <div class="register-incorrect-repeat hidden">Passwords don't match!</div>
-                  </div>
-                  <div class="spoiler-wrapper">
-                    <div class="spoiler-click-target" tabindex="0"><span class="spoiler-state" style="font-size: 12px; padding-right: 4px;" >▼</span><label class="spoiler-message" for="register-register-token">Have a code to enter? Click and enter it below</label></div>
-                    <input class="text-input input-big spoiler-target spoiler-hide" style="font-size: 12px; line-height: 12px; height: 24px;" id="register-register-token" type="text">
-                  </div>
-                  <br />
-                  <input type="submit" style="display: none;">
-                  <button type="submit" class="btn btn-big btn-standard center">Register</button>
-                  <p class="subtext">Already have an account? <a class="register-sublink" style="cursor:pointer;" onclick="window.location.replace('/login' + window.location.search)">Log in!</a></p>
-                </form>
-              </div>
+            <div class="register_welcome">Welcome!</div>
+            <div class="register-info-box hidden">
+              <span class="service-name">...</span> requires a minimum account status of <span class="service-account_type">...</span>. You may not be allowed access.<br />
+              Newly created accounts have a status of <span class="service-account_type">default</span>.
             </div>
+            <div class="register-container">
+              <form class="register" id="register" method="POST" action="/register">
+                <div class="form-group">
+                  <label for="register-username">Username </label>
+                  <input autocomplete="username" class="text-input input-big" id="register-username" type="text">
+                </div>
+                <div class="form-group">
+                  <label for="register-email">Email </label>
+                  <input class="text-input input-big" id="register-email" type="email">
+                </div>
+                <div class="form-group">
+                  <div class="form-group-2">
+                    <label for="register-firstname">First name </label>
+                    <input class="text-input input-big" id="register-firstname" type="text">
+                  </div>
+                  <div class="form-group-2">
+                    <label for="register-lastname">Last name </label>
+                    <input class="text-input input-big" id="register-lastname" type="text">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="register-password">Password </label>
+                  <input autocomplete="new-password" class="text-input input-big" id="register-password" type="password">
+                </div>
+                <div class="form-group">
+                  <label for="register-repeat-password">Repeat password </label>
+                  <input autocomplete="new-password" class="text-input input-big" id="register-repeat-password" type="password">
+                  <div class="register-incorrect-repeat hidden">Passwords don't match!</div>
+                </div>
+                <div class="spoiler-wrapper">
+                  <div class="spoiler-click-target" tabindex="0"><span class="spoiler-state" style="font-size: 12px; padding-right: 4px;" >▼</span><label class="spoiler-message" for="register-register-token">Have a code to enter? Click and enter it below</label></div>
+                  <input class="text-input input-big spoiler-target spoiler-hide" style="font-size: 12px; line-height: 12px; height: 24px;" id="register-register-token" type="text">
+                </div>
+                <br />
+                <input type="submit" style="display: none;">
+                <button type="submit" class="btn btn-big btn-standard center">Register</button>
+                <p class="subtext">Already have an account? <a class="register-sublink" style="cursor:pointer;" onclick="window.location.replace('/login' + window.location.search)">Log in!</a></p>
+              </form>
+            </div>
+          </div>
+          <div class="footer margin-center">
+            <div class="tos-accept-message">By logging in or registering you agree to the <a class="no-style" href="/tos">ToS</a> and accept the use of cookies.</div>
+            <div class="links">
+                <a href="/tos">Terms and Conditions</a>
+                <a href="/about">About</a>
+                <a href="/cookies">Cookies</a>
+                <a href="/data">Data</a>
+            </div>
+          </div>
       </div>
     </div>
     <script src="./util.js"></script>
@@ -84,6 +93,12 @@
         $toggleTheme(storageObject.theme)
       } else {
         $toggleTheme('light')
+      }
+
+      if(getUrlParameter('rt')) {
+        console.log('has register token', getUrlParameter('rt'))
+        document.querySelector('#register-register-token').value = getUrlParameter('rt')
+        document.querySelector('.spoiler-wrapper').style.display = 'none'
       }
 
       getServiceInfo(getUrlParameter('id'), function(json) {

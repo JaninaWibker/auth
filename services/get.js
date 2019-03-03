@@ -1,4 +1,4 @@
-module.exports = (serviceCache) => (req, res) => {
+module.exports = (serviceCache) => (method) => (req, res) => {
 
   if(!req.params.id) res.json({ message: 'supply id/name/app/cb (/service/:method/:id)', status: 'failure' })
 
@@ -17,7 +17,7 @@ module.exports = (serviceCache) => (req, res) => {
     }
   }
 
-  switch(req.params.method) {
+  switch(method) {
     case 'by-id':   return res.json(find_match('id'))
     case 'by-name': return res.json(find_match('name'))
     case 'by-app':  return res.json(find_match('app'))

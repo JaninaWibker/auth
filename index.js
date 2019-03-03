@@ -52,7 +52,10 @@ app.post(['/register', '/service/register'], services.register(validateRegisterT
 
 app.get(['/public_key', '/service/public_key'], services.public_key(public_key))
 
-app.get(['/:method/:id?', '/service/:method/:id?'], services.get)
+app.get(['/by-id/:id?', '/service/by-id/:id?'], services.get('by-id'))
+app.get(['/by-name/:id?', '/service/by-name/:id?'], services.get('by-name'))
+app.get(['/by-app/:id?', '/service/by-app/:id?'], services.get('by-app'))
+app.get(['/by-cb/:id?', '/service/by-cb/:id?'], services.get('by-cb'))
 
 app.post('/generate-register-token', passport.authenticate('jwt', { session: false }), registertokens.generate(generateRegisterToken))
 

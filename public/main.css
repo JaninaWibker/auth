@@ -100,6 +100,7 @@ body.theme-dark {
 
 @media (max-width: 420px) {
   .container {
+    width: 100%;
     max-width: 400px;
     padding: 0px;
   }
@@ -110,6 +111,8 @@ body.theme-dark {
     width: 380px;
     padding: 10px;
   }
+
+  
 }
 
 .margin-center {
@@ -327,7 +330,6 @@ body.theme-dark .theme-chooser .enable-dark-theme-a {
 .footer {
   width: 438px;
   max-width: calc(100% - 20px);
-  height: 58px;
   padding: 10px 0px;
   text-align: center;
 }
@@ -394,7 +396,7 @@ body.theme-dark .theme-chooser .enable-dark-theme-a {
   flex-wrap: wrap;
   margin: 0px 8px 0px 16px;
   width: min-content;
-  max-width: 100%;
+  max-width: calc(100% - 24px);
 }
 
 .user-profile-group-vertical {
@@ -453,6 +455,26 @@ body.theme-dark .theme-chooser .enable-dark-theme-a {
 
 .user-profile-field#user-profile-username {
   font-weight: bold;
+}
+
+@media (max-width: 420px) {
+
+  .user-profile-info-wrapper {
+    margin: 0px auto 0px auto;
+  }
+
+  .user-profile-group-horizontal {
+    width: 350px;
+  }
+
+  .user-profile-group-vertical {
+    width: 175px;
+  }
+
+  .user-profile-group-horizontal .user-profile-field-block {
+    width: 175px;
+    overflow: hidden;
+  }
 }
 
 .heading-sub {

@@ -105,6 +105,12 @@ body.theme-dark {
     padding: 0px;
   }
 
+  .container.small-padding {
+    padding-left: 8px;
+    padding-right: 8px;
+    width: calc(100% - 16px);
+  }
+
   .login-box, .register-box {
     margin-top: 80px;
     border: none;

@@ -122,7 +122,7 @@
         const loginUsername = continueAsContainer.querySelector('.login-continue-as-username')
 
         // settings values
-        loginFullname.innerText = storageObject.fullname || '<no name available>'
+        loginFullname.innerText = storageObject.fullname || storageObject.username || '<no name available>' // sometimes the fullname is not available (don't know why exactly), now showing the username instead of "<no name available>" since this does not look as much like a failure on the side of the site / service. This error of not finding the exact username will have to be fixed sometime soon.
         loginUsername.innerText = storageObject.username
         profilePicture.innerText = (storageObject.username || '').substring(0, 1)
         

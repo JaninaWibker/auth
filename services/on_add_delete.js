@@ -1,4 +1,6 @@
 const jwt = require('jsonwebtoken')
+const { event } = require('../analytics.js')
+const isProduction = require('dotenv').config().parsed['ENVIRONMENT'] === 'PROD'
 
 const { fetchTimeout } = require('../utils/fetch.js')
 
@@ -10,6 +12,11 @@ const format_date = (date=new Date()) =>
   date.toLocaleDateString().replace(/\//g, '-') + '@' + date.toLocaleTimeString()
 
 const mapService = (logStr, payload, service) => {
+  if(isProduction) event({
+    category: 'SERVICE_ADD',
+    title: `${service.name} has been added to the list of services`,
+    data: service
+  })
   if(LOGGING) console.log(
     '[' + format_date() + '][' + logStr + ']',
     {name: service.name, account_type: service.account_type},

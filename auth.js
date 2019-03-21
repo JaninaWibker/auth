@@ -5,6 +5,7 @@ const jwtCache = new _cache.Cache()
 const refreshTokenCache = new _cache.Cache()
 const db = require('./db.js')
 const RSA = require('node-rsa')
+const { bug } = require('./analytics.js')
 
 const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {}}) => {
 
@@ -29,12 +30,13 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
   const addToCache = (id, token, payload, time) => {
     return onAdd(id, token, payload)
       .then(() => jwtCache.put(id, token, time)) // TODO - order
-      .catch(console.log)
+      .catch(err => bug({ category: 'CACHE_ERROR', error: err, metadata: { type: 'ADD', id, token, payload } }))
   }
 
   const removeFromCache = (id, payload={account_type: 'default'}) => {
     return onDelete(id, jwtCache.get(id), payload)
       .then(() => jwtCache.del(id))
+      .catch(() => bug({ category: 'CACHE_ERROR', error: err, metadata: { type: 'REMOVE', id, payload }}))
   }
 
   const strategy = new JWTStrategy(jwtOptions, (jwt_payload, cb) => {
@@ -125,6 +127,7 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
     try {
       decrypted_data = rsa.decryptPublic(Buffer.from(register_token.replace(/\-/g, '+').replace(/\_/g, '/'), 'base64'))  
     } catch (error) {
+      bug({ category: 'REGISTERTOKEN_DECRYPT_FAILURE', error: error, metadata: { register_token } })
       return { message: 'decryption failed, encrypted using invalid private key (this could just mean that environments were switched while making the request (local development / production)', status: 'failure' }
     }
 

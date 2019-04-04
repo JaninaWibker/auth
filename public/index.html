@@ -153,17 +153,18 @@
             if(json.status === 'success') {
               // testIfRefreshTokenWorks tries to log-in with the refresh-token, this is exactly what
               // is needed here. The verb 'test' may be somewhat wrong but it is the wanted behaviour.
-              testIfRefreshTokenWorks(getStorage('refreshToken'), function(err, bool) {
-                if(bool) {
-                  // testIfJwtWorks updates the saved user data. This is again exactly what is wanted,
-                  // but also again somewhat misleading name-whise. The result of the test is unimportant
-                  // since it must true since the jwt has just been generated.
-                  testIfJwtWorks(getStorage('jwt'), function(err, bool) {
-                    if(bool) cb(null, JSON.parse(getStorage('user')))
-                    else cb(true, null)
-                  })
-                }
-              })
+              // testIfRefreshTokenWorks(getStorage('refreshToken'), function(err, bool) {
+              //   if(bool) {
+              //     // testIfJwtWorks updates the saved user data. This is again exactly what is wanted,
+              //     // but also again somewhat misleading name-whise. The result of the test is unimportant
+              //     // since it must true since the jwt has just been generated.
+              //     testIfJwtWorks(getStorage('jwt'), function(err, bool) {
+              //       if(bool) cb(null, JSON.parse(getStorage('user')))
+              //       else cb(true, null)
+              //     })
+              //   }
+              // })
+              updateSavedUserData(getStorage('refreshToken'), cb)
             } else {
               cb(true, null) // this needs to become a real error instead of just 'true'
             }
@@ -245,13 +246,13 @@
       }
 
       if(storageObject.jwt) {
-        testIfJwtWorks(storageObject.jwt, (err, bool) => {
+        testIfJwtWorks(storageObject.jwt, function cbTestIfJwtWorks(err, bool) {
           if(err) return redirectToLogin()
 
           if(bool) {
             return showMainPage()
           } else {
-            testIfRefreshTokenWorks(storageObject.refreshToken, (err, bool) => {
+            testIfRefreshTokenWorks(storageObject.refreshToken, function cbTestIfRefreshTokenWorks(err, bool) {
 
               if(err) return redirectToLogin()
 
@@ -262,7 +263,7 @@
           }
         })
       } else {
-        testIfRefreshTokenWorks(storageObject.refreshToken, (err, bool) => {
+        testIfRefreshTokenWorks(storageObject.refreshToken, function cbTestIfRefreshTokenWorks(err, bool) {
           if(err) return redirectToLogin()
           if(bool) {
             return showMainPage()

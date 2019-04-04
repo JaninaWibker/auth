@@ -46,7 +46,7 @@ function testIfJwtWorks(token, cb) {
       }
       
     })
-    .catch(function catchTestIfJwtWorks(err) { console.log(err); return cb(err, false)})
+    .catch(function catchTestIfJwtWorks(err) { return cb(err, false)})
 }
 
 function testIfRefreshTokenWorks(token, cb) {
@@ -61,6 +61,55 @@ function testIfRefreshTokenWorks(token, cb) {
       }
     })
     .catch(function catchTestIfRefreshTokenWorks(err) { return cb(err, false) })
+}
+
+function updateSavedUserData(token, cb) {
+  // testIfRefreshTokenWorks tries to log-in with the refresh-token, this is exactly what
+  // is needed here. The verb 'test' may be somewhat wrong but it is the wanted behaviour.
+  // It also updates the stored jwt
+  testIfRefreshTokenWorks(token, function(err, bool) {
+    if(bool) {
+      // testIfJwtWorks updates the saved user data. This is again exactly what is wanted,
+      // but also again somewhat misleading name-whise. The result of the test is unimportant
+      // since it must true since the jwt has just been generated.
+      testIfJwtWorks(getStorage('jwt'), function(err, bool) {
+        if(bool) cb(null, JSON.parse(getStorage('user')))
+        else cb({ message: 'invalid JWT', status: 'failure', error: err }, null)
+      })
+    } else {
+      cb({ message: 'invalid RefreshToken', status: 'failure', error: err }, null)
+    }
+  })
+}
+
+function updateSavedUserDataIfNeeded(token, cb) {
+  const storageObject = getStorageObject()
+  if(storageObject.user || storageObject.refreshToken) {
+    let user
+    try {
+      user = JSON.parse(storageObject.user)
+      updateSavedUserData(storageObject.refreshToken, function cbUpdateSavedUserData(err, user) {
+        if(err)  {
+          setStorageObject({
+            theme: getStorage('theme'),
+            jwt: null,
+            refreshToken: null,
+            remember_me: false,
+            user: null,
+            username: null,
+            fullname: null,
+          })
+          cb({ message: 'could not retrieve updated user object, invalid RefreshToken, resetting storage', status: 'failure', error: err }, null)
+        } else {
+          cb(null, user)
+        }
+      })
+    } catch (err) {
+      cb({ message: 'could not deserialize storageObject.user, this means the data is corrupted', status: 'failure', error: err }, null)
+    }
+  } else {
+    cb({ message: 'no saved user found', status: 'failure', error: null }, null)
+  }
 }
 
 function createElement(type, attributes) {

@@ -179,7 +179,7 @@ body.theme-dark .theme-chooser .enable-dark-theme-a {
 }
 
 .login-info-box .service-account_type, .register-info-box .service-account_type {
-  background-color: #f8f8f8;
+  background-color: var(--grey-4-color);
   font-size: 12px;
   border-radius: 2px;
   color: #a36ad8;

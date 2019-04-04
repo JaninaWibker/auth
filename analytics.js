@@ -10,6 +10,8 @@ module.exports.log = ({ category, title, log, metadata }) => fetch(analytics_ser
     'Accept': 'application/json',
     'Content-Type': 'application/json'
   }
+}).catch(err => {
+  console.log('analytics server not available (' + err.type + '/' + err.code + ')', err.message)
 })
 
 module.exports.event = ({ category, title, data }) => fetch(analytics_server + '/analytics/auth', {
@@ -21,6 +23,8 @@ module.exports.event = ({ category, title, data }) => fetch(analytics_server + '
     'Accept': 'application/json',
     'Content-Type': 'application/json'
   }
+}).catch(err => {
+  console.log('analytics server not available (' + err.type + '/' + err.code + ')', err.message)
 })
 
 module.exports.bug = ({ category, error, metadata }) => fetch(analytics_server + '/bug/auth', {
@@ -32,4 +36,6 @@ module.exports.bug = ({ category, error, metadata }) => fetch(analytics_server +
     'Accept': 'application/json',
     'Content-Type': 'application/json'
   }
+}).catch(err => {
+  console.log('analytics server not available (' + err.type + '/' + err.code + ')', err.message)
 })

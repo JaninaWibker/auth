@@ -35,13 +35,13 @@ module.exports = (Login) => (req, res) => {
         isRefreshToken: isRefreshToken,
         getRefreshToken: getRefreshToken
       } })
-      else event({ category: 'LOGIN', title: `${req.body.username} logged in at ${format_date()} (${Date.now()})`, data: {
+      else event({ category: 'LOGIN', title: `${req.body.username} logged in at ${format_date()} (${Date.now()})`, data: [{
         username: req.body.username,
         refreshToken: isRefreshToken ? passwordOrRefreshToken : null,
         isRefreshToken: isRefreshToken,
         getRefreshToken: getRefreshToken,
         accessToken: accessToken
-      } })
+      }] })
 
       if(err || !accessToken) res.status(401).json({ message: 'authentication failed', status: 'failure' })
       else res.json({ message: 'authentication successful', status: 'success', token: accessToken, refreshToken: refreshToken })

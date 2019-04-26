@@ -15,7 +15,7 @@ const mapService = (logStr, payload, service) => {
   if(isProduction) event({
     category: 'SERVICE_ADD',
     title: `${service.name} has been added to the list of services`,
-    data: service
+    data: [service]
   })
   if(LOGGING) console.log(
     '[' + format_date() + '][' + logStr + ']',

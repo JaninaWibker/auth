@@ -18,6 +18,14 @@ if(config.ENABLE_LDAP === 'true') {
   ldap.listen(parseInt(config.LDAP_PORT, 10), (url) => console.log('LDAP server listening at ' + url))
 }
 
+global.atob = str => Buffer.from(str, 'base64').toString('binary')
+global.btoa = str => {
+  if(str instanceof Buffer)
+    return str.toString('base64')
+  else
+    return Buffer.from(str.toString(), 'binary').toString('base64')
+}
+
 const {
   JWTStrategy,
   Login,
@@ -29,12 +37,11 @@ const {
   generateRegisterToken
 } = require('./auth.js')({
   private_key: private_key, 
-  public_key: public_key, 
+  public_key: public_key,
   secret: config.SECRET.toString(),
   onAdd: services.onAdd(private_key),
   onDelete: services.onDelete(private_key)
 })
-
 
 const app = express()
 

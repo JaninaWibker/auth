@@ -3,7 +3,9 @@ const serviceCache = new _cache.Cache()
 
 const default_services = require('../default_services.json')
 
-default_services.forEach(service => serviceCache.put(service.id, service))
+default_services.forEach(service => 
+  !service.disabled && serviceCache.put(service.id, service)
+)
 
 serviceCache.put('auth', {
   id: 'auth',

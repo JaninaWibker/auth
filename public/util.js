@@ -123,40 +123,40 @@ function createElement(type, attributes) {
 }
 
 function getStorage(key) {
-  var st = window.localStorage.getItem('accounts.jannik.ml.storage')
+  var st = window.localStorage.getItem(window.location.hostname + '.storage')
   if(st) {
     st = JSON.parse(st)
   } else {
     st = {}
-    window.localStorage.setItem('accounts.jannik.ml.storage', '{}')
+    window.localStorage.setItem(window.location.hostname + '.storage', '{}')
   }
 
   return st[key]
 }
 
 function getStorageObject() {
-  var st = window.localStorage.getItem('accounts.jannik.ml.storage')
+  var st = window.localStorage.getItem(window.location.hostname + '.storage')
   if(st) {
     return JSON.parse(st)
   } else {
-    window.localStorage.setItem('accounts.jannik.ml.storage', '{}')
+    window.localStorage.setItem(window.location.hostname + '.storage', '{}')
     return {}
   }
 }
 
 function setStorage(key, value) {
-  var st = window.localStorage.getItem('accounts.jannik.ml.storage')
+  var st = window.localStorage.getItem(window.location.hostname + '.storage')
 
   if(st) st = JSON.parse(st)
   else st = {}
   
   st[key] = value
-  window.localStorage.setItem('accounts.jannik.ml.storage', JSON.stringify(st))
+  window.localStorage.setItem(window.location.hostname + '.storage', JSON.stringify(st))
   return value
 }
 
 function setStorageObject(obj) {
-  var st = window.localStorage.getItem('accounts.jannik.ml.storage')
+  var st = window.localStorage.getItem(window.location.hostname + '.storage')
 
   if(st) st = JSON.parse(st)
   else st = {}
@@ -166,7 +166,7 @@ function setStorageObject(obj) {
     st[keys[i]] = obj[keys[i]]
   }
 
-  window.localStorage.setItem('accounts.jannik.ml.storage', JSON.stringify(st))
+  window.localStorage.setItem(window.location.hostname + '.storage', JSON.stringify(st))
   return obj
 }
 
@@ -175,7 +175,7 @@ function removeStorage(key) {
 }
 
 function resetStorage() {
-  window.localStorage.setItem('accounts.jannik.ml.storage', '{}')
+  window.localStorage.setItem(window.location.hostname + '.storage', '{}')
 }
 
 function $toggleTheme(theme, doSetStorage=true) {

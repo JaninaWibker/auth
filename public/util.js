@@ -11,8 +11,8 @@ function getServiceInfo(id, cb) {
     .then(cb)
 }
 
-function login(username, passwordOrRefreshToken, isRefreshToken=false, getRefreshToken=false) {
-  return window.fetch('/login', {
+function login(username, passwordOrRefreshToken, isRefreshToken=false, getRefreshToken=false, alternativeOrigin="") {
+  return window.fetch(alternativeOrigin + '/login', {
     method: 'POST',
     body: JSON.stringify({
       username: username,
@@ -27,8 +27,8 @@ function login(username, passwordOrRefreshToken, isRefreshToken=false, getRefres
   })
 }
 
-function testIfJwtWorks(token, cb) {
-  window.fetch('/users/test', {
+function testIfJwtWorks(token, cb, alternativeOrigin='') {
+  window.fetch(alternativeOrigin + '/users/test', {
     method: 'POST',
     headers: {
       'Accept': 'application/json',

@@ -153,7 +153,6 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
     */
     try {
       payload = JSON.parse(rsa.decrypt(tokenBuffer))
-      // payload = JSON.parse(tokenBuffer)
     } catch(e) {
       console.log(e)
       return false

@@ -49,8 +49,8 @@ function testIfJwtWorks(token, cb, alternativeOrigin='') {
     .catch(function catchTestIfJwtWorks(err) { return cb(err, false)})
 }
 
-function testIfRefreshTokenWorks(token, cb) {
-  login(storageObject.username, token, true, false)
+function testIfRefreshTokenWorks(token, cb, alternativeOrigin="") {
+  login(storageObject.username, token, true, false, alternativeOrigin)
     .then(function(res) { return res.json() })
     .then(function(json) {
       if(json.status === 'failure') {

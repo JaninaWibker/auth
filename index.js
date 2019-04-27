@@ -34,7 +34,8 @@ const {
   manualAddToCache,
   generateRefreshToken,
   validateRegisterToken,
-  generateRegisterToken
+  generateRegisterToken,
+  validateService
 } = require('./auth.js')({
   private_key: private_key, 
   public_key: public_key,
@@ -55,7 +56,7 @@ app.use(passport.initialize())
 
 app.get('/current-version', (_, res) => res.send(version))
 
-app.post(['/register', '/service/register'], services.register(validateRegisterToken, public_key))
+app.post(['/register', '/service/register'], services.register(validateService, public_key))
 
 app.get(['/public_key', '/service/public_key'], services.public_key(public_key))
 

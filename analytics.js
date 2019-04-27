@@ -17,7 +17,9 @@ module.exports.log = ({ category, title, log, metadata }) => fetch(analytics_ser
 module.exports.event = ({ category, title, data }) => fetch(analytics_server + '/analytics/auth', {
   method: 'POST',
   body: JSON.stringify({
-    category, title, data
+    data: [
+      {category, title, data}
+    ]
   }),
   headers: {
     'Accept': 'application/json',

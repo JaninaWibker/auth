@@ -7,8 +7,10 @@
   "dependencies": {
     "arg": "^2.0.0",
     "body-parser": "^1.18.3",
+    "cookie-parser": "^1.4.4",
     "dotenv": "^6.0.0",
     "express": "^4.16.3",
+    "full-icu": "^1.2.1",
     "jsonwebtoken": "^8.3.0",
     "ldapjs": "^1.0.2",
     "memory-cache": "^0.2.0",

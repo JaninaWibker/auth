@@ -1,6 +1,3 @@
-const format_date = (date=new Date()) => 
-  date.toLocaleDateString().replace(/\//g, '-') + '@' + date.toLocaleTimeString()
-
 module.exports = (serviceCache) => (validateService, public_key) => (req, res) => {
   console.log('[' + format_date() + '][service/register] "' + req.body.data.name + '" trying to register...')
   if(validateService(Buffer.from(req.get('Authorization').substr('Bearer '.length), 'base64'), {...req.body.data, timestamp: req.body.timestamp})) {

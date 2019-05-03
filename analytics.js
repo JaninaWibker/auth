@@ -18,7 +18,7 @@ module.exports.event = ({ category, title, data }) => fetch(analytics_server + '
   method: 'POST',
   body: JSON.stringify({
     data: [
-      {category, title, data}
+      {category, title, data, timestamp: Date.now()}
     ]
   }),
   headers: {

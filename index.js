@@ -1,7 +1,10 @@
 const express = require('express')
 const bodyParser = require('body-parser')
+const cookieParser = require('cookie-parser')
 const passport = require('passport')
 const fs = require('fs')
+const format_date = require('./utils/format_date.js')
+global.format_date = format_date
 const cors = require('./utils/cors.js')
 const users = require('./users/index.js')
 const registertokens = require('./registertokens/index.js')
@@ -52,6 +55,7 @@ app.use(express.static('public', { index: 'index.html', extensions: ['html'] }))
 app.use(cors)
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
+app.use(cookieParser())
 app.use(passport.initialize())
 
 app.get('/current-version', (_, res) => res.send(version))

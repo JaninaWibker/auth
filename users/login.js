@@ -1,7 +1,5 @@
 const isProduction = require('dotenv').config().parsed['ENVIRONMENT'] === 'PROD'
 const { event, bug } = require('../analytics.js')
-const format_date = (date=new Date()) =>
-  date.toLocaleDateString().replace(/\//g, '-') + '@' + date.toLocaleTimeString()
 
 module.exports = (Login) => (req, res) => {
   const isRefreshToken = req.body.isRefreshToken || req.body.password.startsWith('Refresh-Token:')
@@ -33,15 +31,21 @@ module.exports = (Login) => (req, res) => {
         username: req.body.username,
         refreshToken: isRefreshToken ? passwordOrRefreshToken : null,
         isRefreshToken: isRefreshToken,
-        getRefreshToken: getRefreshToken
+        getRefreshToken: getRefreshToken,
+        clientId: req.cookies.clientId
       } })
-      else event({ category: 'LOGIN', title: `${req.body.username} logged in at ${format_date()} (${Date.now()})`, data: [{
+      else event({ category: 'LOGIN', title: `${req.body.username} logged in at ${format_date()} (${Date.now()})`, data: {
         username: req.body.username,
         refreshToken: isRefreshToken ? passwordOrRefreshToken : null,
         isRefreshToken: isRefreshToken,
         getRefreshToken: getRefreshToken,
-        accessToken: accessToken
-      }] })
+        accessToken: accessToken,
+        clientId: req.cookies.clientId,
+        ip: req.ip,
+        useragent: req.get('User-Agent'),
+        https: req.secure,
+        method: req.method,
+      } })
 
       if(err || !accessToken) res.status(401).json({ message: 'authentication failed', status: 'failure' })
       else res.json({ message: 'authentication successful', status: 'success', token: accessToken, refreshToken: refreshToken })

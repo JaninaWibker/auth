@@ -1,8 +1,5 @@
 const db = require('../db.js')
 
-const format_date = (date=new Date()) =>
-  date.toLocaleDateString().replace(/\//g, '-') + '@' + date.toLocaleTimeString()
-
 module.exports = (req, res) => {
   if(req.user.account_type === 'admin') {
     const data = req.body

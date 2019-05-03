@@ -8,9 +8,6 @@ const LOGGING = true
 
 const account_types = ['default', 'privileged', 'admin']
 
-const format_date = (date=new Date()) =>
-  date.toLocaleDateString().replace(/\//g, '-') + '@' + date.toLocaleTimeString()
-
 const mapService = (logStr, payload, service) => {
   if(isProduction) event({
     category: 'SERVICE_ADD',

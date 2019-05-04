@@ -116,7 +116,10 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
     } 
   }
 
-  const Logout = (id, cb) => removeFromCache(id).then(cb)
+  const Logout = (id, cb) => {
+    const userIsLoggedIn = jwtCache.keys().includes(id.toString())
+    removeFromCache(id).then(bool => cb(userIsLoggedIn ? bool : true))
+  }
 
   const validateRegisterToken = (register_token) => {
 

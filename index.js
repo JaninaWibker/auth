@@ -12,8 +12,8 @@ const services = require('./services/index.js')
 const { version } = require('./package.json')
 
 const config = require('dotenv').config().parsed
-const private_key = fs.readFileSync('private.key', 'utf8')
-const public_key = fs.readFileSync('public.key', 'utf8')
+const private_key = fs.readFileSync('certs/auth/private.key', 'utf8')
+const public_key = fs.readFileSync('certs/auth/public.key', 'utf8')
 
 const ldap = config.ENABLE_LDAP === 'true' ? require('./ldap/index.js') : null
 

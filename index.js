@@ -1,3 +1,4 @@
+const config = require('dotenv').config().parsed
 const express = require('express')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
@@ -11,7 +12,6 @@ const registertokens = require('./registertokens/index.js')
 const services = require('./services/index.js')
 const { version } = require('./package.json')
 
-const config = require('dotenv').config().parsed
 const private_key = fs.readFileSync('certs/auth/private.key', 'utf8')
 const public_key = fs.readFileSync('certs/auth/public.key', 'utf8')
 

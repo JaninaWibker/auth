@@ -1,5 +1,32 @@
+const { Pool } = require('pg')
 const crypto = require('crypto')
 const speakeasy = require('speakeasy')
+const fs = require('fs')
+
+const config = {
+  database: 'auth',
+  host: process.env.POSTGRES_SERVER,
+  port: process.env.POSTGRES_PORT || 5432,
+  user: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD,
+  ssl: {
+    rejectUnauthorized: false,
+    ca: fs.readFileSync(process.env.POSTGRES_CA, 'utf8'),
+    key: fs.readFileSync(process.env.POSTGRES_KEY, 'utf8'),
+    cert: fs.readFileSync(process.env.POSTGRES_CERT, 'utf8')
+  }
+}
+
+const pool = new Pool(config)
+
+// client.connect((err) => {
+//   if (err) {
+//     console.error('error connecting', err.stack)
+//   } else {
+//     console.log('connected')
+//     client.end()
+//   }
+// })
 
 const gen_salt = () => crypto.randomBytes(48).toString('base64')
 

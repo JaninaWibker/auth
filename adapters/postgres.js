@@ -19,14 +19,7 @@ const config = {
 
 const pool = new Pool(config)
 
-// client.connect((err) => {
-//   if (err) {
-//     console.error('error connecting', err.stack)
-//   } else {
-//     console.log('connected')
-//     client.end()
-//   }
-// })
+const clientPromise = pool.connect()
 
 const gen_salt = () => crypto.randomBytes(48).toString('base64')
 
@@ -37,23 +30,78 @@ const hash_password = (password, salt) => {
   return hash.digest('hex')
 }
 
-const authenticateUserIfExists = (username, password, code_2fa, cb) => {}
+const select_postgres_to_general = (res) => ({
+  action: res.command,
+  count: res.rowCount,
+  rows: res.rows
+})
 
-const activateTwoFactorAuthentication = (username_or_email, cb) => {}
+const delete_postgres_to_general = (res, id) => ({
+  action: res.command,
+  changes: res.rowCound,
+  lastID: id,
+})
 
-const deactivateTwoFactorAuthentication = (username_or_email, cb) => {}
+const authenticateUserIfExists = (username_or_email, password, code_2fa, cb) => clientPromise.then(client => 
+  client.query('SELECT salt FROM auth_user WHERE (username = $1::text OR email = $1::text) AND (temp_account = to_timestamp(0) OR temp_account < current_timestamp)', [username_or_email]) // temp_account < current_timestamp will not work like this probably
+    .then(_res => {
+      const res = select_postgres_to_general(_res)
+      if(res.count === 0) return cb(null, false)
+      const hash = hash_password(password, res.rows[0].salt)
+      
+      client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb FROM auth_user WHERE (username = $1::text OR email = $1::text) AND password = $2::text', [username_or_email, hash])
+        .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
+        .catch(err => cb(err, false, { message: 'incorrect password' }))
+    })
+    .catch(err => {
+      console.log(err)
+      cb(null, false, { message: 'user not found' })
+    })
+)
 
-const validateTwoFactorCode = (username_or_email, code, cb) => {}
+const activateTwoFactorAuthentication = (username_or_email, cb) => clientPromise.then(client =>
+  client.query('UPDATE auth_user SET twofa = true, twofa_secret = $1::text WHERE username = $2::text OR email = $3::text', [speakeasy.generateSecret({length: 20}).base32, username_or_email, username_or_email])  
+)
 
-const getUserIfExists = (username, cb) => {}
+const deactivateTwoFactorAuthentication = (username_or_email, cb) => clientPromise.then(client =>
+  client.query('UPDATE auth_user SET twofa = false, twofa_secret = NULL WHERE username = $1::text OR email = $2::text', [username_or_email, username_or_email])
+    .then(cb)
+)
 
-const getUserFromEmailIfExists = (email, cb) => {}
+const validateTwoFactorCode = (username_or_email, code, cb) => clientPromise.then(client =>
+  client.query('SELECT twofa_secret FROM auth_user WHERE twofa = true AND (username = $1::text OR email $2::text)', [username_or_email, username_or_email])
+    .then(res => speakeasy.totp.verify({
+      secret: select_postgres_to_general(res).rows[0].twofa_secret,
+      encoding: 'base32',
+      token: code
+    }))
+      .then(cb)
+)
+
+const getUserIfExists = (username, cb) => clientPromise.then(client =>
+  client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb FROM auth_user WHERE username = $1::text', [username])
+    .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
+    .catch(err => cb(null, false, { message: 'user not found' }))
+)
+
+const getUserFromEmailIfExists = (email, cb) => clientPromise.then(client =>
+  client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb FROM auth_user WHERE email = $1::text', [email])
+    .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
+    .catch(err => cb(null, false, { message: 'user not found' }))
+)
 
 const getUserFromIdIfExists = (id, cb) => IdToUserData(id, cb)
 
-const getUserLimitedIfExists = (username, cb) => {}
+const getUserLimitedIfExists = (username, cb) => clientPromise.then(client => 
+  client.get('SELECT username, id::int, first_name FROM auth_user WHERE username = $1::text', username)
+    .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
+    .catch(err => cb(null, false, { message: 'user not found' }))  
+)
 
-const _doesUserExist = ({id = '', username = '', email = ''}, cb) => {}
+const _doesUserExist = ({id = '', username = '', email = ''}, cb) => clientPromise.then(client =>
+  client.query('SELECT id::int FROM auth_user WHERE id = $1::int OR username = $2::text OR email = $3::text', [id, username, email])
+    .then(res => select_postgres_to_general(res).rows[0] ? cb(true) : cb(false))
+)
 
 const doesUserExistById = (id, cb) => _doesUserExist({id: id}, cb)
 
@@ -61,19 +109,118 @@ const doesUserExistByUsername = (username, cb) => _doesUserExist({username: user
 
 const doesUserExistByEmail = (email, cb) => _doesUserExist({email: email}, cb)
 
-const getUserList = (cb) => {}
+const getUserList = (cb) => clientPromise.then(client =>
+  debug.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb, twofa::boolean, twofa_secret, passwordless::boolean, temp_account::int FROM auth_user')
+)
 
 const UserDataToId = (userData, cb) => cb(null, userData.id)
 
-const IdToUserData = (id, cb) => {}
+const IdToUserData = (id, cb) => clientPromise.then(client =>
+  client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb, temp_account::boolean FROM id = $1::int', [id])
+    .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
+    .catch(err => cb(null, false, { message: 'user not found', err: err }))
+)
 
-const addUser = (username, password, first_name, last_name, email, account_type = 'default', metadata = {}, is_passwordless=false, temp_account=0, cb) => {}
+const addUser = (username, password, first_name, last_name, email, account_type = 'default', metadata = {}, is_passwordless=false, temp_account=0, cb) => {
+  if(password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token:')) {
+    return cb({ message: 'cannot set password to string starting with Refresh-Token or Get-Refresh-Token' }, null)
+  }
 
-const modifyUser = (id, { username, password, first_name, last_name, email }, cb) => {}
+  const salt = gen_salt()
 
-const privilegedModifyUser = (id, { username, password, first_name, last_name, email, account_type, metadata, temp_account }, cb) => {}
+  const newUser = [
+    first_name,
+    last_name,
+    email,
+    username,
+    hash_password(password, salt),
+    salt,
+    account_type,
+    metadata,
+    false, // 2fa
+    null, // 2fa_secret
+    is_passwordless,
+    temp_account
+  ]
 
-const deleteUser = (id, cb) => {}
+  clientPromise.then(client =>
+    client.query('SELECT id::int, * FROM auth_user WHERE username = $1::text OR email $2::text', username, email)
+      .then(res => {
+        if(res.rowCount === 0) {
+          const userKeys = 'first_name, last_name, email, username, password, salt, creation_date, modification_date, account_type, metadata, twofa, twofa_secret, passwordless, temp_account'
+          const userValues = '$1::text, $2::text, $3::text, $4::text, $5::text, $6::text, current_timestamp, current_timestamp, $7::text, $8::jsonb, $9::boolean, $10::text, $11::boolean, $12::timestamptz'
+          client.query('INSERT INTO auth_user ( ' + userKeys + ' ) VALUES ( ' + userValues + ' )', newUser)
+            .then(res => cb(null, select_postgres_to_general(res).rows[0]))
+            .catch(err => cb(err, null))
+        } else {
+          cb({ message: 'username or email already exists' }, null)
+        }
+      })  
+  )
+}
+
+const modifyUser = (id, { username, password, first_name, last_name, email }, cb) => {
+  clientPromise.then(client =>
+    client.query('SELECT username, id::int, first_name, last_name, email, salt, password, creation_date, modification_date FROM auth_user WHERE id = $1::int', [id])
+      .then(res => {
+        const salt = gen_salt()
+        if(password && (password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token'))) {
+          return cb({ message: 'cannot set password to string starting with isRefreshToken or getRefreshToken' }, null)
+        }
+        client.query(
+          'UPDATE auth_user SET username = $1::text, first_name = $2::text, last_name = $3::text, email = $4::text, salt = $5::text, password = $6::text, modification_date = current_timestamp WHERE id = $7::int',
+          [
+            username || res.rows[0].username,
+            first_name || res.rows[0].first_name,
+            last_name || res.rows[0].last_name,
+            email || res.rows[0].email,
+            password ? salt : res.rows[0].salt,
+            password ? hash_password(password, salt) : res.rows[0].password,
+            id
+          ]
+        )
+          .then(res => cb(null, res))
+          .catch(err => cb(err, null))
+      })
+  )
+}
+
+const privilegedModifyUser = (id, { username, password, first_name, last_name, email, account_type, metadata, temp_account }, cb) => {
+  clientPromise.then(client =>
+    client.query('SELECT username, id::int, first_name, last_name, email, salt, password, creation_date, modification_date, account_type, metadata::jsonb, temp_account::boolean FROM auth_user WHERE id = $1::int', [id])
+      .then(res => {
+        const salt = gen_salt()
+        if(password && (password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token'))) {
+          return cb({ message: 'cannot set password to string starting with isRefreshToken or getRefreshToken' }, null)
+        }
+        client.query(
+          'UPDATE auth_user SET username = $1::text, first_name = $2::text, last_name = $3::text, email = $4::text, salt = $5::text, password = $6::text, modification_date = current_timestamp, account_type = $7::text, metadata = $8::text, temp_account = $9::boolean WHERE id = $10::int',
+          [
+            username || res.rows[0].username,
+            first_name || res.rows[0].first_name,
+            last_name || res.rows[0].last_name,
+            email || res.rows[0].email,
+            password ? salt : res.rows[0].salt,
+            password ? hash_password(password, salt) : res.rows[0].password,
+            account_type || res.rows[0].account_type,
+            metadata || res.rows[0].metadata,
+            temp_account || res.rows[0].temp_account || false,
+            id
+          ]
+        )
+          .then(res => cb(null, res))
+          .catch(err => cb(err, null))
+      })  
+  )
+}
+
+const deleteUser = (id, cb) => {
+  clientPromise.then(client =>
+    client.query('DELETE FROM auth_user WHERE id = $1::int', id)
+      .then(res => cb(null, delete_postgres_to_general(res, id)))
+      .catch(err => cb(err, 0))
+  )
+}
 
 module.exports = {
   User: {

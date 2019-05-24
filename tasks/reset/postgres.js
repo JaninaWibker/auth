@@ -16,11 +16,11 @@ INSERT INTO auth_user (
   current_timestamp, -- creation_date
   current_timestamp, -- modification_date
   $7::text, -- account_type
-  '{}', -- metadata
+  '{}'::jsonb, -- metadata
   false, -- 2fa
   '', -- 2fa_secret
   false, -- passwordless
-  0 -- temp_account
+  to_timestamp(0) -- temp_account
 )
 `
 
@@ -46,8 +46,8 @@ module.exports = () => pool.connect()
     console.log('[reset] removing all user entries from auth_user')
 
     await client.query('DELETE FROM auth_user;')
-      .then(res => console.log('[reset] '))
-      .catch(err => console.error('', err))
+      .then(res => console.log('[reset] resetting users successful', res))
+      .catch(err => console.error('[reset] resetting users failed', err))
 
     console.log('[reset] inserting dummy user "guest"')
 

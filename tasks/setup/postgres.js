@@ -13,11 +13,11 @@ CREATE TABLE auth_user (
   creation_date timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
   modification_date timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
   account_type VARCHAR(16) NOT NULL DEFAULT 'default', -- account type can be: 'default', 'privileged', 'admin'
-  metadata VARCHAR(1024) NOT NULL DEFAULT '{}', -- custom metadata that can be used in the future
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb, -- custom metadata that can be used in the future
   twofa BOOLEAN DEFAULT false, -- whether 2 factor authentication is enabled or not
   twofa_secret VARCHAR(32) DEFAULT NULL, -- 2 factor authentication secret
   passwordless BOOLEAN DEFAULT false, -- whether a password is set initially or not, if not the password needs to be set when first logging in
-  temp_account bigint DEFAULT 0 -- 0 for not a temporary account; date value for date the account expires. Upon expiring the account is disabled, deleted or has his account_type set to 'default'
+  temp_account timestamptz DEFAULT to_timestamp(0) -- 0 for not a temporary account; date value for date the account expires. Upon expiring the account is disabled, deleted or has his account_type set to 'default'
 );
 `
 
@@ -36,11 +36,11 @@ INSERT INTO auth_user (
   current_timestamp, -- creation_date
   current_timestamp, -- modification_date
   $7::text, -- account_type
-  '{}', -- metadata
+  '{}'::jsonb, -- metadata
   false, -- 2fa
   '', -- 2fa_secret
   false, -- passwordless
-  0 -- temp_account
+  to_timestamp(0) -- temp_account
 )
 `
 

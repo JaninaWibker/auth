@@ -13,6 +13,20 @@ const hash_password = (password, salt) => {
   return hash.digest('hex')
 }
 
+const select_sqlite_to_general = (rows) => ({
+  action: 'SELECT',
+  count: rows.length,
+  rows: rows
+})
+
+const select_sqlite_get_to_general = (row) => select_sqlite_to_general([row])
+
+const delete_sqlite_to_general = (res) => ({
+  action: res.sql,
+  changes: res.changes,
+  lastID: res.lastID
+})
+
 const authenticateUserIfExists = (username, password, code_2fa, cb) => {
   dbPromise.then(db =>
     db.get('SELECT salt FROM users WHERE (username = ? OR email = ?) AND (temp_account = 0 OR temp_account < datetime("now"))', username, username)
@@ -24,7 +38,11 @@ const authenticateUserIfExists = (username, password, code_2fa, cb) => {
           .then(row => cb(null, row ? row : false))
           .catch(err => cb(err, false, { message: 'incorrect password' }))
       })
-      .catch(err => (console.log(err), cb(null, false, { message: 'user not found' }))))
+      .catch(err => {
+        console.log(err);
+        cb(null, false, { message: 'user not found' })
+      })
+  )
 }
 
 const activateTwoFactorAuthentication = (username_or_email, cb) => {
@@ -48,13 +66,13 @@ const validateTwoFactorCode = (username_or_email, code, cb) => {
         encoding: 'base32',
         token: code
       }))
-      .then(cb))
+        .then(cb))
 }
 
 const getUserIfExists = (username, cb) => {
   dbPromise.then(db =>
     db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users WHERE username = ?', username)
-      .then(row => cb(null, row ? row : false))
+      .then(row => cb(null, select_sqlite_get_to_general(row).rows[0] || false))
       .catch(err => cb(null, false, { message: 'user not found' }))
   )
 }
@@ -62,7 +80,7 @@ const getUserIfExists = (username, cb) => {
 const getUserFromEmailIfExists = (email, cb) => {
   dbPromise.then(db =>
     db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users WHERE email = ?', email)
-      .then(row => cb(null, row ? row : false))
+      .then(row => cb(null, select_sqlite_get_to_general(row).rows[0] || false))
       .catch(err => cb(null, false, { message: 'user not found' }))
   )
 }
@@ -72,7 +90,7 @@ const getUserFromIdIfExists = (id, cb) => IdToUserData(id, cb)
 const getUserLimitedIfExists = (username, cb) => {
   dbPromise.then(db =>
     db.get('SELECT username, rowid as id, first_name FROM users WHERE username = ?', username) // can "rowid as id" be removed? this uses the username and nobody should need the user id of some other user so it can maybe be removed
-      .then(row => cb(null, row ? row : false))
+      .then(row => cb(null, select_sqlite_get_to_general(row).rows[0] || false))
       .catch(err => cb(null, false, { message: 'user not found' }))
   )
 }
@@ -94,7 +112,7 @@ const doesUserExistByEmail = (email, cb) => _doesUserExist({email: email}, cb)
 const getUserList = (cb) => {
   dbPromise.then(db =>
     db.all('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users')
-      .then(rows => cb(null, rows ? rows : false))
+      .then(res => cb(null, select_sqlite_to_general(res).rows || false))
       .catch(err => cb(null, false, { message: 'error while retrieving all users', err: err }))
   )
 }
@@ -206,8 +224,8 @@ const privilegedModifyUser = (id, { username, password, first_name, last_name, e
 const deleteUser = (id, cb) => {
   dbPromise.then(db =>
     db.run('DELETE FROM users WHERE rowid = ?', id)
-      .then(x => cb(null, x))
-      .catch(x => cb(x, 0))
+      .then(res => cb(null, delete_sqlite_to_general(res)))
+      .catch(err => cb(err, 0))
   )
 }
 

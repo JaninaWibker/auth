@@ -25,6 +25,8 @@ module.exports = () => dbPromise.then(async db => {
   console.log('[reset] removing all user entries from user')
 
   await db.run('DELETE FROM users;')
+    .then(res => console.log('[reset] resetting users successful', res))
+    .catch(err => console.error('[reset] resetting users failed', err))
 
   console.log('[setup] inserting dummy user "guest"')
 

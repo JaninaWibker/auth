@@ -9,12 +9,12 @@ const config = {
   port: process.env.POSTGRES_PORT || 5432,
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
-  ssl: {
+  ssl: process.env.POSTGRES_USE_SSL === 'true' ? {
     rejectUnauthorized: false,
     ca: fs.readFileSync(process.env.POSTGRES_CA, 'utf8'),
     key: fs.readFileSync(process.env.POSTGRES_KEY, 'utf8'),
     cert: fs.readFileSync(process.env.POSTGRES_CERT, 'utf8')
-  }
+  } : undefined
 }
 
 const pool = new Pool(config)
@@ -110,13 +110,15 @@ const doesUserExistByUsername = (username, cb) => _doesUserExist({username: user
 const doesUserExistByEmail = (email, cb) => _doesUserExist({email: email}, cb)
 
 const getUserList = (cb) => clientPromise.then(client =>
-  debug.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb, twofa::boolean, twofa_secret, passwordless::boolean, temp_account::int FROM auth_user')
+  client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb, twofa::boolean, twofa_secret, passwordless::boolean, temp_account FROM auth_user')
+    .then(res => cb(null, select_postgres_to_general(res).rows))
+    .catch(err => cb(null, false, { message: 'error while retrieving all users', err: err }))
 )
 
 const UserDataToId = (userData, cb) => cb(null, userData.id)
 
 const IdToUserData = (id, cb) => clientPromise.then(client =>
-  client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb, temp_account::boolean FROM id = $1::int', [id])
+  client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb, temp_account FROM auth_user WHERE id = $1::int', [id])
     .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
     .catch(err => cb(null, false, { message: 'user not found', err: err }))
 )
@@ -187,14 +189,14 @@ const modifyUser = (id, { username, password, first_name, last_name, email }, cb
 
 const privilegedModifyUser = (id, { username, password, first_name, last_name, email, account_type, metadata, temp_account }, cb) => {
   clientPromise.then(client =>
-    client.query('SELECT username, id::int, first_name, last_name, email, salt, password, creation_date, modification_date, account_type, metadata::jsonb, temp_account::boolean FROM auth_user WHERE id = $1::int', [id])
+    client.query('SELECT username, id::int, first_name, last_name, email, salt, password, creation_date, modification_date, account_type, metadata::jsonb, temp_account FROM auth_user WHERE id = $1::int', [id])
       .then(res => {
         const salt = gen_salt()
         if(password && (password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token'))) {
           return cb({ message: 'cannot set password to string starting with isRefreshToken or getRefreshToken' }, null)
         }
         client.query(
-          'UPDATE auth_user SET username = $1::text, first_name = $2::text, last_name = $3::text, email = $4::text, salt = $5::text, password = $6::text, modification_date = current_timestamp, account_type = $7::text, metadata = $8::text, temp_account = $9::boolean WHERE id = $10::int',
+          'UPDATE auth_user SET username = $1::text, first_name = $2::text, last_name = $3::text, email = $4::text, salt = $5::text, password = $6::text, modification_date = current_timestamp, account_type = $7::text, metadata = $8::text, temp_account = to_timestamp($9::int) WHERE id = $10::int',
           [
             username || res.rows[0].username,
             first_name || res.rows[0].first_name,
@@ -204,7 +206,7 @@ const privilegedModifyUser = (id, { username, password, first_name, last_name, e
             password ? hash_password(password, salt) : res.rows[0].password,
             account_type || res.rows[0].account_type,
             metadata || res.rows[0].metadata,
-            temp_account || res.rows[0].temp_account || false,
+            temp_account || res.rows[0].temp_account || 0,
             id
           ]
         )

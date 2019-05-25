@@ -9,7 +9,7 @@ module.exports = (registerTokenCache) => (generateRegisterToken) => (req, res) =
       const register_token = generateRegisterToken({
         id: registerTokenCacheIndex,
         timestamp: Date.now(),
-        ...req.body,
+        ...req.body, // this adds to additional information to the register token which is used when adding an account using a register token. 
         permanent: permanent,
         expireAt: permanent ? 0 : (req.body.expireAt || 30 * 60 * 1000),
       })
@@ -23,3 +23,5 @@ module.exports = (registerTokenCache) => (generateRegisterToken) => (req, res) =
     }
   })
 }
+
+// should register tokens be saved to a database? probably yes.

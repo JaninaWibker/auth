@@ -50,12 +50,12 @@ const config = {
   port: process.env.POSTGRES_PORT || 5432,
   user: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
-  ssl: {
+  ssl: process.env.POSTGRES_USE_SSL === 'true' ? {
     rejectUnauthorized: false,
     ca: fs.readFileSync(process.env.POSTGRES_CA, 'utf8'),
     key: fs.readFileSync(process.env.POSTGRES_KEY, 'utf8'),
     cert: fs.readFileSync(process.env.POSTGRES_CERT, 'utf8')
-  }
+  } : undefined
 }
 
 const pool = new Pool(config)

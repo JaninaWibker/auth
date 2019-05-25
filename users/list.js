@@ -11,6 +11,7 @@ const sendFailure = (res, message) => res.status(500).json({
 
 const sendSuccess = (res, users) => res.status(200).json({
   users: users,
+  count: users.length,
   status: 'success'
 })
 

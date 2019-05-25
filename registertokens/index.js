@@ -5,5 +5,6 @@ module.exports = {
   validate: require('./validate.js')(registerTokenCache),
   invalidate: require('./invalidate.js')(registerTokenCache),
   generate: require('./generate.js')(registerTokenCache),
+  list: require('./list.js')(registerTokenCache),
   registerTokenCache: registerTokenCache
 }

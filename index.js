@@ -73,7 +73,9 @@ app.post('/generate-register-token', passport.authenticate('jwt', { session: fal
 
 app.post('/validate-register-token', passport.authenticate('jwt', { session: false }), registertokens.validate(validateRegisterToken))
 
-app.post('/invalidate-register-token', passport.authenticate('jwt', { session: false }), registertokens.invalidate(validateRegisterToken))
+app.delete('/invalidate-register-token', passport.authenticate('jwt', { session: false }), registertokens.invalidate(validateRegisterToken))
+
+app.get('/list-register-tokens', passport.authenticate('jwt', { session: false }), registertokens.list())
 
 app.post(['/login', '/users/login'], users.login(Login))
 
@@ -84,10 +86,13 @@ app.post(['/add', '/users/add'], users.add({ registerTokenCache: registertokens.
 app.post(['admin/add', '/users/admin/add'], passport.authenticate('jwt', { session: false }), users.adminAdd)
 
 app.post(['/modify', '/users/modify'], passport.authenticate('jwt', { session: false }), users.modify(Logout))
+app.put('/users', passport.authenticate('jwt', { session: false }), users.modify(Logout))
 
 app.post(['/modify-self', '/users/modify-self'], passport.authenticate('jwt', { session: false }), users.modifySelf(Logout))
+app.put('/users/self', passport.authenticate('jwt', { session: false }), users.modifySelf(Logout))
 
 app.post(['/delete', '/users/delete'], passport.authenticate('jwt', { session: false }), users.delete)
+app.delete('/users', passport.authenticate('jwt', { session: false }), users.delete)
 
 app.post(['/test', '/users/test'], passport.authenticate('jwt', { session: false }), users.test)
 

@@ -228,21 +228,58 @@ const deleteUser = (id, cb) => {
   )
 }
 
-const listDevicesByUser = (user_id, cb) => {}
+const DEVICE_BASE_JOIN = `
+SELECT id, user_agent, ip, creation_date, is_revoked FROM device
+LEFT JOIN it_device_user it ON device.id === it.device_id
+LEFT JOIN auth_user ON it.user_id === auth_user.id 
+`
 
-const getDeviceByUserAndDeviceId = (user_id, device_id, cb) => {}
+const listDevicesByUser = (user_id, cb) => {
+  clientPromise.then(client =>
+    client.query(DEVICE_BASE_JOIN + 'WHERE auth_user.id === $1::int', [user_id]))
+}
 
-const getDeviceByDeviceId = (device_id, cb) => {}
+const getDeviceByUserAndDeviceId = (user_id, device_id, cb) => {
+  clientPromise.then(client =>
+    client.query(DEVICE_BASE_JOIN + 'WHERE auth_user.id = $1::int AND device.id = $2::uuid', [user_id, device_id])
+  )
+}
 
-const addDevice = (device, cb) => {}
+const getDeviceByDeviceId = (device_id, cb) => {
+  clientPromise.then(client =>
+    client.query(DEVICE_BASE_JOIN + 'WHERE device.id = $1::uuid', [device_id])
+  )
+}
 
-const deleteDeviceByUserAndDeviceId = (user_id, device_id) => {}
+const addDevice = (device, cb) => {
+  clientPromise.then(client =>
+    client.query('', [])
+  )
+}
 
-const deleteDeviceByDeviceId = (device_id, cb) => {}
+const deleteDeviceByUserAndDeviceId = (user_id, device_id) => {
+  clientPromise.then(client =>
+    client.query('DELETE FROM device WHERE id = $1::uuid AND 1 = (SELECT count(device_id) FROM it_device_user WHERE device_id = $1::uuid); DELETE FROM it_device_user WHERE user_id = $2::int AND device_id = $1::uuid;', [device_id, user_id])
+  )
+}
 
-const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {}
+const deleteDeviceByDeviceId = (device_id, cb) => {
+  clientPromise.then(client =>
+    client.query('DELETE FROM device WHERE id = $1::uuid; DELETE FROM it_device_user WHERE device_id = $1::uuid;', [device_id])
+  )
+}
 
-const modifyDeviceByDeviceId = (device_id, changes, cb) => {}
+const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {
+  clientPromise.then(client =>
+    client.query('', [user_id, device_id])
+  )
+}
+
+const modifyDeviceByDeviceId = (device_id, changes, cb) => {
+  clientPromise.then(client =>
+    client.query('', [device_id])
+  )
+}
 
 module.exports = {
   User: {

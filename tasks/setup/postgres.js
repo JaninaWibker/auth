@@ -51,8 +51,7 @@ CREATE TABLE device (
   id uuid not null default uuid_generate_v1() primary key, -- UUID type: https://dba.stackexchange.com/questions/122623/default-value-for-uuid-column-in-postgres
   user_agent varchar(256),
   ip varchar(45) references ip(ip) on delete set null,
-  creation_date timestamptz default current_timestamp,
-  is_revoked boolean default false
+  creation_date timestamptz default current_timestamp
 );
 `
 
@@ -60,6 +59,8 @@ const CREATE_TABLE_DEVICE_USER_INTERMEDIATE_TABLE_QUERY = `
 CREATE TABLE it_device_user (
   user_id integer references auth_user(id) on delete cascade,
   device_id uuid  references device(id)    on delete cascade,
+  creation_date timestamptz default current_timestamp,
+  is_revoked boolean default false,
   primary key (user_id, device_id)
 )
 `
@@ -126,6 +127,10 @@ module.exports = () => pool.connect()
     console.log('[setup] enabling uuid-ossp pg_extension if not already enabled')
 
     await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
+
+    console.log('[setup] if table it_device_user already exists, drop it')
+
+    await client.query('DROP TABLE IF EXISTS it_device_user')
 
     console.log('[setup] if table auth_user already exists, drop it')
 

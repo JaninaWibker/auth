@@ -56,7 +56,7 @@ CREATE TABLE 'device' (
 `
 
 const CREATE_TABLE_DEVICE_USER_INTERMEDIATE_TABLE_QUERY = `
-CREATE TABLE 'device_user_it' (
+CREATE TABLE 'it_device_user' (
   user_id integer,
   device_id integer,
   primary key (user_id, device_id),
@@ -85,6 +85,10 @@ INSERT INTO 'users' VALUES (
 `
 
 module.exports = () => dbPromise.then(async db => {
+
+  console.log('[setup] if table device_user_it already exists, drop it')
+
+  await db.run('DROP TABLE IF EXISTS device_user_it')
   
   console.log('[setup] if table users already exists, drop it')
 
@@ -117,11 +121,11 @@ module.exports = () => dbPromise.then(async db => {
     .then(res => console.log('[setup] creating users table successful'))
     .catch(err => console.error('[setup] creating users table failed', err))
 
-  console.log('[setup] creating device_user_it table')
+  console.log('[setup] creating it_device_user table')
 
   await db.run(CREATE_TABLE_DEVICE_USER_INTERMEDIATE_TABLE_QUERY)
-    .then(res => console.log('[setup] creating device_user_it table successful'))
-    .catch(err => console.error('[setup] creating device_user_it table failed', err))
+    .then(res => console.log('[setup] creating it_device_user table successful'))
+    .catch(err => console.error('[setup] creating it_device_user table failed', err))
 
   console.log('[setup] inserting dummy user "guest"')
 

@@ -15,7 +15,7 @@ INSERT INTO auth_user (
   $6::text, -- salt
   current_timestamp, -- creation_date
   current_timestamp, -- modification_date
-  $7::text, -- account_type
+  $7::account_type, -- account_type
   '{}'::jsonb, -- metadata
   false, -- 2fa
   '', -- 2fa_secret
@@ -47,15 +47,27 @@ pool.on('error', (err) => {
 module.exports = () => pool.connect()
   .then(async (client) => {
 
+    console.log('[reset] removing all device entries from device')
+
+    await client.query('DELETE FROM device;')
+      .then(res => console.log('[reset] resetting devices successful'))
+      .catch(err => console.error('[reset] resetting devices failed', err))
+
+    console.log('[reset] removing all ip entries from ip')
+
+    await client.query('DELETE FROM ip;')
+      .then(res => console.log('[reset] resetting ips successful'))
+      .catch(err => console.error('[reset] resetting ips failed', err))
+
     console.log('[reset] removing all user entries from auth_user')
 
     await client.query('DELETE FROM auth_user;')
-      .then(res => console.log('[reset] resetting users successful', res))
+      .then(res => console.log('[reset] resetting users successful'))
       .catch(err => console.error('[reset] resetting users failed', err))
 
     console.log('[reset] inserting dummy user "guest"')
 
-    await client.query(INSERT_USER_QUERY, ['first', 'last', 'test@example.com', 'username', 'c42b78633724b8bb7da3bda18b87f3ff4802ca85af7c6418001d509cf220bc61', 'guest', 'default'])
+    await client.query(INSERT_USER_QUERY, ['first', 'last', 'test@example.com', 'guest', 'c42b78633724b8bb7da3bda18b87f3ff4802ca85af7c6418001d509cf220bc61', 'guest', 'default'])
       .then(res => console.log('[reset] inserting dummy user "guest" successful'))
       .catch(err => console.error('[reset] inserting dummy user "guest" failed', err))
 

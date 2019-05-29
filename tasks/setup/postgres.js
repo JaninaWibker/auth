@@ -1,7 +1,7 @@
 const { Pool } = require('pg')
 const fs = require('fs')
 
-const CREATE_TABLE_QUERY = `
+const CREATE_TABLE_USER_QUERY = `
 DROP TYPE IF EXISTS account_type;
 CREATE TYPE account_type AS ENUM ( 'admin', 'privileged', 'default' ); -- this is untested, may need some work
 CREATE TABLE auth_user (
@@ -23,6 +23,39 @@ CREATE TABLE auth_user (
 );
 `
 
+const CREATE_TABLE_IP_QUERY = `
+CREATE TABLE ip (
+  ip varchar(45) primary key, -- supports both ipv4 and ipv6 (ipv6 has a maximum length of 45 characters (https://stackoverflow.com/questions/1076714/max-length-for-client-ip-address/1076749))
+  continent varchar(13) not null default 'None', -- the longest continent names are North/South America which are both 13 characters long (following ISO-3166 continent names)
+  continent_code varchar(2) not null default '--', -- following ISO-3166 continent codes
+  country varchar(64) not null, -- 64 characters will probably be enough for every country (following ISO-3166 country names)
+  country_code varchar(2) not null, -- following ISO-3166 country codes
+  region varchar(64) not null,
+  region_code varchar(5) not null, -- should only be 2 characters but just incase make it 5 characters long
+  city varchar(64) not null,
+  zip varchar(9) not null, -- normal zip code is 5 digits, but zip+4 code is 5 digits + hyphen + 4 digits
+  latitude float not null default 0, -- Hello there Null Island
+  longitude float not null default 0, -- inhabitants, how's life?
+  timezone varchar(32) not null,
+  timezone_code varchar(8), -- not available on ipapi so can be null
+  isp varchar(32) not null, -- internet service provider
+  language varchar(16)[], -- using an array here is probably super bad, but this allows having multiple languages; also not available on ipapi so can be null
+  is_mobile boolean default false, -- not available on ipdata, will be set to false
+  is_anonymous boolean default false, -- either using proxy or tor (tor cannot be detected by ipapi)
+  is_threat boolean default false -- not available on ipapi, will be set to false
+);
+`
+
+const CREATE_TABLE_DEVICE_QUERY = `
+CREATE TABLE device (
+  id uuid not null default uuid_generate_v1() primary key, -- UUID type: https://dba.stackexchange.com/questions/122623/default-value-for-uuid-column-in-postgres
+  user_agent varchar(256),
+  ip varchar(45) references ip(ip) on delete set null,
+  creation_date timestamptz default current_timestamp,
+  is_revoked boolean default false
+);
+`
+
 const CREATE_TABLE_REGISTER_TOKEN_QUERY = `
 CREATE TABLE registertoken (
   id serial primary key,
@@ -31,7 +64,7 @@ CREATE TABLE registertoken (
   expire_at timestamptz default to_timestamp(0),
   usage_count integer not null default 1, -- usage count of 0 means unlimited uses
   metadata jsonb default '{}'::jsonb,
-  account_type varchar(64) default 'default',
+  account_type account_type default 'default',
   token varchar(1536) not null
 );
 `
@@ -82,19 +115,43 @@ pool.on('error', (err) => {
 module.exports = () => pool.connect()
   .then(async (client) => {
 
+    console.log('[setup] enabling uuid-ossp pg_extension if not already enabled')
+
+    await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
+
     console.log('[setup] if table auth_user already exists, drop it')
 
     await client.query('DROP TABLE IF EXISTS auth_user')
 
+    console.log('[setup] if table device already exists, drop it')
+
+    await client.query('DROP TABLE IF EXISTS device')
+
+    console.log('[setup] if table ip already exists, drop it')
+
+    await client.query('DROP TABLE IF EXISTS ip')
+
+    console.log('[setup] creating ip table')
+
+    await client.query(CREATE_TABLE_IP_QUERY)
+      .then(res => { console.log('[setup] creating ip table successful') })
+      .catch(err => { console.error('[setup] creating ip table failed', err) })
+
+    console.log('[setup] creating device table')
+
+    await client.query(CREATE_TABLE_DEVICE_QUERY)
+      .then(res => { console.log('[setup] creating device table successful') })
+      .catch(err => { console.error('[setup] creating device table failed', err) })
+
     console.log('[setup] creating auth_user table')
 
-    await client.query(CREATE_TABLE_QUERY)
+    await client.query(CREATE_TABLE_USER_QUERY)
       .then(res => { console.log('[setup] creating auth_user table successful') })
       .catch(err => { console.error('[setup] creating auth_user table failed', err) })
 
     console.log('[setup] inserting dummy user "guest"')
 
-    await client.query(INSERT_USER_QUERY, ['first', 'last', 'test@example.com', 'username', 'c42b78633724b8bb7da3bda18b87f3ff4802ca85af7c6418001d509cf220bc61', 'guest', 'default'])
+    await client.query(INSERT_USER_QUERY, ['first', 'last', 'test@example.com', 'guest', 'c42b78633724b8bb7da3bda18b87f3ff4802ca85af7c6418001d509cf220bc61', 'guest', 'default'])
       .then(res => { console.log('[setup] inserting dummy user "guest" successful') })
       .catch(err => { console.error('[setup] inserting dummy user "guest" failed', err) })
 

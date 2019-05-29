@@ -55,6 +55,16 @@ CREATE TABLE 'device' (
 )
 `
 
+const CREATE_TABLE_DEVICE_USER_INTERMEDIATE_TABLE_QUERY = `
+CREATE TABLE 'device_user_it' (
+  user_id integer,
+  device_id integer,
+  primary key (user_id, device_id),
+  constraint fk_user_id foreign key (user_id) references auth_user(rowid) on delete cascade,
+  constraint fk_device_id foreign key (device_id) references device(rowid) on delete cascade
+)
+`
+
 const INSERT_USER_QUERY = `
 INSERT INTO 'users' VALUES (
   ?, -- first_name
@@ -106,6 +116,12 @@ module.exports = () => dbPromise.then(async db => {
   await db.run(CREATE_TABLE_USER_QUERY)
     .then(res => console.log('[setup] creating users table successful'))
     .catch(err => console.error('[setup] creating users table failed', err))
+
+  console.log('[setup] creating device_user_it table')
+
+  await db.run(CREATE_TABLE_DEVICE_USER_INTERMEDIATE_TABLE_QUERY)
+    .then(res => console.log('[setup] creating device_user_it table successful'))
+    .catch(err => console.error('[setup] creating device_user_it table failed', err))
 
   console.log('[setup] inserting dummy user "guest"')
 

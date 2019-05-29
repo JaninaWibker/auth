@@ -228,15 +228,21 @@ const deleteUser = (id, cb) => {
   )
 }
 
-const listDevicesByUser = () => {}
+const listDevicesByUser = (user_id, cb) => {}
 
-const getDeviceByUserAndDeviceId = () => {}
+const getDeviceByUserAndDeviceId = (user_id, device_id, cb) => {}
 
-const addDevice = () => {}
+const getDeviceByDeviceId = (device_id, cb) => {}
 
-const deleteDevice = () => {}
+const addDevice = (device, cb) => {}
 
-const modifyDevice = () => {}
+const deleteDeviceByUserAndDeviceId = (user_id, device_id) => {}
+
+const deleteDeviceByDeviceId = (device_id, cb) => {}
+
+const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {}
+
+const modifyDeviceByDeviceId = (device_id, changes, cb) => {}
 
 module.exports = {
   User: {
@@ -260,9 +266,12 @@ module.exports = {
   Device: {
     list: listDevicesByUser,
     get: getDeviceByUserAndDeviceId,
+    getWithoutUserId: getDeviceByDeviceId,
     add: addDevice,
-    delete: deleteDevice,
-    modify: modifyDevice,
+    delete: deleteDeviceByUserAndDeviceId,
+    deleteWithoutUserId: deleteDeviceByDeviceId,
+    modify: modifyDeviceByUserAndDeviceId,
+    modifyWithoutUserId: modifyDeviceByDeviceId,
   },
   authenticateUserIfExists,
   getUserIfExists,
@@ -284,7 +293,10 @@ module.exports = {
   validateTwoFactorCode,
   listDevicesByUser,
   getDeviceByUserAndDeviceId,
+  getDeviceByDeviceId,
   addDevice,
-  deleteDevice,
-  modifyDevice,
+  deleteDeviceByUserAndDeviceId,
+  deleteDeviceByDeviceId,
+  modifyDeviceByUserAndDeviceId,
+  modifyDeviceByDeviceId
 }

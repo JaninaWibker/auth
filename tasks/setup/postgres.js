@@ -56,6 +56,14 @@ CREATE TABLE device (
 );
 `
 
+const CREATE_TABLE_DEVICE_USER_INTERMEDIATE_TABLE_QUERY = `
+CREATE TABLE it_device_user (
+  user_id integer references auth_user(id) on delete cascade,
+  device_id uuid  references device(id)    on delete cascade,
+  primary key (user_id, device_id)
+)
+`
+
 const CREATE_TABLE_REGISTER_TOKEN_QUERY = `
 CREATE TABLE registertoken (
   id serial primary key,
@@ -148,6 +156,12 @@ module.exports = () => pool.connect()
     await client.query(CREATE_TABLE_USER_QUERY)
       .then(res => { console.log('[setup] creating auth_user table successful') })
       .catch(err => { console.error('[setup] creating auth_user table failed', err) })
+
+    console.log('[setup] creating it_device_user table')
+
+    await client.query(CREATE_TABLE_DEVICE_USER_INTERMEDIATE_TABLE_QUERY)
+      .then(res => { console.log('[setup] creating it_device_user table successful') })
+      .catch(err => { console.error('[setup] creating it_device_user table failed', err) })
 
     console.log('[setup] inserting dummy user "guest"')
 

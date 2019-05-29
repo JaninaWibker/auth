@@ -99,6 +99,7 @@ app.post(['/test', '/users/test'], passport.authenticate('jwt', { session: false
 app.post(['/info', '/users/info'], passport.authenticate('jwt', { session: false }), users.info)
 
 app.post(['/list', '/users/list'], passport.authenticate('jwt', { session: false }), users.list)
+app.get( ['/list', '/users/list'], passport.authenticate('jwt', { session: false }), users.list)
 
 app.get(['/username-already-taken', '/users/username-already-taken'], users.username_already_taken)
 

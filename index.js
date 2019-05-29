@@ -100,4 +100,8 @@ app.post(['/info', '/users/info'], passport.authenticate('jwt', { session: false
 
 app.post(['/list', '/users/list'], passport.authenticate('jwt', { session: false }), users.list)
 
+app.get(['/username-already-taken', '/users/username-already-taken'], users.username_already_taken)
+
+app.get(['/is-passwordless', '/users/is-passwordless'], users.is_passwordless)
+
 app.listen(config.PORT || 3003, () => console.log('HTTP server listening on port ' + (config.PORT || 3003)))

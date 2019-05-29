@@ -40,6 +40,10 @@ const config = {
 
 const pool = new Pool(config)
 
+pool.on('error', (err) => {
+  console.error('An idle client has experienced an error', err.stack)
+})
+
 module.exports = () => pool.connect()
   .then(async (client) => {
 

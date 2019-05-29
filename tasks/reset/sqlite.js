@@ -20,6 +20,7 @@ INSERT INTO 'users' VALUES (
   0 -- temp_account
 )
 `
+
 module.exports = () => dbPromise.then(async db => {
 
   console.log('[reset] removing all user entries from user')

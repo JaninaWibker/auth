@@ -229,6 +229,16 @@ const deleteUser = (id, cb) => {
   )
 }
 
+const listDevicesByUser = () => {}
+
+const getDeviceByUserAndDeviceId = () => {}
+
+const addDevice = () => {}
+
+const deleteDevice = () => {}
+
+const modifyDevice = () => {}
+
 module.exports = {
   User: {
     add: addUser,
@@ -248,6 +258,13 @@ module.exports = {
     list: getUserList,
     authenticate: authenticateUserIfExists
   },
+  Device: {
+    list: listDevicesByUser,
+    get: getDeviceByUserAndDeviceId,
+    add: addDevice,
+    delete: deleteDevice,
+    modify: modifyDevice
+  },
   authenticateUserIfExists,
   getUserIfExists,
   getUserFromEmailIfExists,
@@ -266,4 +283,9 @@ module.exports = {
   activateTwoFactorAuthentication,
   deactivateTwoFactorAuthentication,
   validateTwoFactorCode,
+  listDevicesByUser,
+  getDeviceByUserAndDeviceId,
+  addDevice,
+  deleteDevice,
+  modifyDevice
 }

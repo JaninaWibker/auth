@@ -93,7 +93,7 @@
             <div class="info-text">account modification date: <span id="account-modification-date-info"></span></div>
             <div class="info-text">account creation date: <span id="account-creation-date-info"></span></div>
           </div>
-
+          
         </div>
         <div class="footer margin-center">
             <div class="tos-accept-message">By logging, registering or using this service you agree to the <a class="no-style" href="/tos">ToS</a> and accept the use of cookies.</div>
@@ -129,7 +129,139 @@
         return window.location.replace('/login?id=auth')
       }
 
-      function modifyUser(changes, cb) {
+      function generateRegisterToken({ account_type, metadata, permanent, expire_at, usage_count }, cb) {
+        window.fetch('/generate-register-token', {
+          method: 'POST',
+          body: {
+            account_type: account_type,
+            metadata: metadata,
+            permanent: permanent,
+            expireAt: permanent ? 0 : expire_at,
+            usage_count: usage_count
+          },
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + getStorage('jwt')
+          }
+        })
+          .then(function(res) { return res.json() })
+          .then(function(json) {
+            if(json.status !== 'success') {
+              cb(json, null)
+            } else {
+              cb(null, json)
+            }
+          })
+          .catch(function(err) {
+            cb(err, null)
+          })
+      }
+
+      function listRegisterTokens(cb) {
+        window.fetch('/list-register-tokens', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ' + getStorage('jwt')
+          }
+        })
+          .then(function(res) { return res.json() })
+          .then(function(json) {
+            if(json.status !== 'success') {
+              cb(json, null)
+            } else {
+              cb(null, json)
+            }
+          })
+          .catch(function(err) {
+            cb(err, null)
+          })
+      }
+
+      function invalidateRegisterToken(id, cb) {
+        window.fetch('/invalidate-register-token', {
+          method: 'DELETE',
+          body: { id: id },
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + getStorage('jwt')
+          }
+        })
+          .then(function(res) { return res.json() })
+          .then(function(json) {
+            if(json.status !== 'success') {
+              cb(json, null)
+            } else {
+              cb(null, json)
+            }
+          })
+          .catch(function(err) {
+            cb(err, null)
+          })
+      }
+
+      function listUsers(cb) {
+        window.fetch('/users/list', {
+          method: 'GET', // is not a GET request YET, will change soon
+          headers: {
+            'Accept': 'application/json',
+            'Authorization': 'Bearer ' + getStorage('jwt')
+          }
+        })
+          .then(function(res) { return res.json() })
+          .then(function(json) {
+            if(json.status !== 'success') {
+              cb(json, null)
+            } else {
+              cb(null, json.users)
+            }
+          })
+          .catch(function(err) {
+            cb(err, null)
+          })
+      }
+
+      function modifyUser(changes, id, cb) {
+        window.fetch('/users/modify', {
+          method: 'POST',
+          body: JSON.stringify(changes),
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + getStorage('jwt')
+          }
+        })
+          .then(function(res) { return res.json() })
+          .then(function thenModifyUser(json) {
+            // coming soon
+          })
+          .catch(function catchModifyUser() {
+            cb(true, null) // this needs to become a real error instead of just 'true'
+          })
+      }
+
+      function deleteUser(id, cb) {
+        window.fetch('/users/', {
+          method: 'DELETE',
+          body: JSON.stringify({ id: id }),
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + getStorage('jwt')
+          }
+        })
+          .then(function(res) { return res.json() })
+          .then(function thenDeleteUser(json) {
+            // coming soon
+          })
+          .catch(function catchDeleteUser() {
+            cb(true, null) // this needs to become a real error instead of just 'true'
+          })
+      }
+
+      function modifyUserSelf(changes, cb) {
 
         let bundled_changes = {
           first_name: changes.first_name,
@@ -236,7 +368,7 @@
 
           spanElements.repeat_password.parentNode.classList.toggle('hidden')
 
-          modifyUser(values, function (err, userObject) {
+          modifyUserSelf(values, function (err, userObject) {
             spanElements.first_name.innerText = userObject.first_name
             spanElements.last_name.innerText = userObject.last_name
 

@@ -123,6 +123,7 @@ app.get(['/device/:device_id', '/device/get/:device_id'], passport.authenticate(
 app.get(['/device/:user_id/:device_id', '/device/get/:user_id/:device_id'], passport.authenticate('jwt', { session: false }), device.get)
 app.get(['/devices/:user_id?', '/devices/get/:user_id?'], passport.authenticate('jwt', { session: false }), device.list)
 app.post(['/device/revoke'], passport.authenticate('jwt', { session: false }), device.revoke)
-app.get(['/device/ip'], passport.authenticate('jwt', { session: false }), device.iplookup)
+
+app.get(['/ip/'], passport.authenticate('jwt', { session: false }), device.iplookup)
 
 app.listen(config.PORT || 3003, () => console.log('HTTP server listening on port ' + (config.PORT || 3003)))

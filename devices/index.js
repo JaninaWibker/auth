@@ -4,6 +4,6 @@ module.exports = {
   add: require('./add.js'),
   delete: require('./delete.js'),
   modify: require('./modify.js'),
-  iplookup: require('./iplookup.js'),
-  revoke: require('./revoke.js')
+  revoke: require('./revoke.js'),
+  iplookup: require('./iplookup.js').iplookup,
 }

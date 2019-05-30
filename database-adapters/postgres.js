@@ -46,6 +46,11 @@ const delete_postgres_to_general = (res, id) => ({
   lastID: id,
 })
 
+const insert_postgres_to_general = (res) => ({
+  action: res.command,
+  // idk what else goes here
+})
+
 const authenticateUserIfExists = (username_or_email, password, code_2fa, cb) => clientPromise.then(client => 
   client.query('SELECT salt FROM auth_user WHERE (username = $1::text OR email = $1::text) AND (temp_account = to_timestamp(0) OR temp_account < current_timestamp)', [username_or_email]) // temp_account < current_timestamp will not work like this probably
     .then(_res => {
@@ -318,6 +323,34 @@ const revokeDeviceByUserAndDeviceId = (user_id, device_id, revoke_status, cb) =>
   )
 }
 
+const getIp = (ip, cb) =>
+  clientPromise.then(client =>
+    client.query('SELECT * FROM ip WHERE ip = $1::text', [ip])
+      .then(res => cb(null, res.rows[0] || null))
+      .catch(err => cb(err, null))
+  )
+
+const addIp = (ip, data, cb) =>
+  clientPromise.then(client => 
+    client.query('INSERT INTO ip VALUES ( $1::text, $2::text, $3::text, $4::text, $5::text, $6::text, $7::text, $8::text, $9::text, $10::float, $11::float, $12::text, $13::text, $14::text, $15::text[], $16::boolean, $17::boolean, $18::boolean )', [ip, ...data])
+      .then(res => cb(null, res)) // replace `res` with something useful
+      .catch(err => cb(err, null))
+  )
+
+const modifyIp = (ip, data, cb) =>
+  clientPromise.then(client =>
+    client.query('UPDATE ip SET continent = $1::text, continent_code = $2::text, country = $3::text, country_code = $4::text, region = $5::text, region_code = $6::text, city = $7::text, zip = $8::text, latitude = $9::float, longitude = $10::float, timezone = $11::text, timezone_code = $12::text, isp = $13::text, language = $14::text[], is_mobile = $15::boolean, is_anonymous = $16::boolean, is_threat = $17::boolean WHERE ip = $18::text', [...data, ip])
+      .then(res => cb(null, res)) // replace `res` with something useful
+      .catch(err => cb(err, null))
+  )
+
+const deleteIp = (ip, cb) =>
+  clientPromise.then(client =>
+    client.query('DELETE ip WHERE ip = $1::text', [ip])
+      .then(res => cb(null, res)) // replace `res` with something useful
+      .catch(err => cb(err, null))
+  )
+
 module.exports = {
   User: {
     add: addUser,
@@ -348,6 +381,12 @@ module.exports = {
     modifyWithoutUserId: modifyDeviceByDeviceId,
     revoke: revokeDeviceByUserAndDeviceId,
   },
+  Ip: {
+    get: getIp,
+    add: addIp,
+    modify: modifyIp,
+    delete: deleteIp
+  },
   authenticateUserIfExists,
   getUserIfExists,
   getUserFromEmailIfExists,
@@ -373,5 +412,10 @@ module.exports = {
   deleteDeviceByUserAndDeviceId,
   deleteDeviceByDeviceId,
   modifyDeviceByUserAndDeviceId,
-  modifyDeviceByDeviceId
+  modifyDeviceByDeviceId,
+  revokeDeviceByUserAndDeviceId,
+  getIp,
+  addIp,
+  modifyIp,
+  deleteIp
 }

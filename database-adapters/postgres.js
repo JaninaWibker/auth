@@ -42,7 +42,7 @@ const select_postgres_to_general = (res) => ({
 
 const delete_postgres_to_general = (res, id) => ({
   action: res.command,
-  changes: res.rowCound,
+  changes: res.rowCount,
   lastID: id,
 })
 
@@ -229,55 +229,92 @@ const deleteUser = (id, cb) => {
 }
 
 const DEVICE_BASE_JOIN = `
-SELECT id, user_agent, ip, creation_date, is_revoked FROM device
-LEFT JOIN it_device_user it ON device.id === it.device_id
-LEFT JOIN auth_user ON it.user_id === auth_user.id 
+SELECT device.id as device_id, user_agent, ip, it.creation_date, device.creation_date as device_creation_date, is_revoked FROM device
+LEFT JOIN it_device_user it ON device.id = it.device_id
+LEFT JOIN auth_user ON it.user_id = auth_user.id 
 `
 
 const listDevicesByUser = (user_id, cb) => {
   clientPromise.then(client =>
-    client.query(DEVICE_BASE_JOIN + 'WHERE auth_user.id === $1::int', [user_id]))
+    client.query(DEVICE_BASE_JOIN + 'WHERE auth_user.id = $1::int', [user_id])
+      .then(res => cb(null, res.rows))
+      .catch(err => cb(err, null))
+    )
 }
 
 const getDeviceByUserAndDeviceId = (user_id, device_id, cb) => {
   clientPromise.then(client =>
     client.query(DEVICE_BASE_JOIN + 'WHERE auth_user.id = $1::int AND device.id = $2::uuid', [user_id, device_id])
+      .then(res => cb(null, res.rows[0] || null))
+      .catch(err => cb(err, null))
   )
 }
 
 const getDeviceByDeviceId = (device_id, cb) => {
   clientPromise.then(client =>
     client.query(DEVICE_BASE_JOIN + 'WHERE device.id = $1::uuid', [device_id])
+      .then(res => {
+        const joined_row = {
+          device_id: res.rows[0].device_id,
+          user_agent: res.rows[0].user_agent,
+          ip: res.rows[0].ip,
+          creation_date: res.rows[0].device_creation_date,
+          users: res.rows.map(row => ({ user_id: row.user_id, is_revoked: row.is_revoked, creation_date: row.creation_date }))
+        }
+
+        cb(null, joined_row)
+      })
+      .catch(err => cb(err, null))
   )
 }
 
 const addDevice = (device, cb) => {
   clientPromise.then(client =>
     client.query('', [])
+      .catch(err => cb(err, null))
   )
 }
 
-const deleteDeviceByUserAndDeviceId = (user_id, device_id) => {
+const deleteDeviceByUserAndDeviceId = (user_id, device_id, cb) => {
   clientPromise.then(client =>
-    client.query('DELETE FROM device WHERE id = $1::uuid AND 1 = (SELECT count(device_id) FROM it_device_user WHERE device_id = $1::uuid); DELETE FROM it_device_user WHERE user_id = $2::int AND device_id = $1::uuid;', [device_id, user_id])
+    client.query('DELETE FROM device WHERE id = $1::uuid AND 1 = (SELECT count(device_id) FROM it_device_user WHERE device_id = $1::uuid)', [device_id])
+      .then(() => client.query('DELETE FROM it_device_user WHERE user_id = $1::int AND device_id = $2::uuid', [user_id, device_id])
+        .then(res => cb(null, res.rowCount !== 0))
+        .catch(err => cb(err, null))
+      )
+      .catch(err => cb(err, null))
   )
 }
 
 const deleteDeviceByDeviceId = (device_id, cb) => {
   clientPromise.then(client =>
     client.query('DELETE FROM device WHERE id = $1::uuid; DELETE FROM it_device_user WHERE device_id = $1::uuid;', [device_id])
+      .then(res => cb(null, res.rowCount !== 0))
+      .catch(err => cb(err, null))
   )
 }
 
 const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {
   clientPromise.then(client =>
     client.query('', [user_id, device_id])
+      .then(() => {})
+    .catch(err => cb(err, null))
   )
 }
 
 const modifyDeviceByDeviceId = (device_id, changes, cb) => {
   clientPromise.then(client =>
     client.query('', [device_id])
+      .then(() => {})
+    .catch(err => cb(err, null))
+  )
+}
+
+const revokeDeviceByUserAndDeviceId = (user_id, device_id, revoke_status, cb) => {
+  clientPromise.then(client => 
+    client.query('UPDATE it_device_user SET is_revoked = $1::boolean WHERE user_id = $2::int AND device_id = $3::uuid', [revoke_status, user_id, device_id])
+      .then(() => cb(null, revoke_status))
+      .catch(err => cb(err, null))
   )
 }
 
@@ -309,6 +346,7 @@ module.exports = {
     deleteWithoutUserId: deleteDeviceByDeviceId,
     modify: modifyDeviceByUserAndDeviceId,
     modifyWithoutUserId: modifyDeviceByDeviceId,
+    revoke: revokeDeviceByUserAndDeviceId,
   },
   authenticateUserIfExists,
   getUserIfExists,

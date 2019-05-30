@@ -21,26 +21,31 @@ const sendSuccess = (res, message, device) => res.status(200).json({
   status: 'success'
 })
 
+/*
+params {
+  :device_id, -- usably by everybody
+  :user_id -- usable by admins only, defaults to req.user.id
+}
+*/
+
 const getDevice = (req, res) =>
   db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(err) return sendError(res, 'could not validate requesting users account type', info)
+    if(err)      return sendError(res, 'could not validate requesting users account type', info)
 
-    if(req.body.device && req.body.account_type === 'admin') {
-      db.Device.getWithoutUserId(req.body.device, (err, device, info) => {
-        if(err || info) sendError(res, 'error while getting device information', info.message)
-        sendSuccess(res, 'successfully retrieved device information (admin)', device)
+    if(!req.params.device_id) {
+      sendError(res, 'supply device id to retrieve device information')
+    } else if(req.params.user_id && user.account_type === 'admin') {
+      db.Device.get(parseInt(req.params.user_id, 10), req.params.device_id, (err, device, info) => {
+        if(err || info) sendError(res, 'error while getting device information', info)
+        else if(device) sendSuccess(res, 'successfully retrieved device information', device)
+        else            sendFailure(res, 'error while getting device information')
       })
-    } else if(req.body.device && req.body.account_type !== 'admin') {
-      db.Device.get(req.user.id, req.body.device_id, (err, device, info) => {
-        if(err || info) sendError(res, 'error while getting device information', info.message)
-        if(device) {
-          sendSuccess(res, 'successfully retrieved device information', device)
-        } else {
-          sendFailureNotPermitted(res)
-        }
+    } else if(!req.params.user_id) {
+      db.Device.get(req.user.id, req.params.device_id, (err, device, info) => {
+        if(err || info) sendError(res, 'error while getting device information', info)
+        else if(device) sendSuccess(res, 'successfully retrieved device information', device)
+        else            sendFailure(res, 'error while getting device information')
       })
-    } else {
-      sendFailure(res, 'supply device id (body.device) to retrieve device information')
     }
   })
 

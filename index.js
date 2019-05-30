@@ -8,6 +8,7 @@ const format_date = require('./utils/format_date.js')
 global.format_date = format_date
 const cors = require('./utils/cors.js')
 const users = require('./users/index.js')
+const device = require('./devices/index.js')
 const registertokens = require('./registertokens/index.js')
 const services = require('./services/index.js')
 const { version } = require('./package.json')
@@ -60,6 +61,8 @@ app.use(passport.initialize())
 
 app.get('/current-version', (_, res) => res.send(version))
 
+// service endpoint
+
 app.post(['/register', '/service/register'], services.register(validateService, public_key))
 
 app.get(['/public_key', '/service/public_key'], services.public_key(public_key))
@@ -69,6 +72,8 @@ app.get(['/by-name/:id?', '/service/by-name/:id?'], services.get('by-name'))
 app.get(['/by-app/:id?', '/service/by-app/:id?'], services.get('by-app'))
 app.get(['/by-cb/:id?', '/service/by-cb/:id?'], services.get('by-cb'))
 
+// register-token endpoint
+
 app.post('/generate-register-token', passport.authenticate('jwt', { session: false }), registertokens.generate(generateRegisterToken))
 
 app.post('/validate-register-token', passport.authenticate('jwt', { session: false }), registertokens.validate(validateRegisterToken))
@@ -77,9 +82,13 @@ app.delete('/invalidate-register-token', passport.authenticate('jwt', { session:
 
 app.get('/list-register-tokens', passport.authenticate('jwt', { session: false }), registertokens.list())
 
+// login / logout endpoint
+
 app.post(['/login', '/users/login'], users.login(Login))
 
 app.post(['/logout', '/users/logout'], passport.authenticate('jwt', { session: false }), users.logout(Logout))
+
+// users endpoint
 
 app.post(['/add', '/users/add'], users.add({ registerTokenCache: registertokens.registerTokenCache, validateRegisterToken, signJwtNoCheck, generateRefreshToken, manualAddToCache }))
 
@@ -104,5 +113,16 @@ app.get( ['/list', '/users/list'], passport.authenticate('jwt', { session: false
 app.get(['/username-already-taken', '/users/username-already-taken'], users.username_already_taken)
 
 app.get(['/is-passwordless', '/users/is-passwordless'], users.is_passwordless)
+
+// device endpoint
+
+app.post(['/device', '/device/add'], passport.authenticate('jwt', { session: false }), device.add)
+app.delete(['/device', '/device/delete'], passport.authenticate('jwt', { session: false }), device.delete)
+app.patch(['/device', '/device/modify'], passport.authenticate('jwt', { session: false }), device.modify)
+app.get(['/device/:device_id', '/device/get/:device_id'], passport.authenticate('jwt', { session: false }), device.get)
+app.get(['/device/:user_id/:device_id', '/device/get/:user_id/:device_id'], passport.authenticate('jwt', { session: false }), device.get)
+app.get(['/devices/:user_id?', '/devices/get/:user_id?'], passport.authenticate('jwt', { session: false }), device.list)
+app.post(['/device/revoke'], passport.authenticate('jwt', { session: false }), device.revoke)
+app.get(['/device/ip'], passport.authenticate('jwt', { session: false }), device.iplookup)
 
 app.listen(config.PORT || 3003, () => console.log('HTTP server listening on port ' + (config.PORT || 3003)))

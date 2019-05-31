@@ -48,7 +48,7 @@ const delete_postgres_to_general = (res, id) => ({
 
 const insert_postgres_to_general = (res) => ({
   action: res.command,
-  // idk what else goes here
+  changes: res.rowCount
 })
 
 const authenticateUserIfExists = (username_or_email, password, code_2fa, cb) => clientPromise.then(client => 
@@ -273,10 +273,25 @@ const getDeviceByDeviceId = (device_id, cb) => {
   )
 }
 
-const addDevice = (device, cb) => {
+const addDevice = ({ ip, user_agent }, cb) => {
   clientPromise.then(client =>
-    client.query('', [])
-      .catch(err => cb(err, null))
+    client.query('INSERT INTO device ( ip, user_agent ) VALUES ( $1::text, $2::text )', [ip, user_agent])
+      .then(() => client.query('SELECT id FROM device WHERE ip = $1::text AND user_agent = $2::text ORDER BY creation_date desc LIMIT 1', [ip, user_agent])
+        .then(res => cb(null, res.rows[0].id))
+        .catch(err => cb(err, null))
+      ).catch(err => cb(err, null))
+  )
+}
+
+const addDeviceToUser = ({ ip, user_agent }, user_id, cb) => {
+  clientPromise.then(client =>
+    client.query('INSERT INTO device ( ip, user_agent ) VALUES ( $1::text, $2::text )', [ip, user_agent])
+      .then(() => client.query('SELECT id FROM device WHERE ip = $1::text AND user_agent = $2::text ORDER BY creation_date desc LIMIT 1', [ip, user_agent])
+        .then(res => client.query('INSERT INTO it_device_user ( user_id, device_id ) VALUES ( $1::int, $2::uuid )', [user_id, res.rows[0].id])
+          .then(() => cb(null, res.rows[0].id))
+          .catch(err => cb(err, null))
+        ).catch(err => cb(err, null))
+      ).catch(err => cb(err, null))
   )
 }
 
@@ -374,7 +389,8 @@ module.exports = {
     list: listDevicesByUser,
     get: getDeviceByUserAndDeviceId,
     getWithoutUserId: getDeviceByDeviceId,
-    add: addDevice,
+    add: addDeviceToUser,
+    addWithoutUserId: addDevice,
     delete: deleteDeviceByUserAndDeviceId,
     deleteWithoutUserId: deleteDeviceByDeviceId,
     modify: modifyDeviceByUserAndDeviceId,
@@ -409,6 +425,7 @@ module.exports = {
   getDeviceByUserAndDeviceId,
   getDeviceByDeviceId,
   addDevice,
+  addDeviceToUser,
   deleteDeviceByUserAndDeviceId,
   deleteDeviceByDeviceId,
   modifyDeviceByUserAndDeviceId,

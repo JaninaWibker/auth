@@ -23,7 +23,6 @@ const sendSuccess = (res, message, device) => res.status(200).json({
 })
 
 const modifyDeviceIntermediate = (device_id, { ip, useragent }, cb) => {
-
   db.Device.getWithoutUserId(device_id, (err, device) => {
     if(err) cb(err, null)
     else if(device.ip === ip) {

@@ -90,7 +90,7 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
           const accessTokenPayload = { id: user.id, username: user.username, iss: 'accounts.jannik.ml', typ: 'JWT', partial_key: false, enabled_2fa: user['2fa_enabled'] === 1 ? true : false, account_type: user.account_type }
           const accessToken = jwt.sign(accessTokenPayload, jwtOptions.privateKey, { algorithm: jwtOptions.algorithm })
           addToCache(user.id, accessToken, accessTokenPayload, 30 * 60 * 1000)
-            .then(() => cb(err, accessToken))
+            .then(() => cb(err, accessToken, undefined, user))
         } else {
           cb({ message: 'invalid refresh token' }, false, false)
         }
@@ -108,12 +108,12 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
           if(getRefreshToken) refreshToken = generateRefreshToken(user.username, user.id)
           
           addToCache(user.id, accessToken, accessTokenPayload, 30 * 60 * 1000)
-            .then(() => cb(err, accessToken, refreshToken))
+            .then(() => cb(err, accessToken, refreshToken, user))
         } else {
           cb(err, false, false)
         }
       })
-    } 
+    }
   }
 
   const Logout = (id, cb) => {

@@ -60,4 +60,7 @@ const addDevice = (req, res) =>
     }
   })
 
-module.exports = addDevice
+module.exports = {
+  addDevice,
+  addDeviceIntermediate
+}

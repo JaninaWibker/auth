@@ -274,7 +274,7 @@ const deleteUser = (id, cb) => {
 const DEVICE_BASE_JOIN = `
 SELECT  device.id as device_id, user_agent, ip.ip as ip, continent, continent_code, country, country_code, 
         region, region_code, city, zip, latitude, longitude, timezone, timezone_code, isp, language, is_mobile
-        is_anonymous, is_threat, it.creation_date, device.creation_date as device_creation_date, is_revoked
+        is_anonymous, is_threat, is_internal, it.creation_date, device.creation_date as device_creation_date, is_revoked
 FROM device
 LEFT JOIN ip ON device.ip = ip.ip
 LEFT JOIN it_device_user it ON device.id = it.device_id
@@ -317,6 +317,16 @@ const getDeviceByDeviceId = (device_id, cb) => {
       })
       .catch(err => cb(err, null))
       .catch(release_catch(client))
+  )
+}
+
+const getDeviceByUserIdAndIpAndUserAgent = (user_id, ip, user_agent, cb) => {
+  pool.connect().then(client =>
+    client.query(DEVICE_BASE_JOIN + 'WHERE user_id = $1::int AND ip.ip = $2::text AND user_agent = $3::text', [user_id, ip, user_agent])
+      .then(res => cb(null, res.rows[0]))
+      .then(release_then(client))
+      .catch(err => cb(err, null))
+      .catch(release_catch(client))  
   )
 }
 
@@ -374,6 +384,7 @@ const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {
   pool.connect().then(client =>
     client.query('', [user_id, device_id])
       .then(() => {})
+      .then(release_then(client))
     .catch(err => cb(err, null))
     .catch(release_catch(client))
   )
@@ -381,10 +392,22 @@ const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {
 
 const modifyDeviceByDeviceId = (device_id, changes, cb) => {
   pool.connect().then(client =>
-    client.query('', [device_id])
-      .then(() => {})
+    client.query('SELECT ip, user_agent FROM device WHERE id = $1::uuid', [device_id])
+      .then(res => client.query('UPDATE device SET ip = $1::text, user_agent = $2::text WHERE id = $3::uuid', [changes.ip || res.rows[0].ip, changes.user_agent || res.rows[0].user_agent, device_id])
+        .then(rtn => cb(null, rtn))
+      ).then(release_then(client))
     .catch(err => cb(err, null))
     .catch(release_catch(client))
+  )
+}
+
+const modifyDeviceLastUsed = (device_id, user_id, last_used, cb) => {
+  pool.connect().then(client =>
+    client.query('UPDATE it_device_user SET last_used = $1::timestamptz WHERE device_id = $2::uuid AND user_id = $3::int', [last_used || new Date(), device_id, user_id])
+      .then(rtn => cb(null, rtn))
+      .then(release_then(client))
+      .catch(err => cb(err, null))
+      .catch(release_catch(client))
   )
 }
 
@@ -392,6 +415,7 @@ const revokeDeviceByUserAndDeviceId = (user_id, device_id, revoke_status, cb) =>
   pool.connect().then(client => 
     client.query('UPDATE it_device_user SET is_revoked = $1::boolean WHERE user_id = $2::int AND device_id = $3::uuid', [revoke_status, user_id, device_id])
       .then(() => cb(null, revoke_status))
+      .then(release_then(client))
       .catch(err => cb(err, null))
       .catch(release_catch(client))
   )
@@ -465,12 +489,14 @@ module.exports = {
     list: listDevicesByUser,
     get: getDeviceByUserAndDeviceId,
     getWithoutUserId: getDeviceByDeviceId,
+    getByUserIdAndIpAndUserAgent: getDeviceByUserIdAndIpAndUserAgent,
     add: addDeviceToUser,
     addWithoutUserId: addDevice,
     delete: deleteDeviceByUserAndDeviceId,
     deleteWithoutUserId: deleteDeviceByDeviceId,
     modify: modifyDeviceByUserAndDeviceId,
     modifyWithoutUserId: modifyDeviceByDeviceId,
+    modifyLastUsed: modifyDeviceLastUsed,
     revoke: revokeDeviceByUserAndDeviceId,
   },
   Ip: {
@@ -501,12 +527,14 @@ module.exports = {
   listDevicesByUser,
   getDeviceByUserAndDeviceId,
   getDeviceByDeviceId,
+  getDeviceByUserIdAndIpAndUserAgent,
   addDevice,
   addDeviceToUser,
   deleteDeviceByUserAndDeviceId,
   deleteDeviceByDeviceId,
   modifyDeviceByUserAndDeviceId,
   modifyDeviceByDeviceId,
+  modifyDeviceLastUsed,
   revokeDeviceByUserAndDeviceId,
   getIp,
   addIp,

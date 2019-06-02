@@ -232,7 +232,7 @@ const deleteUser = (id, cb) => {
 const DEVICE_BASE_JOIN = `
 SELECT  device.id as device_id, user_agent, ip.ip as ip, continent, continent_code, country, country_code, 
         region, region_code, city, zip, latitude, longitude, timezone, timezone_code, isp, language, is_mobile, 
-        is_anonymous, is_threat, it.creation_date, device.creation_date as device_creation_date, is_revoked
+        is_anonymous, is_threat, is_internal, it.creation_date, device.creation_date as device_creation_date, is_revoked
 FROM device
 LEFT JOIN ip ON device.ip = ip.ip
 LEFT JOIN it_device_user it ON device.id = it.device_id
@@ -273,6 +273,14 @@ const getDeviceByDeviceId = (device_id, cb) => {
   })
 }
 
+const getDeviceByUserIdAndIpAndUserAgent = (user_id, ip, user_agent, cb) => {
+  dbPromise.then(db => {
+    db.all(DEVICE_BASE_JOIN + 'WHERE user_id = ? AND ip = ? AND user_agent = ?', user_id, ip, user_agent)
+      .then(res => cb(null, res.rows[0]))
+      .catch(err => cb(err, null))
+  })
+}
+
 const addDevice = ({ ip, user_agent }, cb) => {
   dbPromise.then(db => {
     db.run('INSERT INTO device ( ip, user_agent ) VALUES ( ?, ? )', ip, user_agent)
@@ -288,7 +296,7 @@ const addDeviceToUser = ({ ip, user_agent }, user_id, cb) => {
     db.run('INSERT INTO device ( ip, user_agent ) VALUES ( ?, ? )', ip, user_agent)
       .then(() => db.get('SELECT id FROM device WHERE ip = ? AND user_agent = ? ORDERY BY creation_date desc', ip, user_agent)
         .then(row => db.run('INSERT INTO it_device_user ( user_id, device_id ) VALUES ( ?, ? )', user_id, row.id)
-          .then(() => cb(null, row.id)
+          .then(() => cb(null, row.id))
           .catch(err => cb(err, null))
         ).catch(err => cb(err, null))
       ).catch(err => cb(err, null))
@@ -324,9 +332,20 @@ const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {
 }
 
 const modifyDeviceByDeviceId = (device_id, changes, cb) => {
+  dbPromise.then(db =>
+    db.all('SELECT ip, user_agent FROM device WHERE id = ?', device_id)
+      .then(res => db.run('UPDATE device SET ip = ?, user_agent = ?', changes.ip || res.rows[0].ip, changes.user_agent || res.rows[0].user_agent)
+        .then(rtn => cb(null, rtn))
+        .catch(err => cb(err, null))
+      )
+      .catch(err => cb(err, null))
+  )
+}
+
+const modifyDeviceLastUsed = (device_id, user_id, last_used, cb) => {
   dbPromise.then(db => {
-    db.run('', device_id)
-      .then(() => {})
+    db.run('UPDATE it_device_user SET last_used = ? WHERE device_id = ? AND user_id = ?', last_used, device_id, user_id)
+      .then(rtn => cb(null, rtn))
       .catch(err => cb(err, null))
   })
 }
@@ -357,7 +376,7 @@ const addIp = (ip, data, cb) => {
 
 const addIpInternal = (ip, cb) => {
   dbPromise.then(db =>
-    db.run('INSERT INTO ip ( ip, is_internal ) VALUES ( ?, 0 )', ip)
+    db.run('INSERT INTO ip ( ip, is_internal ) VALUES ( ?, 1 )', ip)
       .then(res =>  cb(null, res))
       .catch(err => cb(err, null))  
   )
@@ -402,18 +421,20 @@ module.exports = {
     list: listDevicesByUser,
     get: getDeviceByUserAndDeviceId,
     getWithoutUserId: getDeviceByDeviceId,
+    getByUserIdAndIpAndUserAgent: getDeviceByUserIdAndIpAndUserAgent,
     add: addDeviceToUser,
     addWithoutUserId: addDevice,
     delete: deleteDeviceByUserAndDeviceId,
     deleteWithoutUserId: deleteDeviceByDeviceId,
     modify: modifyDeviceByUserAndDeviceId,
     modifyWithoutUserId: modifyDeviceByDeviceId,
+    modifyLastUsed: modifyDeviceLastUsed,
     revoke: revokeDeviceByUserAndDeviceId,
   },
   Ip: {
     get: getIp,
-    addInternal: addIpInternal,
     add: addIp,
+    addInternal: addIpInternal,
     modify: modifyIp,
     delete: deleteIp
   },
@@ -438,12 +459,14 @@ module.exports = {
   listDevicesByUser,
   getDeviceByUserAndDeviceId,
   getDeviceByDeviceId,
+  getDeviceByUserIdAndIpAndUserAgent,
   addDevice,
   addDeviceToUser,
   deleteDeviceByUserAndDeviceId,
   deleteDeviceByDeviceId,
   modifyDeviceByUserAndDeviceId,
   modifyDeviceByDeviceId,
+  modifyDeviceLastUsed,
   revokeDeviceByUserAndDeviceId,
   getIp,
   addIp,

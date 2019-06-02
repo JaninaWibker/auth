@@ -22,11 +22,11 @@ const sendSuccess = (res, message, device) => res.status(200).json({
   device: device
 })
 
-const modifyDeviceIntermediate = (device_id, { ip, useragent }, cb) => {
+const modifyDeviceIntermediate = (device_id, { ip, user_agent }, cb) => {
   db.Device.getWithoutUserId(device_id, (err, device) => {
     if(err) cb(err, null)
     else if(device.ip === ip) {
-      return db.Device.modifyWithoutUserId(device_id, { ip, useragent }, cb)
+      return db.Device.modifyWithoutUserId(device_id, { ip, user_agent }, cb)
     } else {
       db.Ip.get(ip, (err, data) => {
         if(err) cb(err, null)
@@ -34,10 +34,10 @@ const modifyDeviceIntermediate = (device_id, { ip, useragent }, cb) => {
 
           iplookup.getFromDatabaseOrFromServiceAndThenSaveToDatabase(ip, (err, data, message) => {
             if(err) cb(err, null, message)
-            else    db.Device.modifyWithoutUserId(device_id, { ip, useragent }, cb)
+            else    db.Device.modifyWithoutUserId(device_id, { ip, user_agent }, cb)
           })
 
-        } else return db.Device.modifyWithoutUserId(device_id, { ip, useragent }, cb)
+        } else return db.Device.modifyWithoutUserId(device_id, { ip, user_agent }, cb)
       })
     }
   })
@@ -55,7 +55,7 @@ const modifyDevice = (req, res) =>
   db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
     if(err) return sendError(res, 'could not validate requesting users account type', info)
     if(user.account_type === 'admin') {
-      modifyDeviceIntermediate(req.body.device_id, { ip: req.body.ip, useragent: req.body.useragent }, (err, device) => {
+      modifyDeviceIntermediate(req.body.device_id, { ip: req.body.ip, user_agent: req.body.user_agent }, (err, device) => {
         if(err) sendErorr(res, 'failed to modify device ' + req.body.device_id, err)
         else    sendSuccess(res, 'successfully modified device ' + req.body.device_id, device)
       })
@@ -64,4 +64,7 @@ const modifyDevice = (req, res) =>
     }
   })
 
-module.exports = modifyDevice
+module.exports = {
+  modifyDevice,
+  modifyDeviceIntermediate
+}

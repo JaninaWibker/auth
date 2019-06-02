@@ -3,7 +3,7 @@ const URL = require('url')
 const cors = (req, res, next) => {
 
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH')
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Device-Id')
 
   const url = URL.parse(req.protocol + '://' + req.get('host'))
   const url_reversed_arr = url.hostname.split('.').reverse()

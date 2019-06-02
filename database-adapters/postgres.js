@@ -23,7 +23,14 @@ pool.on('error', (err) => {
   console.error('An idle client has experienced an error', err.stack)
 })
 
-const clientPromise = pool.connect()
+const release_then = (client) => () => {
+  client.release()
+}
+
+const release_catch = (client) => (err) => {
+  client.release()
+  if(err) console.log(err)
+}
 
 const gen_salt = () => crypto.randomBytes(48).toString('base64')
 
@@ -51,7 +58,7 @@ const insert_postgres_to_general = (res) => ({
   changes: res.rowCount
 })
 
-const authenticateUserIfExists = (username_or_email, password, code_2fa, cb) => clientPromise.then(client => 
+const authenticateUserIfExists = (username_or_email, password, code_2fa, cb) => pool.connect().then(client => 
   client.query('SELECT salt FROM auth_user WHERE (username = $1::text OR email = $1::text) AND (temp_account = to_timestamp(0) OR temp_account < current_timestamp)', [username_or_email]) // temp_account < current_timestamp will not work like this probably
     .then(_res => {
       const res = select_postgres_to_general(_res)
@@ -60,40 +67,52 @@ const authenticateUserIfExists = (username_or_email, password, code_2fa, cb) => 
       
       client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb FROM auth_user WHERE (username = $1::text OR email = $1::text) AND password = $2::text', [username_or_email, hash])
         .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
+        .then(release_then(client))
         .catch(err => cb(err, false, { message: 'incorrect password' }))
+        .catch(release_catch(client))
     })
     .catch(err => {
       console.log(err)
-      cb(null, false, { message: 'user not found' })
+      return cb(null, false, { message: 'user not found' })
     })
+    .catch(release_catch(client))
 )
 
-const activateTwoFactorAuthentication = (username_or_email, cb) => clientPromise.then(client =>
+const activateTwoFactorAuthentication = (username_or_email, cb) => pool.connect().then(client =>
   client.query('UPDATE auth_user SET twofa = true, twofa_secret = $1::text WHERE username = $2::text OR email = $3::text', [speakeasy.generateSecret({length: 20}).base32, username_or_email, username_or_email])  
+    .then(res => cb(res))
+    .then(release_then(client))
+    .catch(release_catch(client))
 )
 
-const deactivateTwoFactorAuthentication = (username_or_email, cb) => clientPromise.then(client =>
+const deactivateTwoFactorAuthentication = (username_or_email, cb) => pool.connect().then(client =>
   client.query('UPDATE auth_user SET twofa = false, twofa_secret = NULL WHERE username = $1::text OR email = $2::text', [username_or_email, username_or_email])
-    .then(cb)
+    .then(res => cb(res))
+    .then(release_then(client))
+    .catch(release_catch(client))
 )
 
-const validateTwoFactorCode = (username_or_email, code, cb) => clientPromise.then(client =>
+const validateTwoFactorCode = (username_or_email, code, cb) => pool.connect().then(client =>
   client.query('SELECT twofa_secret FROM auth_user WHERE twofa = true AND (username = $1::text OR email $2::text)', [username_or_email, username_or_email])
     .then(res => speakeasy.totp.verify({
       secret: select_postgres_to_general(res).rows[0].twofa_secret,
       encoding: 'base32',
       token: code
     }))
-      .then(cb)
+      .then(res => cb(res))
+      .then(release_then(client))
+      .catch(release_catch(client))
 )
 
-const getUserIfExists = (username, cb) => clientPromise.then(client =>
+const getUserIfExists = (username, cb) => pool.connect().then(client =>
   client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb FROM auth_user WHERE username = $1::text', [username])
     .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
+    .then(release_then(client))
     .catch(err => cb(null, false, { message: 'user not found' }))
+    .catch(release_catch(client))
 )
 
-const getUserFromEmailIfExists = (email, cb) => clientPromise.then(client =>
+const getUserFromEmailIfExists = (email, cb) => pool.connect().then(client =>
   client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb FROM auth_user WHERE email = $1::text', [email])
     .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
     .catch(err => cb(null, false, { message: 'user not found' }))
@@ -101,15 +120,22 @@ const getUserFromEmailIfExists = (email, cb) => clientPromise.then(client =>
 
 const getUserFromIdIfExists = (id, cb) => IdToUserData(id, cb)
 
-const getUserLimitedIfExists = (username, cb) => clientPromise.then(client => 
+const getUserLimitedIfExists = (username, cb) => pool.connect().then(client => 
   client.get('SELECT username, id::int, first_name FROM auth_user WHERE username = $1::text', username)
     .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
-    .catch(err => cb(null, false, { message: 'user not found' }))  
+    .then(release_then(client))
+    .catch(err => cb(null, false, { message: 'user not found' }))
+    .catch(release_catch(client))
 )
 
-const _doesUserExist = ({id = '', username = '', email = ''}, cb) => clientPromise.then(client =>
+const _doesUserExist = ({id = '', username = '', email = ''}, cb) => pool.connect().then(client =>
   client.query('SELECT id::int FROM auth_user WHERE id = $1::int OR username = $2::text OR email = $3::text', [id, username, email])
     .then(res => select_postgres_to_general(res).rows[0] ? cb(true) : cb(false))
+    .then(release_then(client))
+    .catch(err => {
+      // cb(err) // TODO: ?
+    })
+    .catch(release_catch(client))
 )
 
 const doesUserExistById = (id, cb) => _doesUserExist({id: id}, cb)
@@ -118,18 +144,24 @@ const doesUserExistByUsername = (username, cb) => _doesUserExist({username: user
 
 const doesUserExistByEmail = (email, cb) => _doesUserExist({email: email}, cb)
 
-const getUserList = (cb) => clientPromise.then(client =>
+const getUserList = (cb) => pool.connect().then(client =>
   client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb, twofa::boolean, twofa_secret, passwordless::boolean, temp_account FROM auth_user')
     .then(res => cb(null, select_postgres_to_general(res).rows))
+    .then(release_then(client))
     .catch(err => cb(null, false, { message: 'error while retrieving all users', err: err }))
+    .catch(release_catch(client))
 )
 
 const UserDataToId = (userData, cb) => cb(null, userData.id)
 
-const IdToUserData = (id, cb) => clientPromise.then(client =>
+const IdToUserData = (id, cb) => pool.connect().then(client =>
   client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb, temp_account FROM auth_user WHERE id = $1::int', [id])
     .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
-    .catch(err => cb(null, false, { message: 'user not found', err: err }))
+    .then(release_then(client))
+    .catch(err => {
+      return cb(null, false, { message: 'user not found', err: err })
+    })
+    .catch(release_catch(client))
 )
 
 const addUser = (username, password, first_name, last_name, email, account_type = 'default', metadata = {}, is_passwordless=false, temp_account=0, cb) => {
@@ -154,7 +186,7 @@ const addUser = (username, password, first_name, last_name, email, account_type 
     temp_account
   ]
 
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query('SELECT id::int, * FROM auth_user WHERE username = $1::text OR email $2::text', username, email)
       .then(res => {
         if(res.rowCount === 0) {
@@ -162,16 +194,18 @@ const addUser = (username, password, first_name, last_name, email, account_type 
           const userValues = '$1::text, $2::text, $3::text, $4::text, $5::text, $6::text, current_timestamp, current_timestamp, $7::text, $8::jsonb, $9::boolean, $10::text, $11::boolean, $12::timestamptz'
           client.query('INSERT INTO auth_user ( ' + userKeys + ' ) VALUES ( ' + userValues + ' )', newUser)
             .then(res => cb(null, select_postgres_to_general(res).rows[0]))
+            .then(release_then(client))
             .catch(err => cb(err, null))
         } else {
           cb({ message: 'username or email already exists' }, null)
         }
-      })  
+      })
+      .catch(release_catch(client))
   )
 }
 
 const modifyUser = (id, { username, password, first_name, last_name, email }, cb) => {
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query('SELECT username, id::int, first_name, last_name, email, salt, password, creation_date, modification_date FROM auth_user WHERE id = $1::int', [id])
       .then(res => {
         const salt = gen_salt()
@@ -191,13 +225,15 @@ const modifyUser = (id, { username, password, first_name, last_name, email }, cb
           ]
         )
           .then(res => cb(null, res))
+          .then(release_then(client))
           .catch(err => cb(err, null))
       })
+      .catch(release_catch(client))
   )
 }
 
 const privilegedModifyUser = (id, { username, password, first_name, last_name, email, account_type, metadata, temp_account }, cb) => {
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query('SELECT username, id::int, first_name, last_name, email, salt, password, creation_date, modification_date, account_type, metadata::jsonb, temp_account FROM auth_user WHERE id = $1::int', [id])
       .then(res => {
         const salt = gen_salt()
@@ -226,37 +262,47 @@ const privilegedModifyUser = (id, { username, password, first_name, last_name, e
 }
 
 const deleteUser = (id, cb) => {
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query('DELETE FROM auth_user WHERE id = $1::int', id)
       .then(res => cb(null, delete_postgres_to_general(res, id)))
+      .then(release_then(client))
       .catch(err => cb(err, 0))
+      .catch(release_catch(client))
   )
 }
 
 const DEVICE_BASE_JOIN = `
-SELECT device.id as device_id, user_agent, ip, it.creation_date, device.creation_date as device_creation_date, is_revoked FROM device
+SELECT  device.id as device_id, user_agent, ip.ip as ip, continent, continent_code, country, country_code, 
+        region, region_code, city, zip, latitude, longitude, timezone, timezone_code, isp, language, is_mobile
+        is_anonymous, is_threat, it.creation_date, device.creation_date as device_creation_date, is_revoked
+FROM device
+LEFT JOIN ip ON device.ip = ip.ip
 LEFT JOIN it_device_user it ON device.id = it.device_id
 LEFT JOIN auth_user ON it.user_id = auth_user.id 
 `
 
 const listDevicesByUser = (user_id, cb) => {
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query(DEVICE_BASE_JOIN + 'WHERE auth_user.id = $1::int', [user_id])
       .then(res => cb(null, res.rows))
+      .then(release_then(client))
       .catch(err => cb(err, null))
+      .catch(release_catch(client))
     )
 }
 
 const getDeviceByUserAndDeviceId = (user_id, device_id, cb) => {
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query(DEVICE_BASE_JOIN + 'WHERE auth_user.id = $1::int AND device.id = $2::uuid', [user_id, device_id])
       .then(res => cb(null, res.rows[0] || null))
+      .then(release_then(client))
       .catch(err => cb(err, null))
+      .catch(release_catch(client))
   )
 }
 
 const getDeviceByDeviceId = (device_id, cb) => {
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query(DEVICE_BASE_JOIN + 'WHERE device.id = $1::uuid', [device_id])
       .then(res => {
         const joined_row = {
@@ -270,100 +316,130 @@ const getDeviceByDeviceId = (device_id, cb) => {
         cb(null, joined_row)
       })
       .catch(err => cb(err, null))
+      .catch(release_catch(client))
   )
 }
 
 const addDevice = ({ ip, user_agent }, cb) => {
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query('INSERT INTO device ( ip, user_agent ) VALUES ( $1::text, $2::text )', [ip, user_agent])
       .then(() => client.query('SELECT id FROM device WHERE ip = $1::text AND user_agent = $2::text ORDER BY creation_date desc LIMIT 1', [ip, user_agent])
         .then(res => cb(null, res.rows[0].id))
+        .then(release_then(client))
         .catch(err => cb(err, null))
       ).catch(err => cb(err, null))
+      .catch(release_catch(client))
   )
 }
 
 const addDeviceToUser = ({ ip, user_agent }, user_id, cb) => {
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query('INSERT INTO device ( ip, user_agent ) VALUES ( $1::text, $2::text )', [ip, user_agent])
       .then(() => client.query('SELECT id FROM device WHERE ip = $1::text AND user_agent = $2::text ORDER BY creation_date desc LIMIT 1', [ip, user_agent])
         .then(res => client.query('INSERT INTO it_device_user ( user_id, device_id ) VALUES ( $1::int, $2::uuid )', [user_id, res.rows[0].id])
           .then(() => cb(null, res.rows[0].id))
+          .then(release_then(client))
           .catch(err => cb(err, null))
         ).catch(err => cb(err, null))
       ).catch(err => cb(err, null))
+      .catch(release_catch(client))
   )
 }
 
 const deleteDeviceByUserAndDeviceId = (user_id, device_id, cb) => {
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query('DELETE FROM device WHERE id = $1::uuid AND 1 = (SELECT count(device_id) FROM it_device_user WHERE device_id = $1::uuid)', [device_id])
       .then(() => client.query('DELETE FROM it_device_user WHERE user_id = $1::int AND device_id = $2::uuid', [user_id, device_id])
         .then(res => cb(null, res.rowCount !== 0))
+        .then(release_then(client))
         .catch(err => cb(err, null))
-      )
-      .catch(err => cb(err, null))
+      ).catch(err => cb(err, null))
+      .catch(release_catch(client))
   )
 }
 
 const deleteDeviceByDeviceId = (device_id, cb) => {
-  clientPromise.then(client =>
-    client.query('DELETE FROM device WHERE id = $1::uuid; DELETE FROM it_device_user WHERE device_id = $1::uuid;', [device_id])
-      .then(res => cb(null, res.rowCount !== 0))
-      .catch(err => cb(err, null))
+  pool.connect().then(client =>
+    client.query('DELETE FROM device WHERE id = ?', [device_id])
+      .then(() => client.query('DELETE FROM it_device_user WHERE device_id = ?', [device_id])
+        .then(res => cb(null, res.rowCount !== 0))
+        .then(release_then(client))
+        .catch(err => cb(err, null))
+      ).catch(err => cb(err, null))
+      .catch(release_catch(client))
   )
 }
 
 const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query('', [user_id, device_id])
       .then(() => {})
     .catch(err => cb(err, null))
+    .catch(release_catch(client))
   )
 }
 
 const modifyDeviceByDeviceId = (device_id, changes, cb) => {
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query('', [device_id])
       .then(() => {})
     .catch(err => cb(err, null))
+    .catch(release_catch(client))
   )
 }
 
 const revokeDeviceByUserAndDeviceId = (user_id, device_id, revoke_status, cb) => {
-  clientPromise.then(client => 
+  pool.connect().then(client => 
     client.query('UPDATE it_device_user SET is_revoked = $1::boolean WHERE user_id = $2::int AND device_id = $3::uuid', [revoke_status, user_id, device_id])
       .then(() => cb(null, revoke_status))
       .catch(err => cb(err, null))
+      .catch(release_catch(client))
   )
 }
 
 const getIp = (ip, cb) =>
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query('SELECT * FROM ip WHERE ip = $1::text', [ip])
       .then(res => cb(null, res.rows[0] || null))
+      .then(release_then(client))
       .catch(err => cb(err, null))
+      .catch(release_catch(client))
   )
 
 const addIp = (ip, data, cb) =>
-  clientPromise.then(client => 
+  pool.connect().then(client => 
     client.query('INSERT INTO ip VALUES ( $1::text, $2::text, $3::text, $4::text, $5::text, $6::text, $7::text, $8::text, $9::text, $10::float, $11::float, $12::text, $13::text, $14::text, $15::text[], $16::boolean, $17::boolean, $18::boolean )', [ip, ...data])
       .then(res => cb(null, res)) // replace `res` with something useful
+      .then(release_then(client))
       .catch(err => cb(err, null))
+      .catch(release_catch(client))
   )
 
+const addIpInternal = (ip, cb) =>
+    pool.connect().then(client =>
+      client.query('INSERT INTO ip ( ip, is_internal ) VALUES ( $1::text, true )', [ip])
+        .then(res => cb(null, res)) // replace `res`with something useful
+        .then(release_then(client))
+        .catch(err => cb(err, null))
+        .catch(release_catch(client))
+    )
+
 const modifyIp = (ip, data, cb) =>
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query('UPDATE ip SET continent = $1::text, continent_code = $2::text, country = $3::text, country_code = $4::text, region = $5::text, region_code = $6::text, city = $7::text, zip = $8::text, latitude = $9::float, longitude = $10::float, timezone = $11::text, timezone_code = $12::text, isp = $13::text, language = $14::text[], is_mobile = $15::boolean, is_anonymous = $16::boolean, is_threat = $17::boolean WHERE ip = $18::text', [...data, ip])
       .then(res => cb(null, res)) // replace `res` with something useful
+      .then(release_then(client))
       .catch(err => cb(err, null))
+      .catch(release_catch(client))
   )
 
 const deleteIp = (ip, cb) =>
-  clientPromise.then(client =>
+  pool.connect().then(client =>
     client.query('DELETE ip WHERE ip = $1::text', [ip])
       .then(res => cb(null, res)) // replace `res` with something useful
+      .then(release_then(client))
       .catch(err => cb(err, null))
+      .catch(release_catch(client))
   )
 
 module.exports = {
@@ -400,6 +476,7 @@ module.exports = {
   Ip: {
     get: getIp,
     add: addIp,
+    addInternal: addIpInternal,
     modify: modifyIp,
     delete: deleteIp
   },

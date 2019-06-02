@@ -24,20 +24,29 @@ const request = (ip, cb) => {
 
 const getFromDatabaseOrFromServiceAndThenSaveToDatabase = (ip, cb) => {
   db.Ip.get(ip, (err, data) => {
-    if(err)         cb(err, null, 'failed to retrieve ip information from database')
+    if(err)           cb(err, null, 'failed to retrieve ip information from database')
     else if(data) {
-                    cb(null, data, 'successfully retrieved ip information from database')
+                      cb(null, data, 'successfully retrieved ip information from database')
     } else {
       request(ip, (err, data) => {
-        if(err)     cb(err, null, 'failed to retrieve ip information')
+        if(err)       cb(err, null, 'failed to retrieve ip information')
         else {
 
           const arr = [ data.continent, data.continent_code, data.country, data.country_code, data.region, data.region_code, data.city, data.zip, data.latitude, data.longitude, data.timezone, data.timezone_code, data.isp, data.languages, data.threat.is_mobile, data.threat.is_anonymous, data.threat.is_threat ]
           
-          db.Ip.add(ip, arr, (err, idk) => {
-            if(err) cb(err, null, 'failed to save newly retrieved ip information to database')
-            else    cb(null, data, 'successfully retrieved ip information')
-          })
+          if(data.is_internal) {
+            db.Ip.addInternal(ip, (err, idk) => {
+              if(err) cb(err, null, 'failed to save newly retrieved internal ip information to database')
+              else    cb(null, data, 'successfully retrieved internal ip information')
+            })
+          } else {
+            db.Ip.add(ip, arr, (err, idk) => {
+              if(err) cb(err, null, 'failed to save newly retrieved ip information to database')
+              else    cb(null, data, 'successfully retrieved ip information')
+            })
+          }
+
+          
         }
       })
     }

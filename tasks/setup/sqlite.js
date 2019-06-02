@@ -24,23 +24,24 @@ CREATE TABLE 'users' (
 const CREATE_TABLE_IP_QUERY = `
 CREATE TABLE 'ip' (
   ip varchar(45) primary key, -- supports both ipv4 and ipv6 (ipv6 has a maximum length of 45 characters (https://stackoverflow.com/questions/1076714/max-length-for-client-ip-address/1076749))
-  continent varchar(13) not null default 'None',   -- the longest continent names are North/South America which are both 13 characters long (following ISO-3166 continent names)
-  continent_code varchar(2) not null default '--', -- following ISO-3166 continent codes
-  country varchar(64) not null,       -- 64 characters will probably be enough for every country (following ISO-3166 country names)
-  country_code varchar(2) not null,   -- following ISO-3166 country codes
-  region varchar(64) not null,
-  region_code varchar(5) not null,    -- should only be 2 characters but just incase make it 5 characters long
-  city varchar(64) not null,
-  zip varchar(9) not null,            -- normal zip code is 5 digits, but zip+4 code is 5 digits + hyphen + 4 digits
-  latitude float not null default 0,  -- Hello there Null Island
-  longitude float not null default 0, -- inhabitants, how's life?
-  timezone varchar(32) not null,
+  continent varchar(13) default 'None',   -- the longest continent names are North/South America which are both 13 characters long (following ISO-3166 continent names)
+  continent_code varchar(2) default '--', -- following ISO-3166 continent codes
+  country varchar(64),       -- 64 characters will probably be enough for every country (following ISO-3166 country names)
+  country_code varchar(2),   -- following ISO-3166 country codes
+  region varchar(64),
+  region_code varchar(5),    -- should only be 2 characters but just incase make it 5 characters long
+  city varchar(64),
+  zip varchar(9),            -- normal zip code is 5 digits, but zip+4 code is 5 digits + hyphen + 4 digits
+  latitude float default 0,  -- Hello there Null Island
+  longitude float default 0, -- inhabitants, how's life?
+  timezone varchar(32),
   timezone_code varchar(8),           -- not available on ipapi so can be null
-  isp varchar(32) not null,           -- internet service provider
+  isp varchar(32),           -- internet service provider
   language varchar(16),               -- this is only a 16 character varchar, postgres uses an array of varchar(16), so this will only have the first language if one is available at all
   is_mobile boolean default 0,        -- not available on ipdata, will be set to false
   is_anonymous boolean default 0,     -- either using proxy or tor (tor cannot be detected by ipapi)
   is_threat boolean default 0,        -- not available on ipapi, will be set to false
+  is_internal boolean default 0,      -- this is a flag that indicates that the IP address is a private IPv4, special purpose IPv4 (not globally routable), IPv6 link local unicast address or IPv6 unique local address
   creation_date datetime not null default current_datetime
 )
 `
@@ -59,6 +60,8 @@ const CREATE_TABLE_DEVICE_USER_INTERMEDIATE_TABLE_QUERY = `
 CREATE TABLE 'it_device_user' (
   user_id integer,
   device_id integer,
+  creation_date datetime default current_datetime,
+  last_used datetime default current_datetime,
   primary key (user_id, device_id),
   constraint fk_user_id foreign key (user_id) references auth_user(rowid) on delete cascade,
   constraint fk_device_id foreign key (device_id) references device(rowid) on delete cascade
@@ -88,7 +91,7 @@ module.exports = () => dbPromise.then(async db => {
 
   console.log('[setup] if table device_user_it already exists, drop it')
 
-  await db.run('DROP TABLE IF EXISTS device_user_it')
+  await db.run('DROP TABLE IF EXISTS it_device_user')
   
   console.log('[setup] if table users already exists, drop it')
 

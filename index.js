@@ -119,10 +119,11 @@ app.get(['/is-passwordless', '/users/is-passwordless'], users.is_passwordless)
 app.post(['/device', '/device/add'], passport.authenticate('jwt', { session: false }), device.add)
 app.delete(['/device', '/device/delete'], passport.authenticate('jwt', { session: false }), device.delete)
 app.patch(['/device', '/device/modify'], passport.authenticate('jwt', { session: false }), device.modify)
+app.patch(['/device/revoke'], passport.authenticate('jwt', { session: false }), device.revoke)
 app.get(['/device/:device_id', '/device/get/:device_id'], passport.authenticate('jwt', { session: false }), device.get)
 app.get(['/device/:user_id/:device_id', '/device/get/:user_id/:device_id'], passport.authenticate('jwt', { session: false }), device.get)
 app.get(['/devices/:user_id?', '/devices/get/:user_id?'], passport.authenticate('jwt', { session: false }), device.list)
-app.post(['/device/revoke'], passport.authenticate('jwt', { session: false }), device.revoke)
+
 
 app.get(['/ip/'], passport.authenticate('jwt', { session: false }), device.iplookup)
 

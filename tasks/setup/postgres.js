@@ -26,23 +26,25 @@ CREATE TABLE auth_user (
 const CREATE_TABLE_IP_QUERY = `
 CREATE TABLE ip (
   ip varchar(45) primary key, -- supports both ipv4 and ipv6 (ipv6 has a maximum length of 45 characters (https://stackoverflow.com/questions/1076714/max-length-for-client-ip-address/1076749))
-  continent varchar(13) not null default 'None', -- the longest continent names are North/South America which are both 13 characters long (following ISO-3166 continent names)
-  continent_code varchar(2) not null default '--', -- following ISO-3166 continent codes
-  country varchar(64) not null, -- 64 characters will probably be enough for every country (following ISO-3166 country names)
-  country_code varchar(2) not null, -- following ISO-3166 country codes
-  region varchar(64) not null,
-  region_code varchar(5) not null, -- should only be 2 characters but just incase make it 5 characters long
-  city varchar(64) not null,
-  zip varchar(9) not null, -- normal zip code is 5 digits, but zip+4 code is 5 digits + hyphen + 4 digits
-  latitude float not null default 0, -- Hello there Null Island
-  longitude float not null default 0, -- inhabitants, how's life?
-  timezone varchar(32) not null,
+  continent varchar(13) default 'None', -- the longest continent names are North/South America which are both 13 characters long (following ISO-3166 continent names)
+  continent_code varchar(2) default '--', -- following ISO-3166 continent codes
+  country varchar(64), -- 64 characters will probably be enough for every country (following ISO-3166 country names)
+  country_code varchar(2), -- following ISO-3166 country codes
+  region varchar(64),
+  region_code varchar(5), -- should only be 2 characters but just incase make it 5 characters long
+  city varchar(64),
+  zip varchar(9), -- normal zip code is 5 digits, but zip+4 code is 5 digits + hyphen + 4 digits
+  latitude float default 0, -- Hello there Null Island
+  longitude float default 0, -- inhabitants, how's life?
+  timezone varchar(32),
   timezone_code varchar(8), -- not available on ipapi so can be null
-  isp varchar(32) not null, -- internet service provider
+  isp varchar(32), -- internet service provider
   language varchar(16)[], -- using an array here is probably super bad, but this allows having multiple languages; also not available on ipapi so can be null
   is_mobile boolean default false, -- not available on ipdata, will be set to false
   is_anonymous boolean default false, -- either using proxy or tor (tor cannot be detected by ipapi)
-  is_threat boolean default false -- not available on ipapi, will be set to false
+  is_threat boolean default false, -- not available on ipapi, will be set to false
+  is_internal boolean default false, -- this is a flag that indicates that the IP address is a private IPv4, special purpose IPv4 (not globally routable), IPv6 link local unicast address or IPv6 unique local address
+  creation_date timestamptz default current_timestamp
 );
 `
 
@@ -60,6 +62,7 @@ CREATE TABLE it_device_user (
   user_id integer references auth_user(id) on delete cascade,
   device_id uuid  references device(id)    on delete cascade,
   creation_date timestamptz default current_timestamp,
+  last_used timestamptz default current_timestamp,
   is_revoked boolean default false,
   primary key (user_id, device_id)
 )

@@ -229,21 +229,155 @@ const deleteUser = (id, cb) => {
   )
 }
 
-const listDevicesByUser = (user_id, cb) => {}
+const DEVICE_BASE_JOIN = `
+SELECT  device.id as device_id, user_agent, ip.ip as ip, continent, continent_code, country, country_code, 
+        region, region_code, city, zip, latitude, longitude, timezone, timezone_code, isp, language, is_mobile, 
+        is_anonymous, is_threat, it.creation_date, device.creation_date as device_creation_date, is_revoked
+FROM device
+LEFT JOIN ip ON device.ip = ip.ip
+LEFT JOIN it_device_user it ON device.id = it.device_id
+LEFT JOIN users ON it.user_id = users.id 
+`
 
-const getDeviceByUserAndDeviceId = (user_id, device_id, cb) => {}
+const listDevicesByUser = (user_id, cb) => {
+  dbPromise.then(db => 
+    db.all(DEVICE_BASE_JOIN + 'WHERE users.id = ?', user_id)
+      .then(rows => cb(null, rows))
+      .catch(err => cb(err, null))
+  )
+}
 
-const getDeviceByDeviceId = (device_id, cb) => {}
+const getDeviceByUserAndDeviceId = (user_id, device_id, cb) => {
+  dbPromise.then(db => {
+    db.all(DEVICE_BASE_JOIN + 'WHERE users.id = ? AND device.id = ?', user_id, device_id)
+      .then(rows => cb(null, rows[0] || null))
+      .catch(err => cb(err, null))
+  })
+}
 
-const addDevice = (device, cb) => {}
+const getDeviceByDeviceId = (device_id, cb) => {
+  dbPromise.then(db => {
+    db.all(DEVICE_BASE_JOIN + 'WHERE device.id = ?', device_id)
+      .then(rows => {
+        const joined_rows = {
+          device_id: rows[0].device_id,
+          user_agent: rows[0].user_agent,
+          ip: rows[0].ip,
+          creation_date: rows[0].device_creation_date,
+          users: rows.map(row => ({ user_id: row.user_id, is_revoked: row.is_revoked, creation_date: row.creation_date }))
+        }
 
-const deleteDeviceByUserAndDeviceId = (user_id, device_id) => {}
+        cb(null, joined_rows)
+      })
+      .catch(err => cb(err, null))
+  })
+}
 
-const deleteDeviceByDeviceId = (device_id, cb) => {}
+const addDevice = ({ ip, user_agent }, cb) => {
+  dbPromise.then(db => {
+    db.run('INSERT INTO device ( ip, user_agent ) VALUES ( ?, ? )', ip, user_agent)
+      .then(() => db.get('SELECT id FROM device WHERE ip = ? AND user_agent = ? ORDERY BY creation_date desc', ip, user_agent)
+        .then(row => cb(err, row.id))
+        .catch(err => cb(err, null))
+      ).catch(err => cb(err, null))
+  })
+}
 
-const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {}
+const addDeviceToUser = ({ ip, user_agent }, user_id, cb) => {
+  dbPromise.then(db => {
+    db.run('INSERT INTO device ( ip, user_agent ) VALUES ( ?, ? )', ip, user_agent)
+      .then(() => db.get('SELECT id FROM device WHERE ip = ? AND user_agent = ? ORDERY BY creation_date desc', ip, user_agent)
+        .then(row => db.run('INSERT INTO it_device_user ( user_id, device_id ) VALUES ( ?, ? )', user_id, row.id)
+          .then(() => cb(null, row.id)
+          .catch(err => cb(err, null))
+        ).catch(err => cb(err, null))
+      ).catch(err => cb(err, null))
+  })
+}
 
-const modifyDeviceByDeviceId = (device_id, changes, cb) => {}
+const deleteDeviceByUserAndDeviceId = (user_id, device_id, cb) => {
+  dbPromise.then(db => {
+    db.run('DELETE FROM device WHERE ip = ? AND 1 = (SELECT count(device_id) FROM it_device_user WHERE device_id = ?)', device_id, device_id)
+      .then(() => db.run('DELETE FROM it_device_user WHERE user_id = ? AND device_id = ?', user_id, device_id)
+        .then(res => cb(null, res.changes !== 0))
+        .catch(err => cb(err, null))
+      ).catch(err => cb(err, null))
+  })
+}
+
+const deleteDeviceByDeviceId = (device_id, cb) => {
+  dbPromise.then(db => {
+    db.run('DELETE FROM device WHERE id = ?', device_id)
+      .then(() => db.run('DELETE FROM it_device_user WHERE device_id = ?', device_id)
+        .then(res => cb(null, res.changes !== 0))
+        .catch(err => cb(err, null))
+      ).catch(err => cb(err, null))
+  })
+}
+
+const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {
+  dbPromise.then(db => {
+    db.run('', user_id, device_id)
+      .then(() => {})
+      .catch(err => cb(err, null))
+  })
+}
+
+const modifyDeviceByDeviceId = (device_id, changes, cb) => {
+  dbPromise.then(db => {
+    db.run('', device_id)
+      .then(() => {})
+      .catch(err => cb(err, null))
+  })
+}
+
+const revokeDeviceByUserAndDeviceId = (user_id, device_id, revoke_status, cb) => {
+  dbPromise.then(db => {
+    db.run('UPDATE it_device_user SET is_revoked = ? WHERE user_id = ? AND device_id = ?', revoke_status, user_id, device_id)
+      .then(() => cb(null, revoke_status))
+      .catch(err => cb(err, null))
+  })
+}
+
+const getIp = (ip, cb) => {
+  dbPromise.then(db =>
+    db.all('SELECT * FROM ip WHERE ip = ?', ip) // when using all, it maybe does not error when no rows are returned
+      .then(rows => cb(null, rows[0] || null))
+      .catch(err => cb(err, null))
+  )
+}
+
+const addIp = (ip, data, cb) => {
+  dbPromise.then(db =>
+    db.run('INSERT INTO ip VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )', ip, ...data)
+      .then(res => cb(null, res))
+      .catch(err => cb(err, null))
+  )
+}
+
+const addIpInternal = (ip, cb) => {
+  dbPromise.then(db =>
+    db.run('INSERT INTO ip ( ip, is_internal ) VALUES ( ?, 0 )', ip)
+      .then(res =>  cb(null, res))
+      .catch(err => cb(err, null))  
+  )
+}
+
+const modifyIp = (ip, data, cb) => {
+  dbPromise.then(db =>
+    db.run('UPDATE ip SET continent = ?, continent_code = ?, country = ?, country_code = ?, region = ?, region_code = ?, city = ?, zip = ?, latitude = ?, longitude = ?, timezone = ?, timezone_code = ?, isp = ?, language = ?, is_mobile = ?, is_anonymous = ?, is_threat = ? WHERE ip = ?', ...data, ip)
+      .then(res => cb(null, res))
+      .catch(err => cb(err, null))
+  )
+}
+
+const deleteIp = (ip, cb) => {
+  dbPromise.then(db =>
+    db.run('DELETE ip WHERE ip = ?', ip)
+      .then(res => cb(null, res))
+      .catch(err => cb(err, null))  
+  )
+}
 
 module.exports = {
   User: {
@@ -268,11 +402,20 @@ module.exports = {
     list: listDevicesByUser,
     get: getDeviceByUserAndDeviceId,
     getWithoutUserId: getDeviceByDeviceId,
-    add: addDevice,
+    add: addDeviceToUser,
+    addWithoutUserId: addDevice,
     delete: deleteDeviceByUserAndDeviceId,
     deleteWithoutUserId: deleteDeviceByDeviceId,
     modify: modifyDeviceByUserAndDeviceId,
     modifyWithoutUserId: modifyDeviceByDeviceId,
+    revoke: revokeDeviceByUserAndDeviceId,
+  },
+  Ip: {
+    get: getIp,
+    addInternal: addIpInternal,
+    add: addIp,
+    modify: modifyIp,
+    delete: deleteIp
   },
   authenticateUserIfExists,
   getUserIfExists,
@@ -296,8 +439,14 @@ module.exports = {
   getDeviceByUserAndDeviceId,
   getDeviceByDeviceId,
   addDevice,
+  addDeviceToUser,
   deleteDeviceByUserAndDeviceId,
   deleteDeviceByDeviceId,
   modifyDeviceByUserAndDeviceId,
-  modifyDeviceByDeviceId
+  modifyDeviceByDeviceId,
+  revokeDeviceByUserAndDeviceId,
+  getIp,
+  addIp,
+  modifyIp,
+  deleteIp
 }

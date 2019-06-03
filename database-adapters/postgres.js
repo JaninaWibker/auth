@@ -65,11 +65,10 @@ const authenticateUserIfExists = (username_or_email, password, code_2fa, cb) => 
       if(res.count === 0) return cb(null, false)
       const hash = hash_password(password, res.rows[0].salt)
       
-      client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb FROM auth_user WHERE (username = $1::text OR email = $1::text) AND password = $2::text', [username_or_email, hash])
+      return client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb FROM auth_user WHERE (username = $1::text OR email = $1::text) AND password = $2::text', [username_or_email, hash])
         .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
         .then(release_then(client))
         .catch(err => cb(err, false, { message: 'incorrect password' }))
-        .catch(release_catch(client))
     })
     .catch(err => {
       console.log(err)
@@ -115,7 +114,9 @@ const getUserIfExists = (username, cb) => pool.connect().then(client =>
 const getUserFromEmailIfExists = (email, cb) => pool.connect().then(client =>
   client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb FROM auth_user WHERE email = $1::text', [email])
     .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
+    .then(release_then(client))
     .catch(err => cb(err, false, { message: 'user not found' }))
+    .catch(release_catch(client))
 )
 
 const getUserFromIdIfExists = (id, cb) => IdToUserData(id, cb)
@@ -257,6 +258,7 @@ const privilegedModifyUser = (id, { username, password, first_name, last_name, e
           ]
         )
           .then(res => cb(null, res))
+          .then(release_then(client))
           .catch(err => cb(err, null))
       })  
   )
@@ -316,6 +318,7 @@ const getDeviceByDeviceId = (device_id, cb) => {
 
         cb(null, joined_row)
       })
+      .then(release_then(client))
       .catch(err => cb(err, null))
       .catch(release_catch(client))
   )

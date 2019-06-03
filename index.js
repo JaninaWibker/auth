@@ -12,6 +12,7 @@ const device = require('./devices/index.js')
 const registertokens = require('./registertokens/index.js')
 const services = require('./services/index.js')
 const { version } = require('./package.json')
+const startup_time = +new Date()
 
 const private_key = fs.readFileSync('certs/auth/private.key', 'utf8')
 const public_key = fs.readFileSync('certs/auth/public.key', 'utf8')
@@ -59,7 +60,9 @@ app.use(bodyParser.json())
 app.use(cookieParser())
 app.use(passport.initialize())
 
-app.get('/current-version', (_, res) => res.send(version))
+app.get('/current-version', (_, res) => res.status(200).end(version))
+
+app.get('/uptime', (_, res) => res.status(200).end(startup_time.toString()))
 
 // service endpoint
 
@@ -110,9 +113,9 @@ app.post(['/info', '/users/info'], passport.authenticate('jwt', { session: false
 app.post(['/list', '/users/list'], passport.authenticate('jwt', { session: false }), users.list)
 app.get( ['/list', '/users/list'], passport.authenticate('jwt', { session: false }), users.list)
 
-app.get(['/username-already-taken', '/users/username-already-taken'], users.username_already_taken)
+app.get(['/username-already-taken/:username?', '/users/username-already-taken/:username?'], users.username_already_taken)
 
-app.get(['/is-passwordless', '/users/is-passwordless'], users.is_passwordless)
+app.get(['/is-passwordless/:username?', '/users/is-passwordless/:username?'], users.is_passwordless)
 
 // device endpoint
 
@@ -123,7 +126,6 @@ app.patch(['/device/revoke'], passport.authenticate('jwt', { session: false }), 
 app.get(['/device/:device_id', '/device/get/:device_id'], passport.authenticate('jwt', { session: false }), device.get)
 app.get(['/device/:user_id/:device_id', '/device/get/:user_id/:device_id'], passport.authenticate('jwt', { session: false }), device.get)
 app.get(['/devices/:user_id?', '/devices/get/:user_id?'], passport.authenticate('jwt', { session: false }), device.list)
-
 
 app.get(['/ip/'], passport.authenticate('jwt', { session: false }), device.iplookup)
 

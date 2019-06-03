@@ -105,17 +105,17 @@ const validateTwoFactorCode = (username_or_email, code, cb) => pool.connect().th
 )
 
 const getUserIfExists = (username, cb) => pool.connect().then(client =>
-  client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb FROM auth_user WHERE username = $1::text', [username])
+  client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb, passwordless::boolean as is_passwordless, temp_account::timestamptz FROM auth_user WHERE username = $1::text', [username])
     .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
     .then(release_then(client))
-    .catch(err => cb(null, false, { message: 'user not found' }))
+    .catch(err => cb(err, false, { message: 'user not found' }))
     .catch(release_catch(client))
 )
 
 const getUserFromEmailIfExists = (email, cb) => pool.connect().then(client =>
   client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb FROM auth_user WHERE email = $1::text', [email])
     .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
-    .catch(err => cb(null, false, { message: 'user not found' }))
+    .catch(err => cb(err, false, { message: 'user not found' }))
 )
 
 const getUserFromIdIfExists = (id, cb) => IdToUserData(id, cb)
@@ -124,7 +124,7 @@ const getUserLimitedIfExists = (username, cb) => pool.connect().then(client =>
   client.get('SELECT username, id::int, first_name FROM auth_user WHERE username = $1::text', username)
     .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
     .then(release_then(client))
-    .catch(err => cb(null, false, { message: 'user not found' }))
+    .catch(err => cb(err, false, { message: 'user not found' }))
     .catch(release_catch(client))
 )
 
@@ -187,15 +187,16 @@ const addUser = (username, password, first_name, last_name, email, account_type 
   ]
 
   pool.connect().then(client =>
-    client.query('SELECT id::int, * FROM auth_user WHERE username = $1::text OR email $2::text', username, email)
+    client.query('SELECT id::int, * FROM auth_user WHERE username = $1::text OR email = $2::text', [username, email])
       .then(res => {
         if(res.rowCount === 0) {
           const userKeys = 'first_name, last_name, email, username, password, salt, creation_date, modification_date, account_type, metadata, twofa, twofa_secret, passwordless, temp_account'
-          const userValues = '$1::text, $2::text, $3::text, $4::text, $5::text, $6::text, current_timestamp, current_timestamp, $7::text, $8::jsonb, $9::boolean, $10::text, $11::boolean, $12::timestamptz'
+          const userValues = '$1::text, $2::text, $3::text, $4::text, $5::text, $6::text, current_timestamp, current_timestamp, $7::account_type, $8::jsonb, $9::boolean, $10::text, $11::boolean, to_timestamp($12)::timestamptz'
           client.query('INSERT INTO auth_user ( ' + userKeys + ' ) VALUES ( ' + userValues + ' )', newUser)
-            .then(res => cb(null, select_postgres_to_general(res).rows[0]))
-            .then(release_then(client))
-            .catch(err => cb(err, null))
+            .then(() => client.query('SELECT id::int FROM auth_user WHERE username = $1::text', [username])
+              .then(res => cb(null, select_postgres_to_general(res).rows[0]))
+              .then(release_then(client))
+            ).catch(err => cb(err, null))
         } else {
           cb({ message: 'username or email already exists' }, null)
         }
@@ -283,7 +284,7 @@ LEFT JOIN auth_user ON it.user_id = auth_user.id
 
 const listDevicesByUser = (user_id, cb) => {
   pool.connect().then(client =>
-    client.query(DEVICE_BASE_JOIN + 'WHERE auth_user.id = $1::int', [user_id])
+    client.query(DEVICE_BASE_JOIN + 'WHERE auth_user.id = $1::int ORDER BY last_used desc', [user_id])
       .then(res => cb(null, res.rows))
       .then(release_then(client))
       .catch(err => cb(err, null))

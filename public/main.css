@@ -396,7 +396,7 @@ body.theme-dark .theme-chooser .enable-dark-theme-a {
   min-height: calc(100vh - 24px);
 }
 
-.user-profile-info-wrapper {
+.user-profile-info-wrapper, .register_token-wrapper {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -410,13 +410,13 @@ body.theme-dark .theme-chooser .enable-dark-theme-a {
   width: 200px;
 }
 
-.user-profile-group-horizontal {
+.user-profile-group-horizontal, .register_token-add-group-horizontal {
   display: flex;
   width: 400px;
   height: 50px;
 }
 
-.user-profile-field-block {
+.user-profile-field-block, .register_token-add-field-block {
   height: 50px;
 }
 
@@ -424,18 +424,18 @@ body.theme-dark .theme-chooser .enable-dark-theme-a {
   display: none!important;
 }
 
-.user-profile-group-horizontal .user-profile-field-block {
+.user-profile-group-horizontal .user-profile-field-block, .register_token-add-group-horizontal .register_token-add-field-block {
   width: 200px;
   display: inline-block;
 }
 
-.user-profile-label {
+.user-profile-label, .register_token-add-label {
   font-weight: 600;
   font-size: 12px;
   color: var(--grey-1-color);
 }
 
-.user-profile-input {
+.user-profile-input, .register_token-add-input {
   padding: 2px 8px!important;
   width: calc(100% - 24px)!important;
 }
@@ -576,6 +576,14 @@ body {
 
 .form-group-2:nth-child(2), .form-group-3:nth-child(3) {
   margin-left: 8px;
+}
+
+.text-input.input-big.state-green:focus {
+  border-color: green;
+}
+
+.text-input.input-big.state-red, .text-input.input-big.state-red:focus {
+  border-color: red;
 }
 
 .text-input.input-big {

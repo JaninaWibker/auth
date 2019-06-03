@@ -71,9 +71,9 @@ const validateTwoFactorCode = (username_or_email, code, cb) => {
 
 const getUserIfExists = (username, cb) => {
   dbPromise.then(db =>
-    db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users WHERE username = ?', username)
+    db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata, passwordless as is_passwordless, temp_account FROM users WHERE username = ?', username)
       .then(row => cb(null, select_sqlite_get_to_general(row).rows[0] || false))
-      .catch(err => cb(null, false, { message: 'user not found' }))
+      .catch(err => cb(err, false, { message: 'user not found' }))
   )
 }
 
@@ -81,7 +81,7 @@ const getUserFromEmailIfExists = (email, cb) => {
   dbPromise.then(db =>
     db.get('SELECT username, rowid as id, first_name, last_name, email, creation_date, modification_date, account_type, metadata FROM users WHERE email = ?', email)
       .then(row => cb(null, select_sqlite_get_to_general(row).rows[0] || false))
-      .catch(err => cb(null, false, { message: 'user not found' }))
+      .catch(err => cb(err, false, { message: 'user not found' }))
   )
 }
 
@@ -91,7 +91,7 @@ const getUserLimitedIfExists = (username, cb) => {
   dbPromise.then(db =>
     db.get('SELECT username, rowid as id, first_name FROM users WHERE username = ?', username) // can "rowid as id" be removed? this uses the username and nobody should need the user id of some other user so it can maybe be removed
       .then(row => cb(null, select_sqlite_get_to_general(row).rows[0] || false))
-      .catch(err => cb(null, false, { message: 'user not found' }))
+      .catch(err => cb(err, false, { message: 'user not found' }))
   )
 }
 
@@ -241,7 +241,7 @@ LEFT JOIN users ON it.user_id = users.id
 
 const listDevicesByUser = (user_id, cb) => {
   dbPromise.then(db => 
-    db.all(DEVICE_BASE_JOIN + 'WHERE users.id = ?', user_id)
+    db.all(DEVICE_BASE_JOIN + 'WHERE users.id = ? ORDER BY last_used desc', user_id)
       .then(rows => cb(null, rows))
       .catch(err => cb(err, null))
   )

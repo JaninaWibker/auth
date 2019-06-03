@@ -22,8 +22,17 @@ function login(username, passwordOrRefreshToken, isRefreshToken=false, getRefres
     }),
     headers: {
       'Accept': 'application/json',
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Device-Id': getStorage('device_id') || ''
     }
+  })
+  .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
+  .then(function(json) {
+    console.log(json)
+    if(json.device_id) {
+      setStorage('device_id', json.device_id)
+    }
+    return json
   })
 }
 

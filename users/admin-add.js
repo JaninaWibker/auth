@@ -17,11 +17,12 @@ module.exports = (req, res) => {
           console.log(err, row)
           res.json({ message: err, status: 'failure' })
         } else {
-          console.log('[' + format_date() + '][user/add] "' + row.lastID, row)
+          console.log('[' + format_date() + '][user/add] "' + (row.id || row.lastID) + '"', row)
           res.json({
             message: 'account creation successful',
             status: 'success',
             data: {
+              id: (row.id || row.lastID),
               username: data.username,
               first_name: data.first_name,
               last_name: data.last_name,

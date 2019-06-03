@@ -33,17 +33,17 @@ module.exports = ({ registerTokenCache, validateRegisterToken, signJwtNoCheck, g
       if(err) {
         res.json({ message: err, status: 'failure' })
       } else {
-        console.log('[' + format_date() + '][user/add] "' + row.lastID, row)
+        console.log('[' + format_date() + '][user/add] "' + (row.id || row.lastID), row)
 
-        const payload = { id: row.lastID, username: data.username, iss: 'accounts.jannik.ml', account_type: account_type, '2fa_enabled': row['2fa_enabled'] }
+        const payload = { id: (row.id || row.lastID), username: data.username, iss: 'accounts.jannik.ml', account_type: account_type, '2fa_enabled': row['2fa_enabled'] }
         const token = signJwtNoCheck(payload)
 
         let refreshToken
-        if(getRefreshToken) refreshToken = generateRefreshToken(data.username, row.lastID)
+        if(getRefreshToken) refreshToken = generateRefreshToken(data.username, (row.id || row.lastID))
         
         console.log('[' + format_date() + '][user/add] "' + token.substring(0, 96), payload)
 
-        manualAddToCache(row.lastID, token, payload, 30 * 60 * 1000)
+        manualAddToCache((row.id || row.lastID), token, payload, 30 * 60 * 1000)
           .then(() =>
             res.json({
               message: 'account creation successful',

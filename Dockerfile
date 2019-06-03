@@ -1,7 +1,7 @@
 FROM node:11
 
 # package.json version
-LABEL version="1.2.5"
+LABEL version="1.3.1"
 
 ARG RESET_DATABASES
 

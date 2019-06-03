@@ -103,7 +103,7 @@
         document.querySelector('.spoiler-wrapper').style.display = 'none'
       }
 
-      getServiceInfo(getUrlParameter('id'), function(json) {
+      getServiceInfo(getUrlParameter('id') || 'auth', function(json) {
         if(json.message) {
 
         } else {
@@ -129,20 +129,23 @@
         })
       }
 
-      function login(username, passwordOrRefreshToken, isRefreshToken=false, getRefreshToken=false) {
-        return window.fetch('/login', {
-          method: 'POST',
-          body: JSON.stringify({
-            username: username,
-            password: passwordOrRefreshToken,
-            isRefreshToken: isRefreshToken,
-            getRefreshToken: getRefreshToken
-          }),
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        })
+      let DEBOUNCE_TIMEOUT
+
+      function debounced(ms, cb) {
+        if(DEBOUNCE_TIMEOUT) {
+          clearTimeout(DEBOUNCE_TIMEOUT)
+          DEBOUNCE_TIMEOUT = setTimeout(() => { DEBOUNCE_TIMEOUT = null; cb() }, ms)
+        } else {
+          DEBOUNCE_TIMEOUT = setTimeout(() => DEBOUNCE_TIMEOUT = null, ms)
+          cb()
+        }
+      }
+
+      function getIsUsernameAlreadyTaken(username, cb) {
+        return window.fetch('/users/username-already-taken/' + username)
+          .then(res => res.json())
+          .then(json => cb(null, json))
+          .catch(err => cb(err, null))
       }
 
       function toggleSpoiler(scope) {
@@ -157,13 +160,43 @@
         scope.classList.toggle('open') 
       }
 
-      document.querySelector('.spoiler-click-target').addEventListener('keypress', function (evt) {
+      function checkIsValidPasswordCharacter(char) {
+        return ' !"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'.indexOf(char) !== -1 || /[a-zA-Z0-9]/.test(char)
+      }
+
+      function checkIsValidUsernameCharacter(char) {
+        return '$-:@'.indexOf(char) !== -1 || /[a-zA-Z0-9]/.test(char)
+      }
+
+      document.querySelector('#register-username').addEventListener('keypress', function(evt) {
+        console.log(evt.code)
+        if(checkIsValidUsernameCharacter(evt.key)) {
+          debounced(250, getIsUsernameAlreadyTaken.bind(this, evt.target.value + evt.key, (err, json) => {
+            if(err) console.log(err)
+            else {
+              console.log('isFocused: ' + (this === document.activeElement), 'isTaken: ' + json.is_taken, 'input: ' + evt.target.value)
+              if(json.is_taken) {
+                evt.target.classList.remove('state-green')
+                evt.target.classList.add('state-red')
+              } else if(evt.target.value !== '') {
+                evt.target.classList.remove('state-red')
+                evt.target.classList.add('state-green')
+              } else {
+                evt.target.classList.remove('state-green')
+                evt.target.classList.remove('state-red')
+              }
+            }
+          }))
+        }
+      })
+
+      document.querySelector('.spoiler-click-target').addEventListener('keypress', function(evt) {
         if(evt.code === 'Space' || evt.code === 'Enter') {
           toggleSpoiler(evt.target)
         }
       })
 
-      document.querySelector('.spoiler-click-target').addEventListener('click', function (evt) {
+      document.querySelector('.spoiler-click-target').addEventListener('click', function(evt) {
         toggleSpoiler(this)
       })
 

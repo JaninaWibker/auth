@@ -159,9 +159,7 @@ const IdToUserData = (id, cb) => pool.connect().then(client =>
   client.query('SELECT username, id::int, first_name, last_name, email, creation_date, modification_date, account_type, metadata::jsonb, temp_account FROM auth_user WHERE id = $1::int', [id])
     .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
     .then(release_then(client))
-    .catch(err => {
-      return cb(null, false, { message: 'user not found', err: err })
-    })
+    .catch(err => cb(null, false, { message: 'user not found', err: err }))
     .catch(release_catch(client))
 )
 
@@ -229,21 +227,21 @@ const modifyUser = (id, { username, password, first_name, last_name, email }, cb
           .then(res => cb(null, res))
           .then(release_then(client))
           .catch(err => cb(err, null))
-      })
-      .catch(release_catch(client))
+      }).catch(release_catch(client))
   )
 }
 
-const privilegedModifyUser = (id, { username, password, first_name, last_name, email, account_type, metadata, temp_account }, cb) => {
+const privilegedModifyUser = (id, { username, password, first_name, last_name, email, account_type, metadata, passwordless, temp_account }, cb) => {
   pool.connect().then(client =>
-    client.query('SELECT username, id::int, first_name, last_name, email, salt, password, creation_date, modification_date, account_type, metadata::jsonb, temp_account FROM auth_user WHERE id = $1::int', [id])
+    client.query('SELECT username, id::int, first_name, last_name, email, salt, password, creation_date, modification_date, account_type, metadata::jsonb, passwordless::boolean, temp_account FROM auth_user WHERE id = $1::int', [id])
       .then(res => {
         const salt = gen_salt()
         if(password && (password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token'))) {
           return cb({ message: 'cannot set password to string starting with isRefreshToken or getRefreshToken' }, null)
         }
+        console.log(!!password, password ? hash_password(password, salt) : res.rows[0].password)
         client.query(
-          'UPDATE auth_user SET username = $1::text, first_name = $2::text, last_name = $3::text, email = $4::text, salt = $5::text, password = $6::text, modification_date = current_timestamp, account_type = $7::text, metadata = $8::text, temp_account = to_timestamp($9::int) WHERE id = $10::int',
+          'UPDATE auth_user SET username = $1::text, first_name = $2::text, last_name = $3::text, email = $4::text, salt = $5::text, password = $6::text, modification_date = current_timestamp, account_type = $7::account_type, metadata = $8::jsonb, passwordless = $9::boolean, temp_account = to_timestamp($10::int) WHERE id = $11::int',
           [
             username || res.rows[0].username,
             first_name || res.rows[0].first_name,
@@ -253,14 +251,15 @@ const privilegedModifyUser = (id, { username, password, first_name, last_name, e
             password ? hash_password(password, salt) : res.rows[0].password,
             account_type || res.rows[0].account_type,
             metadata || res.rows[0].metadata,
-            temp_account || res.rows[0].temp_account || 0,
+            passwordless !== undefined ? passwordless : (res.rows[0].passwordless || false),
+            temp_account || +new Date(res.rows[0].temp_account) || 0,
             id
           ]
         )
           .then(res => cb(null, res))
           .then(release_then(client))
           .catch(err => cb(err, null))
-      })  
+      }).catch(release_catch(client))
   )
 }
 
@@ -356,6 +355,15 @@ const addDeviceToUser = ({ ip, user_agent }, user_id, cb) => {
           .catch(err => cb(err, null))
         ).catch(err => cb(err, null))
       ).catch(err => cb(err, null))
+      .catch(release_catch(client))
+  )
+}
+
+const addExistingDeviceToUser = ({ user_id, device_id }, cb) => {
+  pool.connect().then(client =>
+    client.query('INSERT INTO it_device_user ( user_id, device_id ) VALUES ( $1::int, $2::uuid )', [user_id, device_id])
+      .then(res => cb(null, res))
+      .then(release_then(client))
       .catch(release_catch(client))
   )
 }
@@ -496,6 +504,7 @@ module.exports = {
     getByUserIdAndIpAndUserAgent: getDeviceByUserIdAndIpAndUserAgent,
     add: addDeviceToUser,
     addWithoutUserId: addDevice,
+    addExistingToUser: addExistingDeviceToUser,
     delete: deleteDeviceByUserAndDeviceId,
     deleteWithoutUserId: deleteDeviceByDeviceId,
     modify: modifyDeviceByUserAndDeviceId,
@@ -532,8 +541,9 @@ module.exports = {
   getDeviceByUserAndDeviceId,
   getDeviceByDeviceId,
   getDeviceByUserIdAndIpAndUserAgent,
-  addDevice,
   addDeviceToUser,
+  addDevice,
+  addExistingDeviceToUser,
   deleteDeviceByUserAndDeviceId,
   deleteDeviceByDeviceId,
   modifyDeviceByUserAndDeviceId,

@@ -11,4 +11,5 @@ module.exports = {
   logout: require('./logout.js'),
   username_already_taken: require('./username_already_taken.js'),
   is_passwordless: require('./is_passwordless.js'),
+  set_password: require('./set_password.js')
 }

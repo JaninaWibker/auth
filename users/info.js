@@ -12,21 +12,22 @@ const sendSuccess = (res, user) => res.status(200).json({
 })
 
 module.exports = (req, res) => {
-  console.log(req.body, req.user)
+  const username = req.params.username || req.body.username
+
   db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(req.body.username === undefined) {
+    if(username === undefined) {
       db.getUserIfExists(req.user.username, (err, user) => {
         if(err) sendFailure(res)
         else    sendSuccess(res, user)
       })
     }
-    else if(req.body.username === req.user.username || user.account_type === 'admin') {
-      db.getUserIfExists(req.body.username, (err, user) => {
+    else if(username === req.user.username || user.account_type === 'admin') {
+      db.getUserIfExists(username, (err, user) => {
         if(err) sendFailure(res)
         else    sendSuccess(res, user)
       })
     } else {
-      db.getUserLimitedIfExists(req.body.username, (err, user) => {
+      db.getUserLimitedIfExists(username, (err, user) => {
         if(err) sendFailure(res)
         else    sendSuccess(res, user)
       })

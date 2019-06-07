@@ -194,16 +194,16 @@ const modifyUser = (id, { username, password, first_name, last_name, email }, cb
   )
 }
 
-const privilegedModifyUser = (id, { username, password, first_name, last_name, email, account_type, metadata, temp_account }, cb) => {
+const privilegedModifyUser = (id, { username, password, first_name, last_name, email, account_type, metadata, passwordless, temp_account }, cb) => {
   dbPromise.then(db => 
-    db.get('SELECT username, rowid as id, first_name, last_name, email, salt, password, creation_date, modification_date, account_type, metadata FROM users WHERE rowid = ?', id)
+    db.get('SELECT username, rowid as id, first_name, last_name, email, salt, password, creation_date, modification_date, account_type, metadata, passwordless, temp_account FROM users WHERE rowid = ?', id)
       .then(row => {
         const salt = gen_salt()
         if(password && (password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token'))) {
           return cb({ message: 'cannot set password to string starting with isRefreshToken or getRefreshToken' }, null)
         }
         db.run(
-          'UPDATE users SET username = ?, first_name = ?, last_name = ?, email = ?, salt = ?, password = ?, modification_date = datetime("now"), account_type = ?, metadata = ?, temp_account = ? WHERE rowid = ?',
+          'UPDATE users SET username = ?, first_name = ?, last_name = ?, email = ?, salt = ?, password = ?, modification_date = datetime("now"), account_type = ?, metadata = ?, passwordless = ?, temp_account = ? WHERE rowid = ?',
           username || row.username,
           first_name || row.first_name,
           last_name || row.last_name,
@@ -212,7 +212,8 @@ const privilegedModifyUser = (id, { username, password, first_name, last_name, e
           password ? hash_password(password, salt) : row.password,
           account_type || row.account_type,
           metadata ? (typeof metadata === 'string' ? metadata : JSON.stringify(metadata)) : row.metadata,
-          temp_account || row.temp_account || 0,
+          passwordless !== undefined ? passwordless : (row.passwordless || 0),
+          temp_account !== undefined ? temp_account : (row.temp_account || 0),
           id
         )
           .then(x => cb(null, x))
@@ -300,6 +301,14 @@ const addDeviceToUser = ({ ip, user_agent }, user_id, cb) => {
           .catch(err => cb(err, null))
         ).catch(err => cb(err, null))
       ).catch(err => cb(err, null))
+  })
+}
+
+const addExistingDeviceToUser = ({ user_id, device_id }, cb) => {
+  dbPromise.then(db => {
+    db.run('INSERT INTO it_device_user ( user_id, device_id) VALUES ( ?, ? )', user_id, device_id)
+      .then(() => cb(null, null))
+      .catch(err => cb(err, null))
   })
 }
 
@@ -424,6 +433,7 @@ module.exports = {
     getByUserIdAndIpAndUserAgent: getDeviceByUserIdAndIpAndUserAgent,
     add: addDeviceToUser,
     addWithoutUserId: addDevice,
+    addExistingToUser: addExistingDeviceToUser,
     delete: deleteDeviceByUserAndDeviceId,
     deleteWithoutUserId: deleteDeviceByDeviceId,
     modify: modifyDeviceByUserAndDeviceId,
@@ -460,8 +470,9 @@ module.exports = {
   getDeviceByUserAndDeviceId,
   getDeviceByDeviceId,
   getDeviceByUserIdAndIpAndUserAgent,
-  addDevice,
   addDeviceToUser,
+  addDevice,
+  addExistingDeviceToUser,
   deleteDeviceByUserAndDeviceId,
   deleteDeviceByDeviceId,
   modifyDeviceByUserAndDeviceId,

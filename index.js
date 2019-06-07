@@ -95,20 +95,22 @@ app.post(['/logout', '/users/logout'], passport.authenticate('jwt', { session: f
 
 app.post(['/add', '/users/add'], users.add({ registerTokenCache: registertokens.registerTokenCache, validateRegisterToken, signJwtNoCheck, generateRefreshToken, manualAddToCache }))
 
-app.post(['admin/add', '/users/admin/add'], passport.authenticate('jwt', { session: false }), users.adminAdd)
+app.post(['/admin/add', '/users/admin/add'], passport.authenticate('jwt', { session: false }), users.adminAdd)
 
-app.post(['/modify', '/users/modify'], passport.authenticate('jwt', { session: false }), users.modify(Logout))
-app.put('/users', passport.authenticate('jwt', { session: false }), users.modify(Logout))
+app.post(['/modify', '/users/modify'],  passport.authenticate('jwt', { session: false }), users.modify(Logout))
+app.put('/users',                       passport.authenticate('jwt', { session: false }), users.modify(Logout)) // TODO: find out if this should be PATCH or PUT, I feel like it should be patch
 
-app.post(['/modify-self', '/users/modify-self'], passport.authenticate('jwt', { session: false }), users.modifySelf(Logout))
-app.put('/users/self', passport.authenticate('jwt', { session: false }), users.modifySelf(Logout))
+app.post(['/modify-self', '/users/modify-self'],  passport.authenticate('jwt', { session: false }), users.modifySelf(Logout))
+app.put('/users/self',                            passport.authenticate('jwt', { session: false }), users.modifySelf(Logout)) // TODO: find out if this should be PATCH or PUT, I feel like it should be patch
 
-app.post(['/delete', '/users/delete'], passport.authenticate('jwt', { session: false }), users.delete)
-app.delete('/users', passport.authenticate('jwt', { session: false }), users.delete)
+app.post(['/delete', '/users/delete'],  passport.authenticate('jwt', { session: false }), users.delete)
+app.delete('/users',                    passport.authenticate('jwt', { session: false }), users.delete)
 
-app.post(['/test', '/users/test'], passport.authenticate('jwt', { session: false }), users.test)
+app.post(['/test', '/users/test'],  passport.authenticate('jwt', { session: false }), users.test)
+app.get(['/test', '/users/test'],   passport.authenticate('jwt', { session: false }), users.test)
 
-app.post(['/info', '/users/info'], passport.authenticate('jwt', { session: false }), users.info)
+app.post(['/info', '/users/info'],                    passport.authenticate('jwt', { session: false }), users.info)
+app.get(['/info/:username', '/users/info/:username'], passport.authenticate('jwt', { session: false }), users.info)
 
 app.post(['/list', '/users/list'], passport.authenticate('jwt', { session: false }), users.list)
 app.get( ['/list', '/users/list'], passport.authenticate('jwt', { session: false }), users.list)
@@ -116,6 +118,8 @@ app.get( ['/list', '/users/list'], passport.authenticate('jwt', { session: false
 app.get(['/username-already-taken/:username?', '/users/username-already-taken/:username?'], users.username_already_taken)
 
 app.get(['/is-passwordless/:username?', '/users/is-passwordless/:username?'], users.is_passwordless)
+
+app.patch(['/set-password', '/users/set-password'], users.set_password)
 
 // device endpoint
 

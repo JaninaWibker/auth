@@ -65,6 +65,9 @@
                 <label for="login-username">Username or email: </label>
                 <input name="username" autocomplete="off" class="text-input input-big" id="login-username" type="text" />
               </div>
+              <div class="login-passwordless-account-notice hidden">
+                This account does not have a password set, you can set it now.
+              </div>
               <div class="form-group">
                 <label for="login-password">Password: </label>
                 <input name="password" autocomplete="off" class="text-input input-big" id="login-password" type="password" />
@@ -73,10 +76,10 @@
               <div class="form-group hidden" id="repeat-password-form-group">
                 <label for="login-repeat-password">Repeat password: </label>
                 <input name="password" autocomplete="off" class="text-input input-big" id="login-repeat-password" type="password" />
-                <div class="login-incorrect-credentials hidden">Passwords don't match</div>
+                <div class="login-incorrect-repeat hidden">Passwords don't match</div>
               </div>
               <input type="submit" style="display: none;">
-              <button type="submit" class="btn btn-big btn-standard center">Login</button>
+              <button type="submit" id="login-btn" class="btn btn-big btn-standard center">Login</button>
               <p class="subtext">
                 Don't have an account? <a class="login-sublink" style="cursor:pointer;" onclick="window.location.replace('/register' + window.location.search)">Create one now!</a>
               </p>
@@ -125,6 +128,39 @@
         document.body.querySelector('.login-continue-as-flex-wrapper').classList.add('hidden')
         document.body.querySelector('.login-or-divider-container').classList.add('hidden')
         document.body.querySelector('.login-container .login-header-container').classList.add('hidden')
+      }
+
+      function loginAndSaveUserData(username, password) {
+        return login(username, password, false, true)
+          .then(function(json) {
+
+            setStorage('jwt', json.token)
+
+            setStorageObject({
+              username: username,
+              refreshToken: json.refreshToken,
+              remember_me: true,
+              jwt: json.token
+            })
+            window.fetch('/users/info', {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Bearer ' + json.token
+              }
+            })
+            .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
+            .then(function(json) { if(json.user) setStorage('fullname', json.user.first_name + ' ' + json.user.last_name) })
+            .catch(function(res) { console.log(res.message) })
+
+            if(getUrlParameter('id') === 'auth' || getUrlParameter('id') === '') {
+              return window.location.replace('/')
+            }
+
+            return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + json.token + window.location.hash ) 
+          })
+          .catch(function catchLogin(res) {
+            document.body.querySelector('.login-incorrect-credentials').classList.toggle('hidden')
+          })
       }
 
       function getUptime(cb) {
@@ -242,58 +278,87 @@
 
       }
 
+      let is_passwordless = false
+
       document.querySelector('#login-username').addEventListener('change', function(evt) {
         if(evt.target.value === '') {
+          is_passwordless = false
+          document.querySelector('.login-passwordless-account-notice').classList.add('hidden')
           document.querySelector('#repeat-password-form-group').classList.add('hidden')
+          document.querySelector('#login-btn').innerText = 'Login'
         } else {
           isPasswordlessAccount(evt.target.value, (err, json) => {
             if(err) console.error(err)
             else {
               if(json.is_passwordless){
+                is_passwordless = true
+                document.querySelector('.login-passwordless-account-notice').classList.remove('hidden')
                 document.querySelector('#repeat-password-form-group').classList.remove('hidden')
+                document.querySelector('#login-btn').innerText = 'Set password & Login'
               } else {
+                is_passwordless = false
+                document.querySelector('.login-passwordless-account-notice').classList.add('hidden')
                 document.querySelector('#repeat-password-form-group').classList.add('hidden')
+                document.querySelector('#login-btn').innerText = 'Login'
               }
             }
-        })
+          })
         }
       })
 
-      document.querySelector('form.login#login').addEventListener('submit', function(evt) {
+      function submitLogin(evt) {
         evt.preventDefault()
         const username = document.querySelector('form.login#login #login-username').value
         const password = document.querySelector('form.login#login #login-password').value
 
-        login(username, password, false, true)
-          .then(function(json) {
+        return loginAndSaveUserData(username, password)
+      }
 
-            setStorage('jwt', json.token)
+      function submitSetPassword(evt) {
+        evt.preventDefault()
 
-            setStorageObject({
-              username: username,
-              refreshToken: json.refreshToken,
-              remember_me: true,
-              jwt: json.token
-            })
-            window.fetch('/users/info', {
-              method: 'POST',
-              headers: {
-                'Authorization': 'Bearer ' + json.token
-              }
-            })
-            .then(function(res) { return res.status === 401 ? Promise.reject({ status: res.status, message: res.json() }) : res.json() })
-            .then(function(json) { if(json.user) setStorage('fullname', json.user.first_name + ' ' + json.user.last_name) })
-            .catch(function(res) { console.log(res.message) })
+        const username = document.querySelector('form.login#login #login-username').value
+        const password = document.querySelector('form.login#login #login-password').value
+        const repeat_password = document.querySelector('form.login#login #login-repeat-password').value
 
-            if(getUrlParameter('id') === 'auth' || getUrlParameter('id') === '') {
-              return window.location.replace('/')
+        if(password !== repeat_password) {
+          document.querySelector('form.login#login .login-incorrect-repeat').classList.remove('hidden')
+          return
+        } else {
+          document.querySelector('form.login#login .login-incorrect-repeat').classList.add('hidden')
+
+          window.fetch('/users/set-password', {
+          method: 'PATCH',
+          body: JSON.stringify({
+            username: username,
+            password: password
+          }),
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Device-Id': getStorage('device_id') || ''
+          }
+        })
+          .then(res => res.json())
+          .then(json => {
+            if(json.status === 'failure') {
+              // TODO: display some kind of error
+              console.log(json.message)
+            } else {
+              loginAndSaveUserData(username, password)
             }
+          })
+          .catch(err => {
+            // TODO: display some kind of error
+            console.log(err)
+          })
+        }
 
-            return window.location.replace(getUrlParameter('from') + '?href=' + encodeURIComponent(getUrlParameter('href')) + '&jwt=' + json.token + window.location.hash ) 
-          })
-          .catch(function catchLogin(res) {
-            document.body.querySelector('.login-incorrect-credentials').classList.toggle('hidden')
-          })
+      }
+
+      document.querySelector('form.login#login').addEventListener('submit', function(evt) {
+        if(is_passwordless) submitSetPassword(evt)
+        else submitLogin(evt)
       })
     </script>
   </body>

@@ -30,7 +30,7 @@ const sendSuccess = (res, message, status) => res.status(200).json({
 
 const revokeDevice = (req, res) =>
   db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(err) return sendError(res, 'could not validate requesting users account type', info)
+    if(err) return          sendError(res, 'could not validate requesting users account type', info)
     if(req.body.user_id && user.account_type === 'admin') {
       db.Device.revoke(req.body.user_id, req.body.device_id, true, (err, status) => {
         if(err || !status)  sendError(res, 'failed to revoke device ' + req.body.device_id + ' from user ' + req.body.user_id, err)

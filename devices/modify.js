@@ -56,7 +56,7 @@ const modifyDevice = (req, res) =>
     if(err) return sendError(res, 'could not validate requesting users account type', info)
     if(user.account_type === 'admin') {
       modifyDeviceIntermediate(req.body.device_id, { ip: req.body.ip, user_agent: req.body.user_agent }, (err, device) => {
-        if(err) sendErorr(res, 'failed to modify device ' + req.body.device_id, err)
+        if(err) sendError(res, 'failed to modify device ' + req.body.device_id, err)
         else    sendSuccess(res, 'successfully modified device ' + req.body.device_id, device)
       })
     } else {

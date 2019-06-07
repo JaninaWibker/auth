@@ -168,7 +168,7 @@ body.theme-dark .theme-chooser .enable-dark-theme-a {
   border-left: 4px solid #a36ad8;
 }
 
-.login-info-box.hidden, .register-info-box.hidden, .index.main.hidden {
+.login-info-box.hidden, .register-info-box.hidden, .index.main.hidden, .form-group.hidden {
   display: none;
 }
 
@@ -311,14 +311,21 @@ body.theme-dark .theme-chooser .enable-dark-theme-a {
   display: none;
 }
 
-.login-incorrect-credentials, .register-incorrect-repeat {
+.login-incorrect-credentials, .login-incorrect-repeat, .register-incorrect-repeat {
   color: red;
   font-size: 14px;
   margin: 4px 6px;
 }
 
-.login-incorrect-credentials.hidden, .register-incorrect-repeat.hidden {
+.login-incorrect-credentials.hidden, .login-incorrect-repeat.hidden, .register-incorrect-repeat.hidden, .login-passwordless-account-notice.hidden {
   display: none;
+}
+
+.login-passwordless-account-notice {
+  font-size: 14px;
+  margin: -4px 4px 8px 0px;
+  padding-left: 10px;
+  border-left: 4px solid #a36ad8;
 }
 
 .login-container, .register-container {

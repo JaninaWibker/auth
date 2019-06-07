@@ -5,7 +5,7 @@ const db = require('../db.js')
 const { addDeviceIntermediate } = require('../devices/add.js')
 const { modifyDeviceIntermediate } = require('../devices/modify.js')
 
-const modifyLastUsed = (device_id, user_id, last_used, reject, resolve) => db.Device.modifyLastUsed(device_id, user_id, last_used, (err, rtn) => {
+const modifyLastUsed = (device_id, user_id, last_used, reject, resolve) => db.Device.modifyLastUsed(device_id, user_id, last_used, (err, _rtn) => {
   if(err) reject(err)
   else    resolve(device_id)
 })
@@ -51,6 +51,10 @@ module.exports = (Login) => (req, res) => {
               else {
                 db.Device.get(user.id, device_id, (err, device) => {
                   if(err) reject(err)
+                  else if(!device) db.Device.addExistingToUser({ user_id: user.id, device_id: device_id }, (err, _rtn) => {
+                      if(err) reject(err)
+                      else    resolve()
+                    })
                   else if(device.is_revoked && isRefreshToken) reject({ message: 'authorization failed, device revoked', status: 'failure' })
                   else if(device.is_revoked && !isRefreshToken) db.Device.revoke(user.id, device_id, false, (err, _rtn) => {
                     if(err) reject(err)
@@ -64,11 +68,12 @@ module.exports = (Login) => (req, res) => {
             db.Device.getByUserIdAndIpAndUserAgent(user.id, req.ip, req.get('User-Agent'), (err, device) => {
               if(err)           reject(err)
               else if(!device)  addDevice({ ip: req.ip, user_agent: req.get('User-Agent'), user_id: user.id }, reject, resolve)
-              else              modifyLastUsed(device_id, user.id, new Date(), reject, resolve)
+              else              modifyLastUsed(device.device_id, user.id, new Date(), reject, resolve)
             })
           }
         }
       })
+
     })
 
     devicePromise

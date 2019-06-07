@@ -1,3 +1,5 @@
+if(process.env.IP_LOOKUP_ENDPOINT === undefined || process.env.IP_LOOKUP_ENDPOINT === '') console.log('[iplookup] ip-lookup is disabled. To enable add an endpoint in .env (IP_LOOKUP_ENDPOINT)')
+
 module.exports = {
   list: require('./list.js'),
   get: require('./get.js'),

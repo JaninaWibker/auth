@@ -3,6 +3,8 @@ const crypto = require('crypto')
 const speakeasy = require('speakeasy')
 const fs = require('fs')
 
+console.log('[database] using postgres as database')
+
 const config = {
   database: 'auth',
   host: process.env.POSTGRES_SERVER,

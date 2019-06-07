@@ -2,6 +2,8 @@ const crypto = require('crypto')
 const sqlite = require('sqlite')
 const speakeasy = require('speakeasy')
 
+console.log('[database] using sqlite as database')
+
 const dbPromise = sqlite.open('./Users.sqlite')
 
 const gen_salt = () => crypto.randomBytes(48).toString('base64')

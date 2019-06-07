@@ -12,10 +12,11 @@ const sendError = (res, message, err) => res.status(500).json({
   error: err
 })
 const sendSuccess = (res, message, data) => res.status(200).json({
-  message: message,
-  status: 'success',
-  data: data
-})
+    message: message,
+    stutus: 'success',
+    data: data,
+    is_disabled: IP_LOOKUP_DISABLED  
+  })
 
 const request = (ip, cb) => {
   if(IP_LOOKUP_DISABLED) return cb(null, {

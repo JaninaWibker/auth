@@ -239,7 +239,6 @@ const privilegedModifyUser = (id, { username, password, first_name, last_name, e
         if(password && (password.startsWith('Refresh-Token:') || password.startsWith('Get-Refresh-Token'))) {
           return cb({ message: 'cannot set password to string starting with isRefreshToken or getRefreshToken' }, null)
         }
-        console.log(!!password, password ? hash_password(password, salt) : res.rows[0].password)
         client.query(
           'UPDATE auth_user SET username = $1::text, first_name = $2::text, last_name = $3::text, email = $4::text, salt = $5::text, password = $6::text, modification_date = current_timestamp, account_type = $7::account_type, metadata = $8::jsonb, passwordless = $9::boolean, temp_account = to_timestamp($10::int) WHERE id = $11::int',
           [
@@ -276,7 +275,8 @@ const deleteUser = (id, cb) => {
 const DEVICE_BASE_JOIN = `
 SELECT  device.id as device_id, user_agent, ip.ip as ip, continent, continent_code, country, country_code, 
         region, region_code, city, zip, latitude, longitude, timezone, timezone_code, isp, language, is_mobile
-        is_anonymous, is_threat, is_internal, it.creation_date, device.creation_date as device_creation_date, is_revoked
+        is_anonymous, is_threat, is_internal, it.creation_date, device.creation_date as device_creation_date, is_revoked,
+        auth_user.id as user_id, auth_user.username as username
 FROM device
 LEFT JOIN ip ON device.ip = ip.ip
 LEFT JOIN it_device_user it ON device.id = it.device_id
@@ -307,6 +307,9 @@ const getDeviceByDeviceId = (device_id, cb) => {
   pool.connect().then(client =>
     client.query(DEVICE_BASE_JOIN + 'WHERE device.id = $1::uuid', [device_id])
       .then(res => {
+
+        if(res.rowCount === 0) return cb(null, null)
+
         const joined_row = {
           device_id: res.rows[0].device_id,
           user_agent: res.rows[0].user_agent,

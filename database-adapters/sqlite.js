@@ -233,7 +233,8 @@ const deleteUser = (id, cb) => {
 const DEVICE_BASE_JOIN = `
 SELECT  device.id as device_id, user_agent, ip.ip as ip, continent, continent_code, country, country_code, 
         region, region_code, city, zip, latitude, longitude, timezone, timezone_code, isp, language, is_mobile, 
-        is_anonymous, is_threat, is_internal, it.creation_date, device.creation_date as device_creation_date, is_revoked
+        is_anonymous, is_threat, is_internal, it.creation_date, device.creation_date as device_creation_date, is_revoked,
+        users.id as user_id, users.username as username
 FROM device
 LEFT JOIN ip ON device.ip = ip.ip
 LEFT JOIN it_device_user it ON device.id = it.device_id

@@ -6,6 +6,8 @@ console.log('[database] using sqlite as database')
 
 const dbPromise = sqlite.open('./Users.sqlite')
 
+const terminate = () => {} // no-op, since sqlite is a local / file based db and not a connection / server based db it is not required to close / terminate a connection
+
 const gen_salt = () => crypto.randomBytes(48).toString('base64')
 
 const hash_password = (password, salt) => {
@@ -485,5 +487,6 @@ module.exports = {
   getIp,
   addIp,
   modifyIp,
-  deleteIp
+  deleteIp,
+  terminate
 }

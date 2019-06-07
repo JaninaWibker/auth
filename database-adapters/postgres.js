@@ -34,6 +34,8 @@ const release_catch = (client) => (err) => {
   if(err) console.log(err)
 }
 
+const terminate = () => pool.end()
+
 const gen_salt = () => crypto.randomBytes(48).toString('base64')
 
 const hash_password = (password, salt) => {
@@ -558,5 +560,6 @@ module.exports = {
   getIp,
   addIp,
   modifyIp,
-  deleteIp
+  deleteIp,
+  terminate
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-
+const config = require('dotenv').config().parsed
 const db = require('./db')
 const arg = require('arg')
 
@@ -31,7 +31,7 @@ authcli list-accounts
   if(args._.length >= 6) {
     const [username, first_name, last_name, email, password, account_type='default', is_passwordless=false, temp_account=0] = args._.slice(1, 6)
     console.log(`adding account with\n\tusername:\t"${username}",\n\tpassword:\t"${password}",\n\tfirst_name:\t"${first_name}",\n\tlast_name:\t"${last_name}",\n\temail:\t\t"${email}",\n\taccount_type:\t\t"${account_type}",\n\tis_passwordless:\t\t"${is_passwordless}",\n\ttemp_account:\t\t"${temp_account}"`)
-    db.addUser(username, password, first_name, last_name, email, 'default', {}, 0, "", is_passwordless, temp_account, console.log)
+    db.addUser(username, password, first_name, last_name, email, 'default', {}, is_passwordless, temp_account, console.log).then(db.terminate)
   } else {
     console.log('error, too few arguments:\nauthcli add-account <username> <first_name> <last_name> <email> <password> <account_type?>, <is_passwordless?>, <temp_account?>')
   }
@@ -40,7 +40,7 @@ authcli list-accounts
 
     const cb = (err, user, info) => {
       if(err || info) console.log(err, info)
-      else db.deleteUser(user.id, console.log)
+      else db.deleteUser(user.id, console.log).then(db.terminate)
     }
 
     if(args['--id']) db.getUserFromIdIfExists(parseInt(args['--id'], 10), cb)
@@ -61,7 +61,7 @@ authcli list-accounts
 
       const cb = (err, user, info) => {
         if(err || info) console.log(err, info)
-        else db.privilegedModifyUser(user.id, modifications, console.log)
+        else db.privilegedModifyUser(user.id, modifications, console.log).then(db.terminate)
       }
 
       if(args['--id']) db.getUserFromIdIfExists(parseInt(args['--id'], 10), cb)
@@ -75,14 +75,14 @@ authcli list-accounts
   }
 } else if(args._[0] === 'get-account') {
   if(args['--id'] || args['--username'] || args['--email']) {
-    if(args['--id']) db.getUserFromIdIfExists(parseInt(args['--id'], 10), console.log)
-    if(args['--username']) db.getUserIfExists(args['--username'], console.log)
-    if(args['--email']) db.getUserFromEmailIfExists(args['--email'], console.log)
+    if(args['--id']) db.getUserFromIdIfExists(parseInt(args['--id'], 10), console.log).then(db.terminate)
+    if(args['--username']) db.getUserIfExists(args['--username'], console.log).then(db.terminate)
+    if(args['--email']) db.getUserFromEmailIfExists(args['--email'], console.log).then(db.terminate)
   } else {
     console.log('error, no user selected\nauthcli get-account --id <id> --username <username> --email <email>')
   }
 } else if(args._[0] === 'list-accounts') {
-  db.getUserList(console.log)
+  db.getUserList(console.log).then(db.terminate)
 } else {
   console.log('invalid operation "' + args._[0] + '"')
 }

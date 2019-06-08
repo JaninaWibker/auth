@@ -127,7 +127,7 @@ pool.on('error', (err) => {
 module.exports = () => pool.connect()
   .then(async (client) => {
 
-    console.log('[setup] enabling uuid-ossp pg_extension if not already enabled (this requires SUPER_USER, if the user specified inside the .env file does not have SUPER_USER permissions this will fail unless "uuid-ossp" is already installed. Having it already installed is preferred sicne this does not require giving the user SUPER_USER)')
+    console.log('[setup] enabling uuid-ossp pg_extension if not already enabled (this requires SUPER_USER, if the user specified inside the .env file does not have SUPER_USER permissions this will fail even if "uuid-ossp" is already installed. Having it already installed is preferred since this does not require giving the user SUPER_USER, it will still result in an error message but that can be ignored)')
 
     await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
       .catch(err => console.log('could not create extension (probably insufficent permissions, if the extension already exists this can be ignored: ', err))

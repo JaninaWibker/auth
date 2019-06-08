@@ -127,7 +127,7 @@ pool.on('error', (err) => {
 module.exports = () => pool.connect()
   .then(async (client) => {
 
-    console.log('[setup] enabling uuid-ossp pg_extension if not already enabled')
+    console.log('[setup] enabling uuid-ossp pg_extension if not already enabled (this requires SUPER_USER, if the user specified inside the .env file does not have SUPER_USER permissions this will fail unless "uuid-ossp" is already installed. Having it already installed is preferred sicne this does not require giving the user SUPER_USER)')
 
     await client.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
 
@@ -150,38 +150,40 @@ module.exports = () => pool.connect()
     console.log('[setup] creating ip table')
 
     await client.query(CREATE_TABLE_IP_QUERY)
-      .then(res => { console.log('[setup] creating ip table successful') })
+      .then(_res => { console.log('[setup] creating ip table successful') })
       .catch(err => { console.error('[setup] creating ip table failed', err) })
 
     console.log('[setup] creating device table')
 
     await client.query(CREATE_TABLE_DEVICE_QUERY)
-      .then(res => { console.log('[setup] creating device table successful') })
+      .then(_res => { console.log('[setup] creating device table successful') })
       .catch(err => { console.error('[setup] creating device table failed', err) })
 
     console.log('[setup] creating auth_user table')
 
     await client.query(CREATE_TABLE_USER_QUERY)
-      .then(res => { console.log('[setup] creating auth_user table successful') })
+      .then(_res => { console.log('[setup] creating auth_user table successful') })
       .catch(err => { console.error('[setup] creating auth_user table failed', err) })
 
     console.log('[setup] creating it_device_user table')
 
     await client.query(CREATE_TABLE_DEVICE_USER_INTERMEDIATE_TABLE_QUERY)
-      .then(res => { console.log('[setup] creating it_device_user table successful') })
+      .then(_res => { console.log('[setup] creating it_device_user table successful') })
       .catch(err => { console.error('[setup] creating it_device_user table failed', err) })
 
     console.log('[setup] inserting dummy user "guest"')
 
     await client.query(INSERT_USER_QUERY, ['first', 'last', 'test@example.com', 'guest', 'c42b78633724b8bb7da3bda18b87f3ff4802ca85af7c6418001d509cf220bc61', 'guest', 'default'])
-      .then(res => { console.log('[setup] inserting dummy user "guest" successful') })
+      .then(_res => { console.log('[setup] inserting dummy user "guest" successful') })
       .catch(err => { console.error('[setup] inserting dummy user "guest" failed', err) })
 
     console.log('[setup] inserting dummy user "jannik"')
     
     await client.query(INSERT_USER_QUERY, ['Jannik', 'Wibker', 'jannikwibker@gmail.com', 'jannik', '3301fa8c21ce34e39846fe596a67469fb9c04e168b089bdb3b0f08ffd9d4ccfe', 'pnkBEKh7/Vug7mTLG9loEbl0DfO6b/sIAPPUJtxSYpSe0zQLlC3czGTkMLHyJr2I', 'admin'])
-      .then(res => { console.log('[setup] inserting dummy user "jannik" successful') })
+      .then(_res => { console.log('[setup] inserting dummy user "jannik" successful') })
       .catch(err => { console.error('[setup] inserting dummy user "jannik" failed', err) })
 
-    client.release()
+    await client.release()
+
+    await pool.end()
   })

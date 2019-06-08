@@ -46,9 +46,10 @@ module.exports = (Login) => (req, res) => {
           const device_id = req.body.device_id || req.get('Device-Id')
 
           if(device_id) {
-            modifyDeviceIntermediate(device_id, { ip: req.ip, user_agent: req.get('User-Agent') }, (err, rtn, message) => {
-              if(err) reject(err)
-              else {
+            modifyDeviceIntermediate(device_id, { ip: req.ip, user_agent: req.get('User-Agent') }, (err, _rtn, _message) => {
+              if(err) { // used a device_id that does not exist, when this happens just add a new device and return the device_id of the new device
+                addDevice({ ip: req.ip, user_agent: req.get('User-Agent'), user_id: user.id }, reject, resolve)
+              } else {
                 db.Device.get(user.id, device_id, (err, device) => {
                   if(err) reject(err)
                   else if(!device) db.Device.addExistingToUser({ user_id: user.id, device_id: device_id }, (err, _rtn) => {

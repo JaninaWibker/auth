@@ -51,6 +51,8 @@ const {
 
 const app = express()
 
+app.set('trust proxy', 'uniquelocal') // trust nginx to proxy the correct ip addresses
+
 passport.use(JWTStrategy)
 
 app.use(express.static('public', { index: 'index.html', extensions: ['html'] }))

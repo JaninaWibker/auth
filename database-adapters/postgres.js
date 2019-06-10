@@ -126,7 +126,7 @@ const getUserFromEmailIfExists = (email, cb) => pool.connect().then(client =>
 const getUserFromIdIfExists = (id, cb) => IdToUserData(id, cb)
 
 const getUserLimitedIfExists = (username, cb) => pool.connect().then(client => 
-  client.get('SELECT username, id::int, first_name FROM auth_user WHERE username = $1::text', username)
+  client.get('SELECT username, id::int, first_name FROM auth_user WHERE username = $1::text', [username])
     .then(res => cb(null, select_postgres_to_general(res).rows[0] || false))
     .then(release_then(client))
     .catch(err => cb(err, false, { message: 'user not found' }))
@@ -268,7 +268,7 @@ const privilegedModifyUser = (id, { username, password, first_name, last_name, e
 
 const deleteUser = (id, cb) => {
   pool.connect().then(client =>
-    client.query('DELETE FROM auth_user WHERE id = $1::int', id)
+    client.query('DELETE FROM auth_user WHERE id = $1::int', [id])
       .then(res => cb(null, delete_postgres_to_general(res, id)))
       .then(release_then(client))
       .catch(err => cb(err, 0))

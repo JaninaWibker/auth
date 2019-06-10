@@ -16,6 +16,9 @@ const addDevice = ({ ip, user_agent, user_id }, reject, resolve) => addDeviceInt
 })
 
 module.exports = (Login) => (req, res) => {
+  if(req.body.password === null) {
+    return res.status(401).json({ message: 'authentication failed, supply username, password and/or refresh-token', status: 'failure' })
+  }
   const isRefreshToken = req.body.isRefreshToken || req.body.password.startsWith('Refresh-Token:')
   const getRefreshToken = req.body.getRefreshToken || req.body.password.startsWith('Get-Refresh-Token:')
   let passwordOrRefreshToken
@@ -82,25 +85,27 @@ module.exports = (Login) => (req, res) => {
         Login(req.body.username, passwordOrRefreshToken, isRefreshToken, getRefreshToken, (err, accessToken, refreshToken) => {
           if(!isProduction) console.log(err, accessToken)
 
-          if(err) bug({ category: 'LOGIN_ERROR', error: err, metadata: {
-            username: req.body.username,
-            refreshToken: isRefreshToken ? passwordOrRefreshToken : null,
-            isRefreshToken: isRefreshToken,
-            getRefreshToken: getRefreshToken,
-            clientId: req.cookies.clientId
-          } })
-          else event({ category: 'LOGIN', title: `${req.body.username} logged in at ${format_date()} (${Date.now()})`, data: {
-            username: req.body.username,
-            refreshToken: isRefreshToken ? passwordOrRefreshToken : null,
-            isRefreshToken: isRefreshToken,
-            getRefreshToken: getRefreshToken,
-            accessToken: accessToken,
-            clientId: req.cookies.clientId,
-            ip: req.ip,
-            useragent: req.get('User-Agent'),
-            https: req.secure,
-            method: req.method,
-          } })
+          if(isProduction) {
+            if(err) bug({ category: 'LOGIN_ERROR', error: err, metadata: {
+              username: req.body.username,
+              refreshToken: isRefreshToken ? passwordOrRefreshToken : null,
+              isRefreshToken: isRefreshToken,
+              getRefreshToken: getRefreshToken,
+              clientId: req.cookies.clientId
+            } })
+            else event({ category: 'LOGIN', title: `${req.body.username} logged in at ${format_date()} (${Date.now()})`, data: {
+              username: req.body.username,
+              refreshToken: isRefreshToken ? passwordOrRefreshToken : null,
+              isRefreshToken: isRefreshToken,
+              getRefreshToken: getRefreshToken,
+              accessToken: accessToken,
+              clientId: req.cookies.clientId,
+              ip: req.ip,
+              useragent: req.get('User-Agent'),
+              https: req.secure,
+              method: req.method,
+            } })
+          }
 
           if(err || !accessToken) res.status(401).json({ message: 'authentication failed', status: 'failure', device_id: device_id })
           else res.json({ message: 'authentication successful', status: 'success', token: accessToken, refreshToken: refreshToken, device_id: device_id })

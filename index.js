@@ -100,13 +100,13 @@ app.post(['/add', '/users/add'], users.add({ registerTokenCache: registertokens.
 app.post(['/admin/add', '/users/admin/add'], passport.authenticate('jwt', { session: false }), users.adminAdd)
 
 app.post(['/modify', '/users/modify'],  passport.authenticate('jwt', { session: false }), users.modify(Logout))
-app.put('/users',                       passport.authenticate('jwt', { session: false }), users.modify(Logout)) // TODO: find out if this should be PATCH or PUT, I feel like it should be patch
+app.put(['/users', '/users/modify'],    passport.authenticate('jwt', { session: false }), users.modify(Logout)) // TODO: find out if this should be PATCH or PUT, I feel like it should be patch
 
 app.post(['/modify-self', '/users/modify-self'],  passport.authenticate('jwt', { session: false }), users.modifySelf(Logout))
-app.put('/users/self',                            passport.authenticate('jwt', { session: false }), users.modifySelf(Logout)) // TODO: find out if this should be PATCH or PUT, I feel like it should be patch
+app.put(['/users/self', '/users/modify-self'],    passport.authenticate('jwt', { session: false }), users.modifySelf(Logout)) // TODO: find out if this should be PATCH or PUT, I feel like it should be patch
 
 app.post(['/delete', '/users/delete'],  passport.authenticate('jwt', { session: false }), users.delete)
-app.delete('/users',                    passport.authenticate('jwt', { session: false }), users.delete)
+app.delete(['/users', '/users/delete'], passport.authenticate('jwt', { session: false }), users.delete)
 
 app.post(['/test', '/users/test'],  passport.authenticate('jwt', { session: false }), users.test)
 app.get(['/test', '/users/test'],   passport.authenticate('jwt', { session: false }), users.test)
@@ -122,6 +122,8 @@ app.get(['/username-already-taken/:username?', '/users/username-already-taken/:u
 app.get(['/is-passwordless/:username?', '/users/is-passwordless/:username?'], users.is_passwordless)
 
 app.patch(['/set-password', '/users/set-password'], users.set_password)
+
+app.post(['/verify-password-validity', '/users/verify-password-validity'], passport.authenticate('jwt', { session: false }), users.verify_password_validity)
 
 // device endpoint
 

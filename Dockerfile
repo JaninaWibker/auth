@@ -1,7 +1,7 @@
 FROM node:11
 
 # package.json version
-LABEL version="1.4.0"
+LABEL version="1.4.1"
 
 ARG RESET_DATABASES
 ARG DB="postgres"

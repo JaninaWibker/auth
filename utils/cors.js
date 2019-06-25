@@ -5,6 +5,10 @@ const cors = (req, res, next) => {
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH')
   res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Device-Id')
 
+  if(!req.get('origin')) {
+    return next()
+  }
+
   const url = URL.parse(req.get('origin').startsWith('http') ? req.get('origin') : req.protocol + '://' + req.get('origin'))
   const url_reversed_arr = url.hostname.split('.').reverse()
 

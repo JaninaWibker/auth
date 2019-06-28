@@ -1,5 +1,6 @@
 const config = require('dotenv').config().parsed
 const express = require('express')
+const morgan = require('morgan')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const passport = require('passport')
@@ -54,6 +55,14 @@ const app = express()
 app.set('trust proxy', 'uniquelocal') // trust nginx to proxy the correct ip addresses
 
 passport.use(JWTStrategy)
+
+morgan.token('user', req => req.user && req.user.username)
+morgan.token('user_id', req => req.user && req.user.id)
+
+if(config.ENV && config.ENV.toLowerCase() === 'dev')
+  app.use(morgan(':method\t:url :status -\t:response-time ms', { skip: req => req.method === 'OPTIONS' }))
+else
+  app.use(morgan(':method\t:url :status - :user -\t:response-time ms', { skip: req => req.method === 'OPTIONS' }))
 
 app.use(express.static('public', { index: 'index.html', extensions: ['html'] }))
 app.use(cors)

@@ -51,6 +51,7 @@ module.exports = (Login) => (req, res) => {
           if(device_id) {
             modifyDeviceIntermediate(device_id, { ip: req.ip, user_agent: req.get('User-Agent') }, (err, _rtn, _message) => {
               if(err) { // used a device_id that does not exist, when this happens just add a new device and return the device_id of the new device
+                // can the ip lookup be defered?
                 addDevice({ ip: req.ip, user_agent: req.get('User-Agent'), user_id: user.id }, reject, resolve)
               } else {
                 db.Device.get(user.id, device_id, (err, device) => {
@@ -69,6 +70,8 @@ module.exports = (Login) => (req, res) => {
               }
             })
           } else {
+            // this can be optimized into a single sql statement (at least the modifyLastUsed thing)
+            // can addDevice be deferred? Just generate a uuidv4 and do the ip lookup later.
             db.Device.getByUserIdAndIpAndUserAgent(user.id, req.ip, req.get('User-Agent'), (err, device) => {
               if(err)           reject(err)
               else if(!device)  addDevice({ ip: req.ip, user_agent: req.get('User-Agent'), user_id: user.id }, reject, resolve)
@@ -79,6 +82,8 @@ module.exports = (Login) => (req, res) => {
       })
 
     })
+
+    // const devicePromise = Promise.resolve('just-testing')
 
     devicePromise
       .then(device_id => {

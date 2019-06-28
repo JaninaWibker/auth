@@ -16,12 +16,11 @@ module.exports = (req, res) => {
 
   db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
     if(username === undefined) {
-      db.getUserIfExists(req.user.username, (err, user) => {
-        if(err) sendFailure(res)
-        else    sendSuccess(res, user)
-      })
+      sendSuccess(res, user)
     }
-    else if(username === req.user.username || user.account_type === 'admin') {
+    else if(username === req.user.username) {
+      sendSuccess(res, user)
+    } else if(user.account_type === 'admin') {
       db.getUserIfExists(username, (err, user) => {
         if(err) sendFailure(res)
         else    sendSuccess(res, user)

@@ -6,11 +6,12 @@ LABEL name="auth"
 
 ARG RESET_DATABASES
 ARG DB="postgres"
-
+ARG INSTALL_NANO="true"
 
 # complicated install process for sqlite3 and node-sqlite3 since no pre-build version of node-sqlite3 is available for ARM
 RUN if [ "$DB" = "sqlite" ] ; then apt-get update ; fi
 RUN if [ "$DB" = "sqlite" ] ; then apt-get -yq install sqlite3 libsqlite3-dev ; fi
+RUN if [ "$INSTALL_NANO" = "true" ] ; then apt-get -yq install nano ; fi
 
 COPY . /app
 WORKDIR /app

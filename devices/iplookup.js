@@ -33,6 +33,22 @@ const request = (ip, cb) => {
     .catch(err => cb(err, null))
 }
 
+const saveToDatabase = (ip, data, cb) => {
+  const arr = [data.continent, data.continent_code, data.country, data.country_code, data.region, data.region_code, data.city, data.zip, data.latitude, data.longitude, data.timezone, data.timezone_code, data.isp, data.languages, data.threat.is_mobile, data.threat.is_anonymous, data.threat.is_threat]
+
+  if(data.is_internal) {
+    db.Ip.addInternal(ip, (err, _rtn) => {
+      if(err) cb(err, null, 'failed to save newly retrieved internal ip information to database')
+      else    cb(null, data, 'successfully retrieved internal ip information')
+    })
+  } else {
+    db.Ip.add(ip, arr, (err, _rtn) => {
+      if(err) cb(err, null, 'failed to save newly retrieved ip information to database')
+      else    cb(null, data, 'successfully retrieved ip information')
+    })
+  }
+}
+
 const getFromDatabaseOrFromServiceAndThenSaveToDatabase = (ip, cb) => {
 
   db.Ip.get(ip, (err, data) => {
@@ -43,21 +59,7 @@ const getFromDatabaseOrFromServiceAndThenSaveToDatabase = (ip, cb) => {
       request(ip, (err, json) => {
         if(err)       cb(err, null, 'failed to retrieve ip information')
         else {
-          const data = json.data
-          const arr = [data.continent, data.continent_code, data.country, data.country_code, data.region, data.region_code, data.city, data.zip, data.latitude, data.longitude, data.timezone, data.timezone_code, data.isp, data.languages, data.threat.is_mobile, data.threat.is_anonymous, data.threat.is_threat]
-          
-          if(data.is_internal) {
-            db.Ip.addInternal(ip, (err, _rtn) => {
-              if(err) cb(err, null, 'failed to save newly retrieved internal ip information to database')
-              else    cb(null, data, 'successfully retrieved internal ip information')
-            })
-          } else {
-            db.Ip.add(ip, arr, (err, _rtn) => {
-              if(err) cb(err, null, 'failed to save newly retrieved ip information to database')
-              else    cb(null, data, 'successfully retrieved ip information')
-            })
-          }
-
+          saveToDatabase(ip, json.data, cb)
         }
       })
     }
@@ -81,6 +83,7 @@ const iplookup = (req, res) =>
 
 module.exports = {
   getFromDatabaseOrFromServiceAndThenSaveToDatabase,
+  saveToDatabase,
   request,
   iplookup
 }

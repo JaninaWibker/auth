@@ -235,19 +235,19 @@ const deleteUser = (id, cb) => {
 }
 
 const DEVICE_BASE_JOIN = `
-SELECT  device.id as device_id, user_agent, ip.ip as ip, continent, continent_code, country, country_code, 
+SELECT  device.rowid as device_id, user_agent, iplocation.ip as ip, continent, continent_code, country, country_code, 
         region, region_code, city, zip, latitude, longitude, timezone, timezone_code, isp, language, is_mobile, 
         is_anonymous, is_threat, is_internal, it.creation_date, device.creation_date as device_creation_date, is_revoked,
-        users.id as user_id, users.username as username
+        users.rowid as user_id, users.username as username
 FROM device
-LEFT JOIN ip ON device.ip = ip.ip
-LEFT JOIN it_device_user it ON device.id = it.device_id
-LEFT JOIN users ON it.user_id = users.id 
+LEFT JOIN iplocation ON device.ip = iplocation.ip
+LEFT JOIN it_device_user it ON device.rowid = it.device_id
+LEFT JOIN users ON it.user_id = users.rowid 
 `
 
 const listDevicesByUser = (user_id, cb) => {
   dbPromise.then(db => 
-    db.all(DEVICE_BASE_JOIN + 'WHERE users.id = ? ORDER BY last_used desc', user_id)
+    db.all(DEVICE_BASE_JOIN + 'WHERE users.rowid = ? ORDER BY last_used desc', user_id)
       .then(rows => cb(null, rows))
       .catch(err => cb(err, null))
   )
@@ -255,7 +255,7 @@ const listDevicesByUser = (user_id, cb) => {
 
 const getDeviceByUserAndDeviceId = (user_id, device_id, cb) => {
   dbPromise.then(db => {
-    db.all(DEVICE_BASE_JOIN + 'WHERE users.id = ? AND device.id = ?', user_id, device_id)
+    db.all(DEVICE_BASE_JOIN + 'WHERE users.rowid = ? AND device.rowid = ?', user_id, device_id)
       .then(rows => cb(null, rows[0] || null))
       .catch(err => cb(err, null))
   })
@@ -263,7 +263,7 @@ const getDeviceByUserAndDeviceId = (user_id, device_id, cb) => {
 
 const getDeviceByDeviceId = (device_id, cb) => {
   dbPromise.then(db => {
-    db.all(DEVICE_BASE_JOIN + 'WHERE device.id = ?', device_id)
+    db.all(DEVICE_BASE_JOIN + 'WHERE device.rowid = ?', device_id)
       .then(rows => {
         const joined_rows = {
           device_id: rows[0].device_id,
@@ -281,8 +281,8 @@ const getDeviceByDeviceId = (device_id, cb) => {
 
 const getDeviceByUserIdAndIpAndUserAgent = (user_id, ip, user_agent, cb) => {
   dbPromise.then(db => {
-    db.all(DEVICE_BASE_JOIN + 'WHERE user_id = ? AND ip = ? AND user_agent = ?', user_id, ip, user_agent)
-      .then(res => cb(null, res.rows[0]))
+    db.all(DEVICE_BASE_JOIN + 'WHERE user_id = ? AND iplocation.ip = ? AND user_agent = ?', user_id, ip, user_agent)
+      .then(rows => cb(null, rows[0]))
       .catch(err => cb(err, null))
   })
 }
@@ -290,7 +290,7 @@ const getDeviceByUserIdAndIpAndUserAgent = (user_id, ip, user_agent, cb) => {
 const addDevice = ({ ip, user_agent }, cb) => {
   dbPromise.then(db => {
     db.run('INSERT INTO device ( ip, user_agent ) VALUES ( ?, ? )', ip, user_agent)
-      .then(() => db.get('SELECT id FROM device WHERE ip = ? AND user_agent = ? ORDERY BY creation_date desc', ip, user_agent)
+      .then(() => db.get('SELECT rowid as id FROM device WHERE ip = ? AND user_agent = ? ORDER BY creation_date desc', ip, user_agent)
         .then(row => cb(err, row.id))
         .catch(err => cb(err, null))
       ).catch(err => cb(err, null))
@@ -300,7 +300,7 @@ const addDevice = ({ ip, user_agent }, cb) => {
 const addDeviceToUser = ({ ip, user_agent }, user_id, cb) => {
   dbPromise.then(db => {
     db.run('INSERT INTO device ( ip, user_agent ) VALUES ( ?, ? )', ip, user_agent)
-      .then(() => db.get('SELECT id FROM device WHERE ip = ? AND user_agent = ? ORDERY BY creation_date desc', ip, user_agent)
+      .then(() => db.get('SELECT rowid as id FROM device WHERE ip = ? AND user_agent = ? ORDER BY creation_date desc', ip, user_agent)
         .then(row => db.run('INSERT INTO it_device_user ( user_id, device_id ) VALUES ( ?, ? )', user_id, row.id)
           .then(() => cb(null, row.id))
           .catch(err => cb(err, null))
@@ -329,13 +329,49 @@ const deleteDeviceByUserAndDeviceId = (user_id, device_id, cb) => {
 
 const deleteDeviceByDeviceId = (device_id, cb) => {
   dbPromise.then(db => {
-    db.run('DELETE FROM device WHERE id = ?', device_id)
+    db.run('DELETE FROM device WHERE rowid = ?', device_id)
       .then(() => db.run('DELETE FROM it_device_user WHERE device_id = ?', device_id)
         .then(res => cb(null, res.changes !== 0))
         .catch(err => cb(err, null))
       ).catch(err => cb(err, null))
   })
 }
+
+const allInOneDeviceModify = (user_id, device_id, { ip, user_agent }, ip_lookup, save_to_db,  cb) => dbPromise.then(db => {
+  const queries = [
+    'INSERT INTO iplocation ( ip, is_internal ) SELECT @ip, 1 WHERE NOT EXISTS ( SELECT ip FROM iplocation WHERE ip = @ip);',
+    'UPDATE it_device_user SET last_used = datetime("now") WHERE device_id = @device_id AND user_id = @user_id;',
+    'UPDATE device SET ip = @ip, user_agent = @user_agent WHERE rowid = @device_id;',
+    `SELECT ( SELECT ip FROM iplocation WHERE ip = @ip ) IS NULL as requires_ip_lookup, * FROM device
+    LEFT JOIN iplocation ON iplocation.ip = @ip
+    LEFT JOIN it_device_user ON device.rowid = device_id
+    WHERE device.rowid = @device_id AND user_id = @user_id AND iplocation.ip = @ip;`
+  ]
+
+  return Promise.all([
+    db.run(queries[0], { '@ip': ip }),
+    db.run(queries[1], { '@device_id': device_id, '@user_id': user_id }),
+    db.run(queries[2], { '@ip': ip, '@user_agent': user_agent, '@device_id': device_id })
+  ])
+    .then(_values => {
+      db.get(queries[3], { '@ip': ip, '@user_id': user_id, '@device_id': device_id })
+      .then(row => {
+        if(row.requires_ip_lookup === 1) {
+          ip_lookup(ip, (err, data) => {
+            if(err) console.log(err)
+            else save_to_db(ip, data, console.log)
+          })
+        }
+        cb(null, row)
+      })
+      .catch(err => {
+        console.trace('idfk', err)
+      })
+    })
+    .catch(err => {
+      console.log(err)
+    })
+})
 
 const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {
   dbPromise.then(db => {
@@ -347,7 +383,7 @@ const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {
 
 const modifyDeviceByDeviceId = (device_id, changes, cb) => {
   dbPromise.then(db =>
-    db.all('SELECT ip, user_agent FROM device WHERE id = ?', device_id)
+    db.all('SELECT ip, user_agent FROM device WHERE rowid = ?', device_id)
       .then(res => db.run('UPDATE device SET ip = ?, user_agent = ?', changes.ip || res.rows[0].ip, changes.user_agent || res.rows[0].user_agent)
         .then(rtn => cb(null, rtn))
         .catch(err => cb(err, null))
@@ -374,7 +410,7 @@ const revokeDeviceByUserAndDeviceId = (user_id, device_id, revoke_status, cb) =>
 
 const getIp = (ip, cb) => {
   dbPromise.then(db =>
-    db.all('SELECT * FROM ip WHERE ip = ?', ip) // when using all, it maybe does not error when no rows are returned
+    db.all('SELECT * FROM iplocation WHERE ip = ?', ip) // when using all, it maybe does not error when no rows are returned
       .then(rows => cb(null, rows[0] || null))
       .catch(err => cb(err, null))
   )
@@ -382,7 +418,7 @@ const getIp = (ip, cb) => {
 
 const addIp = (ip, data, cb) => {
   dbPromise.then(db =>
-    db.run('INSERT INTO ip VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )', ip, ...data)
+    db.run('INSERT INTO iplocation VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )', ip, ...data)
       .then(res => cb(null, res))
       .catch(err => cb(err, null))
   )
@@ -390,7 +426,7 @@ const addIp = (ip, data, cb) => {
 
 const addIpInternal = (ip, cb) => {
   dbPromise.then(db =>
-    db.run('INSERT INTO ip ( ip, is_internal ) VALUES ( ?, 1 )', ip)
+    db.run('INSERT INTO iplocation ( ip, is_internal ) VALUES ( ?, 1 )', ip)
       .then(res =>  cb(null, res))
       .catch(err => cb(err, null))  
   )
@@ -398,7 +434,7 @@ const addIpInternal = (ip, cb) => {
 
 const modifyIp = (ip, data, cb) => {
   dbPromise.then(db =>
-    db.run('UPDATE ip SET continent = ?, continent_code = ?, country = ?, country_code = ?, region = ?, region_code = ?, city = ?, zip = ?, latitude = ?, longitude = ?, timezone = ?, timezone_code = ?, isp = ?, language = ?, is_mobile = ?, is_anonymous = ?, is_threat = ? WHERE ip = ?', ...data, ip)
+    db.run('UPDATE iplocation SET continent = ?, continent_code = ?, country = ?, country_code = ?, region = ?, region_code = ?, city = ?, zip = ?, latitude = ?, longitude = ?, timezone = ?, timezone_code = ?, isp = ?, language = ?, is_mobile = ?, is_anonymous = ?, is_threat = ? WHERE ip = ?', ...data, ip)
       .then(res => cb(null, res))
       .catch(err => cb(err, null))
   )
@@ -406,7 +442,7 @@ const modifyIp = (ip, data, cb) => {
 
 const deleteIp = (ip, cb) => {
   dbPromise.then(db =>
-    db.run('DELETE ip WHERE ip = ?', ip)
+    db.run('DELETE iplocation WHERE ip = ?', ip)
       .then(res => cb(null, res))
       .catch(err => cb(err, null))  
   )
@@ -441,6 +477,7 @@ module.exports = {
     addExistingToUser: addExistingDeviceToUser,
     delete: deleteDeviceByUserAndDeviceId,
     deleteWithoutUserId: deleteDeviceByDeviceId,
+    modifyAllInOne: allInOneDeviceModify,
     modify: modifyDeviceByUserAndDeviceId,
     modifyWithoutUserId: modifyDeviceByDeviceId,
     modifyLastUsed: modifyDeviceLastUsed,
@@ -480,6 +517,7 @@ module.exports = {
   addExistingDeviceToUser,
   deleteDeviceByUserAndDeviceId,
   deleteDeviceByDeviceId,
+  allInOneDeviceModify,
   modifyDeviceByUserAndDeviceId,
   modifyDeviceByDeviceId,
   modifyDeviceLastUsed,

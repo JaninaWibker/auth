@@ -399,6 +399,41 @@ const deleteDeviceByDeviceId = (device_id, cb) => {
   )
 }
 
+const allInOneDeviceModify = (user_id, device_id, { ip, user_agent }, ip_lookup, save_to_db,  cb) => pool.connect().then(client => {
+  const get_query = `WITH
+  device AS ( SELECT * FROM device WHERE id = $1::uuid ), 
+  ip AS ( SELECT * FROM ip WHERE ip = $2::text ), 
+  insert_ip_if_needed AS ( INSERT INTO ip ( ip, is_internal ) SELECT $2::text, true WHERE NOT EXISTS ( SELECT ip FROM ip WHERE ip = $2::text ) )
+
+  SELECT CASE WHEN ip.ip IS NULL THEN true ELSE false END as requires_ip_lookup , ip.ip, * FROM device
+  LEFT JOIN ip ON ip.ip = $2::text
+  `
+
+  const update_query = `WITH updated_it_device_user AS (
+    UPDATE it_device_user SET last_used = CURRENT_TIMESTAMP WHERE device_id = $3::uuid AND user_id = $4::int
+  ), updated_device AS (
+    UPDATE device SET ip = $1::text, user_agent = $2::text WHERE id = $3::uuid
+  )
+
+  SELECT * FROM device LEFT JOIN it_device_user ON id = device_id WHERE device_id = $3::uuid AND user_id = $4::int;`
+  
+  client.query(get_query, [device_id, ip])
+    .then(res => {
+      if(res.rows[0].requires_ip_lookup) {
+        ip_lookup(ip, (err, data) => {
+          if(err) console.log(err)
+          else save_to_db(ip, data, console.log)
+        })
+      }
+      
+      return client.query(update_query, [ip, user_agent, device_id, user_id])
+        .then(res => cb(null, res.rows[0]))
+    })
+    .then(release_then(client))
+    .catch(release_catch(client))
+    .catch(err => cb(err, null))
+})
+
 const modifyDeviceByUserAndDeviceId = (user_id, device_id, changes, cb) => {
   pool.connect().then(client =>
     client.query('', [user_id, device_id])
@@ -514,6 +549,7 @@ module.exports = {
     addExistingToUser: addExistingDeviceToUser,
     delete: deleteDeviceByUserAndDeviceId,
     deleteWithoutUserId: deleteDeviceByDeviceId,
+    modifyAllInOne: allInOneDeviceModify,
     modify: modifyDeviceByUserAndDeviceId,
     modifyWithoutUserId: modifyDeviceByDeviceId,
     modifyLastUsed: modifyDeviceLastUsed,
@@ -553,6 +589,7 @@ module.exports = {
   addExistingDeviceToUser,
   deleteDeviceByUserAndDeviceId,
   deleteDeviceByDeviceId,
+  allInOneDeviceModify,
   modifyDeviceByUserAndDeviceId,
   modifyDeviceByDeviceId,
   modifyDeviceLastUsed,

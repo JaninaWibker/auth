@@ -1,6 +1,6 @@
 const sqlite = require('sqlite')
 
-const dbPromise = sqlite.open('./testing_users.sqlite')
+const dbPromise = sqlite.open('./Users.sqlite')
 
 const CREATE_TABLE_USER_QUERY = `
 CREATE TABLE 'users' (
@@ -10,8 +10,8 @@ CREATE TABLE 'users' (
     'username' VARCHAR(128) NOT NULL,
     'password' VARCHAR(64) NOT NULL, -- sha256 hash of the plain-text password
     'salt' VARCHAR(64) NOT NULL,     -- salt that is appended to the password before it is hashed
-    'creation_date' DATETIME NOT NULL DEFAULT CURRENT_DATETIME,
-    'modification_date' DATETIME NOT NULL DEFAULT CURRENT_DATETIME,
+    'creation_date' DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    'modification_date' DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     'account_type' VARCHAR(16) NOT NULL DEFAULT "default", -- account type can be: 'default', 'privileged', 'admin'
     'metadata' VARCHAR(1024) NOT NULL DEFAULT "{}", -- custom metadata that can be used in the future
     '2fa' BOOLEAN DEFAULT 0, -- whether 2 factor authentication is enabled or not
@@ -21,8 +21,8 @@ CREATE TABLE 'users' (
 );
 `
 
-const CREATE_TABLE_IP_QUERY = `
-CREATE TABLE 'ip' (
+const CREATE_TABLE_IPLOCATION_QUERY = `
+CREATE TABLE 'iplocation' (
   ip varchar(45) primary key, -- supports both ipv4 and ipv6 (ipv6 has a maximum length of 45 characters (https://stackoverflow.com/questions/1076714/max-length-for-client-ip-address/1076749))
   continent varchar(13) default 'None',   -- the longest continent names are North/South America which are both 13 characters long (following ISO-3166 continent names)
   continent_code varchar(2) default '--', -- following ISO-3166 continent codes
@@ -42,7 +42,7 @@ CREATE TABLE 'ip' (
   is_anonymous boolean default 0,     -- either using proxy or tor (tor cannot be detected by ipapi)
   is_threat boolean default 0,        -- not available on ipapi, will be set to false
   is_internal boolean default 0,      -- this is a flag that indicates that the IP address is a private IPv4, special purpose IPv4 (not globally routable), IPv6 link local unicast address or IPv6 unique local address
-  creation_date datetime not null default current_datetime
+  creation_date datetime not null default current_timestamp
 )
 `
 
@@ -50,9 +50,9 @@ const CREATE_TABLE_DEVICE_QUERY = `
 CREATE TABLE 'device' (
   user_agent varchar(256),
   ip varchar(45),
-  creation_date datetime not null default current_datetime,
+  creation_date datetime not null default current_timestamp,
   is_revoked boolean default 0,
-  constraint fk_ip foreign key (ip) references ip(ip) on delete set null
+  constraint fk_iplocation foreign key (ip) references iplocation(ip) on delete set null
 )
 `
 
@@ -60,8 +60,8 @@ const CREATE_TABLE_DEVICE_USER_INTERMEDIATE_TABLE_QUERY = `
 CREATE TABLE 'it_device_user' (
   user_id integer,
   device_id integer,
-  creation_date datetime default current_datetime,
-  last_used datetime default current_datetime,
+  creation_date datetime default current_timestamp,
+  last_used datetime default current_timestamp,
   primary key (user_id, device_id),
   constraint fk_user_id foreign key (user_id) references auth_user(rowid) on delete cascade,
   constraint fk_device_id foreign key (device_id) references device(rowid) on delete cascade
@@ -101,15 +101,15 @@ module.exports = () => dbPromise.then(async db => {
 
   await db.run('DROP TABLE IF EXISTS device')
 
-  console.log('[setup] if table ip already exists, drop it')
+  console.log('[setup] if table iplocation already exists, drop it')
 
-  await db.run('DROP TABLE IF EXISTS ip')
+  await db.run('DROP TABLE IF EXISTS iplocation')
 
-  console.log('[setup] creating ip table')
+  console.log('[setup] creating iplocation table')
 
-  await db.run(CREATE_TABLE_IP_QUERY)
-    .then(res => console.log('[setup] creating ip table successful'))
-    .catch(err => console.error('[setup] creating ip table failed', err))
+  await db.run(CREATE_TABLE_IPLOCATION_QUERY)
+    .then(res => console.log('[setup] creating iplocation table successful'))
+    .catch(err => console.error('[setup] creating iplocation table failed', err))
 
   console.log('[setup] creating device table')
 

@@ -56,6 +56,9 @@ app.set('trust proxy', 'uniquelocal') // trust nginx to proxy the correct ip add
 
 passport.use(JWTStrategy)
 
+app.use(express.static('public', { index: 'index.html', extensions: ['html'] }))
+
+// this is placed below express.static since it would otherwise also log every access to static content.
 morgan.token('user', req => req.user && req.user.username)
 morgan.token('user_id', req => req.user && req.user.id)
 
@@ -64,7 +67,6 @@ if(config.ENV && config.ENV.toLowerCase() === 'dev')
 else
   app.use(morgan(':method\t:url :status - :user -\t:response-time ms', { skip: req => req.method === 'OPTIONS' }))
 
-app.use(express.static('public', { index: 'index.html', extensions: ['html'] }))
 app.use(cors)
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())

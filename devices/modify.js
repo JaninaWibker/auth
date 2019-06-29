@@ -22,25 +22,8 @@ const sendSuccess = (res, message, device) => res.status(200).json({
   device: device
 })
 
-const modifyDeviceIntermediate = (device_id, { ip, user_agent }, cb) => {
-  db.Device.getWithoutUserId(device_id, (err, device) => {
-    if(err) cb(err, null)
-    else if(device.ip === ip) {
-      return db.Device.modifyWithoutUserId(device_id, { ip, user_agent }, cb)
-    } else {
-      db.Ip.get(ip, (err, data) => {
-        if(err) cb(err, null)
-        else if(data) {
-
-          iplookup.getFromDatabaseOrFromServiceAndThenSaveToDatabase(ip, (err, data, message) => {
-            if(err) cb(err, null, message)
-            else    db.Device.modifyWithoutUserId(device_id, { ip, user_agent }, cb)
-          })
-
-        } else return db.Device.modifyWithoutUserId(device_id, { ip, user_agent }, cb)
-      })
-    }
-  })
+const modifyDeviceIntermediate = (user_id, device_id, { ip, user_agent }, cb) => {
+  return db.allInOneDeviceModify(user_id, device_id, { ip, user_agent }, iplookup.request, iplookup.saveToDatabase, cb)
 }
 
 /*

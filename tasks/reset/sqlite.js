@@ -1,6 +1,6 @@
 const sqlite = require('sqlite')
 
-const dbPromise = sqlite.open('./testing_users.sqlite')
+const dbPromise = sqlite.open('./Users.sqlite')
 
 const INSERT_USER_QUERY = `
 INSERT INTO 'users' VALUES (
@@ -31,7 +31,7 @@ module.exports = () => dbPromise.then(async db => {
 
   console.log('[reset] removing all ip entries from user')
 
-  await db.run('DELETE FROM ip;')
+  await db.run('DELETE FROM iplocation;')
     .then(res => console.log('[reset] resetting ips successful'))
     .catch(err => console.error('[reset] resetting ips failed', err))
 

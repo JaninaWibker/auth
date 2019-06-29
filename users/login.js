@@ -49,24 +49,26 @@ module.exports = (Login) => (req, res) => {
           const device_id = req.body.device_id || req.get('Device-Id')
 
           if(device_id) {
-            modifyDeviceIntermediate(device_id, { ip: req.ip, user_agent: req.get('User-Agent') }, (err, _rtn, _message) => {
-              if(err) { // used a device_id that does not exist, when this happens just add a new device and return the device_id of the new device
-                // can the ip lookup be defered?
+            console.log('got this far #1')
+            modifyDeviceIntermediate(user.id, device_id, { ip: req.ip, user_agent: req.get('User-Agent') }, (err, device, _message) => {
+              console.log('got this far #2')
+              console.log(err, device)
+              if(err) {
+                // TODO: defer ip lookup
+                // TODO: is this actually maybe already done by the new modifyDeviceIntermediate?
                 addDevice({ ip: req.ip, user_agent: req.get('User-Agent'), user_id: user.id }, reject, resolve)
               } else {
-                db.Device.get(user.id, device_id, (err, device) => {
+                console.log(device)
+                if(!device) db.Device.addExistingToUser({ user_id: user.id, device_id: device_id }, (err, _rtn) => {
                   if(err) reject(err)
-                  else if(!device) db.Device.addExistingToUser({ user_id: user.id, device_id: device_id }, (err, _rtn) => {
-                      if(err) reject(err)
-                      else    resolve()
-                    })
-                  else if(device.is_revoked && isRefreshToken) reject({ message: 'authorization failed, device revoked', status: 'failure' })
-                  else if(device.is_revoked && !isRefreshToken) db.Device.revoke(user.id, device_id, false, (err, _rtn) => {
-                    if(err) reject(err)
-                    modifyLastUsed(device_id, user.id, new Date(), reject, resolve)
-                  })
-                  else modifyLastUsed(device_id, user.id, new Date(), reject, resolve)
+                  else    resolve()
                 })
+                else if(device.is_revoked && isRefreshToken) reject({ message: 'authorization failed, device revoked', status: 'failure' })
+                else if(device.is_revoked && !isRefreshToken) db.Device.revoke(user.id, device_id, false, (err, _rtn) => {
+                  if(err) reject(err)
+                  else    resolve(device.id)
+                })
+                else      resolve(device.id)
               }
             })
           } else {
@@ -118,6 +120,7 @@ module.exports = (Login) => (req, res) => {
         })
       })
       .catch(err => {
+        console.trace(err)
         if(err.status === 'failure') res.status(401).json({ message: err.message, status: 'failure' })
         else                         res.status(401).json({ message: 'authentication failed', status: 'failure', err: err })
       })

@@ -18,14 +18,29 @@ and follow the following steps.
 
 ### .env file
 
-*auth* is configured using a `.env`-file. This file has to contain these things:
+*auth* is configured using a `.env`-file. This file should contain these things:
 
 ```sh
 SECRET="<SECRET>"
 PORT=<PORT>
-ENABLE_LDAP=true|false
+ENABLE_LDAP=<true / false>
 LDAP_PORT=<PORT>
+ANALYTICS_SERVER="<analytics server address>"
+IP_LOOKUP_ENDPOINT="<ip lookup api endpoint (if left blank ip-lookup is disabled)>"
+IP_LOOKUP_SECRET="<your ip lookup secret>"
+DB_DRIVER="<postgres / sqlite>"
+POSTGRES_SERVER="<postgres database address>"
+POSTGRES_PORT=5432
+POSTGRES_USER="<postgres username>"
+POSTGRES_PASSWORD="<postgres password>"
+POSTGRES_USE_SSL=<true / false>
+# if POSTGRES_USE_SSL is false this can be omitted
+POSTGRES_CERT="certs/postgres/client.crt" # generating certificates may be required
+POSTGRES_KEY="certs/postgres/private.key" # depending on the database server configuration
+POSTGRES_CA="certs/postgres/root.crt"    
 ```
+
+> Use the `.env.example`-file as a reference
 
 the `SECRET` is used for server-to-server communication and all servers that want to use *auth* as their account/authentication server must know this and use it.
 
@@ -35,15 +50,22 @@ the `PORT` and `LDAP_PORT` options are pretty selfexplainatory. They specify wha
 
 ### database
 
-*auth* currently uses sqlite as it's database. But this can easily be changed and when needed will be changed in the future.
+*auth* can either use sqlite or postgres as it's database. This is configurable via the `DB_DRIVER`-option in the `.env`-file.
 
-To get started the database needs to be created. This is done using the `reset.sh`-script. It will drop existing tables from Users.sqlite and recreate them. This script is for resetting the user database, meaning that when running warnings about tables not existing will show up. This is the expected behaviour.
+To get started the database has to be initialized. This can be done through the `tasks/setup.js`-file. This file will run the required setup process for the current database driver. When using postgres an important detail is that the extension `"uuid-ossp"` is required for using auth. Since the database user that auth uses is probably not permitted to install extensions this needs to be done prior via this SQL statement:
 
-When you want to reset the user database you also have to use the `reset.sh`-script. It will drop the existing tables and recreate them.
-
-```sh
-sh reset.sh
+```sql
+create extension if not exists "uuid-ossp";
 ```
+
+With that done the database can be initialized using `node tasks/setup.js`. 
+
+When running for the first time there might be some warnings about tables not existing, this can be ignored. After the first time these should not come up anymore.
+
+> The script tries to drop tables that do not exist yet and displays a warning.
+
+
+Resetting the database (deleting all entries, not dropping the tables) can be done via `node tasks/reset.js`
 
 ### private/public rsa key pairs
 
@@ -67,6 +89,10 @@ Extracting the public key into its own file is necessary:
 openssl rsa -in private.key -outform PEM -pubout -out public.key
 ```
 
+### Other services
+
+*auth* interacts with some other services such as [ip-lookup](https://git.jannik.ml/jannik/ip-lookup) and [analytics](https://git.jannik.ml/jannik/analytics-server). These other services are not necessarily required but nice to have. *ip-lookup* is a service for gathering metadata about ip addresses such as geolocation and isp. This is used for the *Devices API*. *analytics* is a service for collecting analytics data. Events such as logins and errors are sent to it for later analysis. 
+
 ## How to run
 
 Running is pretty simple. Just execute the `index.js`-file.
@@ -75,8 +101,20 @@ Running is pretty simple. Just execute the `index.js`-file.
 node index.js
 ```
 
-> remember to run `npm install`.
+> remember to run `npm install` before.
 
 ## Using auth
 
-// TODO: write about how the api works and what it provides
+*auth* can either be used as a **kind of** OAuth Login Provider or directly via the APIs. 
+
+### APIs
+
+#### Miscellaneous
+
+#### Users
+
+#### Devices
+
+#### Services
+
+#### Register-tokens

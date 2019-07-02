@@ -1,0 +1,202 @@
+const fs = require('fs')
+const json = require('./Insomnia-auth.json')
+
+let cache = {}
+const re = /[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,./:;<=>?@[\]^`{|}~]/g
+
+function lower(string) {
+  return string.toLowerCase()
+}
+
+function slugify(str) {
+  if (typeof str !== 'string') {
+    return ''
+  }
+
+  let slug = str
+    .trim()
+    .replace(/[A-Z]+/g, lower)
+    .replace(/<[^>\d]+>/g, '')
+    .replace(re, '')
+    .replace(/\s/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^(\d)/, '_$1')
+
+  let count = cache[slug]
+
+  if(count !== undefined) {
+    cache[slug] = count + 1
+  } else {
+    cache[slug] = 0
+  }
+
+  // count = hasOwn.call(cache, slug) ? count + 1 : 0
+  // cache[slug] = count
+
+  if (count) {
+    slug = slug + '-' + count
+  }
+
+  return slug
+}
+
+slugify.clear = function () {
+  cache = {}
+}
+
+
+const types = [
+  "request", "request_group", "workspace", "environment", "cookie_jar"
+]
+
+const filter_by_type = (arr, typ) => arr.filter(it => it._type === typ)
+
+const transformed_json = {
+  request: filter_by_type(json.resources, 'request'),
+  request_group: filter_by_type(json.resources, 'request_group'),
+  workspace: filter_by_type(json.resources, 'workspace'),
+  environment: filter_by_type(json.resources, 'environment'),
+  cookie_jar: filter_by_type(json.resources, 'cookie_jar')
+}
+
+transformed_json.request.forEach(req => {
+  if(req.parentId) {
+
+    const parent = transformed_json.request_group.find(grp => grp._id === req.parentId)
+
+    if(!parent.children) parent.children = []
+    
+    parent.children.push(req)
+  }
+})
+
+transformed_json.request_group.forEach((grp, i) => {
+  if(grp.parentId) {
+    const parent = transformed_json.request_group.find(outer_group => outer_group && outer_group._id === grp.parentId)
+
+    if(!parent) return
+
+    if(!parent.children) parent.children = []
+
+    parent.children.push(grp)
+
+    delete transformed_json.request_group[i]
+  }
+})
+
+transformed_json.request_group = transformed_json.request_group.filter(it => !!it)
+
+const generate_toc = () => {
+  const render_toc_request = (req, depth=1) => {
+    return '  '.repeat(depth) + '- [' + req.name + '](#' + slugify(req.name) + ')'
+  }
+  const render_toc_group = (grp, depth=0) => {
+    const inner_str = []
+    grp.children.forEach(item => {
+      if(item._type === 'request')            inner_str.push(render_toc_request(item, depth+1))
+      else if(item._type === 'request_group') inner_str.push(render_toc_group(item, depth+1))
+    })
+    return '  '.repeat(depth) + '- [' + grp.name + '](#' + slugify(grp.name) + ')\n' + inner_str.join('\n')
+  }
+
+  const outer_str = []
+
+  for(let i = 0; i < transformed_json.request_group.length; i++) {
+    outer_str.push(render_toc_group(transformed_json.request_group[i], 0))
+  }
+
+  return outer_str.join('\n')
+}
+
+const generate_main = () => {
+
+  const generate_url = (url) => {
+
+    if(url.includes('{{ base_')) {
+      return url.replace(/\{\{ base_.* \}\}/g, '')
+    } else {
+      return url
+    }
+  }
+
+  const render_main_request = (req, depth=1) => {
+
+
+    const authentication = req.authentication && req.authentication.type ? 'authentication: ' + req.authentication.type : null
+    const headers = req.headers && req.headers.length !== 0 ? 'headers: ' + req.headers.map(header => `"${header.name}": "${header.value}"`).join(', ') : null
+
+    let example = null
+    if(req.body && req.body.text) {
+      example = '\n<details><summary>Example</summary>\n\n' 
+      
+      if(req.body.mimeType === 'application/json') {
+        example += '```json\n' + JSON.stringify(JSON.parse(req.body.text), 2, 2) + '\n```'
+      }
+      
+      example += '\n\n</details>'
+
+    }
+
+    return [
+      '#'.repeat(depth) + ' ' + req.name,
+      '',
+      '```',
+      `${req.method} ${generate_url(req.url)}`,
+      authentication,
+      headers,
+      '```',
+      example ? '' : null,
+      example,
+      '',
+      req.description || '> no description',
+      ''
+    ].filter(it => it !== null).join('\n')
+
+    // return '  '.repeat(depth) + '>' + req.name
+  }
+
+  const render_main_group = (grp, depth=0) => {
+    const inner_str = []
+    grp.children.forEach(item => {
+      if(item._type === 'request')            inner_str.push(render_main_request(item, depth+1))
+      else if(item._type === 'request_group') inner_str.push(render_main_group(item, depth+1))
+    })
+    return [
+      '#'.repeat(depth) + ' ' + grp.name,
+      '',
+      inner_str.join('\n'),
+      ''
+    ].join('\n')
+  }
+
+  const outer_str = []
+
+  for(let j = 0; j < transformed_json.request_group.length; j++) {
+    outer_str.push(render_main_group(transformed_json.request_group[j], 2))
+  }
+
+  return outer_str.join('\n')
+}
+
+const toc = generate_toc()
+const main = generate_main()
+const notice = `> some API definitions might already have values populated inside their URL. This is because this file is autogenerated from an [Insomnia](https://insomnia.rest) export and Insomnia does not (yet; ref: [#203](https://github.com/getinsomnia/insomnia/issues/203)) support easily editable variables scoped to just a single request. What kind of property the populated value represents should be easy to see or documented in the API endpoint description.`
+
+const markdown = `# API documentation
+
+${toc}
+
+${notice}
+
+${main}
+
+---
+
+> documentation export date: ${new Date(json.__export_date).toISOString().split(':')[0]}
+> documentation auto generation date: ${new Date().toISOString().split(':')[0]}
+`.trim()
+
+
+fs.writeFile('./index.md', markdown, (err) => {
+  if(err) console.log(err)
+})

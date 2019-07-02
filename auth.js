@@ -49,10 +49,13 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
         console.log('[strategy] authorization failed. User not found (' + jwt_payload.username + ')')
         cb(err, null, null)
       } else {
-        console.log('[strategy] authorization successful (' + user.id + ': ' + jwtCache.get(user.id).substring(0, 96) + ' )')
         const checkCache = true
-        if(!checkCache || jwtCache.get(user.id) !== null) cb(null, user, null)
-        else cb(null, false, { message: 'token expired' })
+        if(!checkCache || jwtCache.get(user.id) !== null) {
+          console.log('[strategy] authorization successful (' + user.id + ': ' + jwtCache.get(user.id).substring(0, 96) + ' )')
+          cb(null, user, null)
+        } else {
+          cb(null, false, { message: 'token expired' })
+        }
       }
     })
   })

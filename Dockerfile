@@ -1,7 +1,7 @@
 FROM node:11
 
 # package.json version
-LABEL version="1.4.2"
+LABEL version="1.4.3"
 LABEL name="auth"
 
 ARG RESET_DATABASES

@@ -38,9 +38,14 @@ const modifyDevice = (req, res) =>
   db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
     if(err) return sendError(res, 'could not validate requesting users account type', info)
     if(user.account_type === 'admin') {
-      modifyDeviceIntermediate(req.body.device_id, { ip: req.body.ip, user_agent: req.body.user_agent }, (err, device) => {
-        if(err) sendError(res, 'failed to modify device ' + req.body.device_id, err)
-        else    sendSuccess(res, 'successfully modified device ' + req.body.device_id, device)
+
+      const device_id = req.body.device_id
+      const ip = req.body.ip
+      const user_agent = req.body.user_agent
+
+      modifyDeviceIntermediate(device_id, { ip: ip, user_agent: user_agent }, (err, device) => { // TODO: fix this; this assumes that modifyDeviceIntermediate does NOT need a user_id
+        if(err) sendError(res, 'failed to modify device ' + device_id, err)
+        else    sendSuccess(res, 'successfully modified device ' + device_id, device)
       })
     } else {
       sendFailureNotPermitted(res)

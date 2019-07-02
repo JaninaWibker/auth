@@ -356,6 +356,9 @@ const allInOneDeviceModify = (user_id, device_id, { ip, user_agent }, ip_lookup,
     .then(_values => {
       db.get(queries[3], { '@ip': ip, '@user_id': user_id, '@device_id': device_id })
       .then(row => {
+        if(!row) {
+          console.log('couldn\'t get row from database, something might be wrong')
+        }
         if(row.requires_ip_lookup === 1) {
           ip_lookup(ip, (err, data) => {
             if(err) console.log(err)

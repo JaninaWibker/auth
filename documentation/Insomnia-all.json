@@ -1,0 +1,1342 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2019-07-02T19:58:07.715Z",
+  "__export_source": "insomnia.desktop.app:v6.5.4",
+  "resources": [
+    {
+      "_id": "req_1fd3ad66a40b49ada2393651a44381c4",
+      "authentication": {
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {},
+      "created": 1556882721206,
+      "description": "",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1556882721206,
+      "method": "GET",
+      "modified": 1562073858894,
+      "name": "Get Analytics Data",
+      "parameters": [],
+      "parentId": "fld_a11486e1a76548c1850935896044e5f3",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_analytics_url  }}/dashboard/data",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_a11486e1a76548c1850935896044e5f3",
+      "created": 1542049327201,
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1542049327201,
+      "modified": 1542049327201,
+      "name": "Analytics",
+      "parentId": "wrk_4b9706ac52404e41a8b61f78449c25c3",
+      "_type": "request_group"
+    },
+    {
+      "_id": "wrk_4b9706ac52404e41a8b61f78449c25c3",
+      "created": 1541449503006,
+      "description": "",
+      "modified": 1541449503006,
+      "name": "Insomnia",
+      "parentId": null,
+      "_type": "workspace"
+    },
+    {
+      "_id": "req_9cd89b03ca964508b0af282a773cabb8",
+      "authentication": {},
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"category\": \"basic\",\n\t\"title\": \"ttttitle\",\n\t\"log\": \"this is the log message, or is it?\",\n\t\"metadata\": {\n\t\t\"blub\": \"123\"\n\t}\n}"
+      },
+      "created": 1541957236385,
+      "description": "",
+      "headers": [
+        {
+          "id": "pair_3b33a7559ee149d18e9b43af52ee2037",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1542049327251,
+      "method": "POST",
+      "modified": 1562073867709,
+      "name": "Log",
+      "parameters": [],
+      "parentId": "fld_a11486e1a76548c1850935896044e5f3",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_analytics_url  }}/log",
+      "_type": "request"
+    },
+    {
+      "_id": "req_404f72137d7c4b85bd9a7a099e7e1b04",
+      "authentication": {},
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"category\": \"basic\",\n\t\"title\": \"ttttitle\",\n\t\"log\": \"this is the log message, or is it?\",\n\t\"metadata\": {\n\t\t\"blub\": \"123\"\n\t}\n}"
+      },
+      "created": 1545162137880,
+      "description": "",
+      "headers": [
+        {
+          "id": "pair_3b33a7559ee149d18e9b43af52ee2037",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1541953391631,
+      "method": "POST",
+      "modified": 1562073864709,
+      "name": "Log (Copy)",
+      "parameters": [],
+      "parentId": "fld_a11486e1a76548c1850935896044e5f3",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_analytics_url  }}/log",
+      "_type": "request"
+    },
+    {
+      "_id": "req_c4ccd88f763648bfb65e74223587011b",
+      "authentication": {
+        "prefix": "Bearer",
+        "token": "",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"data\": {\n\t\t\"name\": \"analytics\",\n\t\t\"id\": \"analytics\",\n\t\t\"url\": \"http://localhost:3008/auth\",\n\t\t\"app\": \"http://localhost:3008\"\n\t}\n}"
+      },
+      "created": 1541775169014,
+      "description": "Register a service as an auth consumer",
+      "headers": [
+        {
+          "id": "pair_7e783e30815b4a4687bcfcb71114628c",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230582621.5,
+      "method": "POST",
+      "modified": 1562073904811,
+      "name": "Register Service",
+      "parameters": [],
+      "parentId": "fld_8fbe7eda534747ffb2269bbb92f72dc1",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/register",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_8fbe7eda534747ffb2269bbb92f72dc1",
+      "created": 1559230527960,
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1559230527960,
+      "modified": 1559230527960,
+      "name": "Service",
+      "parentId": "fld_31bc59d3964d4450b7bc4594f90eeca4",
+      "_type": "request_group"
+    },
+    {
+      "_id": "fld_31bc59d3964d4450b7bc4594f90eeca4",
+      "created": 1541780677023,
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1541780748281,
+      "modified": 1541781208314,
+      "name": "Accounts",
+      "parentId": "wrk_4b9706ac52404e41a8b61f78449c25c3",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_0ee33b6ea3fd49a99a3e4a0e690b734c",
+      "authentication": {},
+      "body": {},
+      "created": 1541775134739,
+      "description": "Retrieve the public key used to verify Json Web Tokens. This key is also given by `/register`. This can be used for when registering is not needed (because of default_services) but the public key still needs to be retrieved.",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1559230582596.5,
+      "method": "GET",
+      "modified": 1559230606544,
+      "name": "Get Public Key",
+      "parameters": [],
+      "parentId": "fld_8fbe7eda534747ffb2269bbb92f72dc1",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/public_key",
+      "_type": "request"
+    },
+    {
+      "_id": "req_44f59ccf2e91411ba51fc5a8f72194c0",
+      "authentication": {},
+      "body": {},
+      "created": 1541857445537,
+      "description": "Get Service (id)\n\n> get service information by service id\n\n- requires :id\n- returns service object\n\n```json\n{\n  \"id\": \"<service.id>\",\n  \"name\": \"<service.name>\",\n  \"url\": \"<service.url>\",\n  \"app\": \"<service.app>\"\n}\n```",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1559230582571.5,
+      "method": "GET",
+      "modified": 1559230594684,
+      "name": "Get Service (id)",
+      "parameters": [],
+      "parentId": "fld_8fbe7eda534747ffb2269bbb92f72dc1",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/service/by-id/notes",
+      "_type": "request"
+    },
+    {
+      "_id": "req_4a27ea0b3ac14f17a313c3c28fc0eec6",
+      "authentication": {},
+      "body": {},
+      "created": 1541857456011,
+      "description": "Get Service (name)\n\n> get service information by service name\n\n- requires :name\n- returns service object\n\n```json\n{\n  \"id\": \"<service.id>\",\n  \"name\": \"<service.name>\",\n  \"url\": \"<service.url>\",\n  \"app\": \"<service.app>\"\n}\n```",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1559230582565.25,
+      "method": "GET",
+      "modified": 1559230596094,
+      "name": "Get Service (name)",
+      "parameters": [],
+      "parentId": "fld_8fbe7eda534747ffb2269bbb92f72dc1",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/service/by-name/Notes",
+      "_type": "request"
+    },
+    {
+      "_id": "req_39bf85aa9aef4f3f979533195b4ace1b",
+      "authentication": {
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"account_type\": \"privileged\"\n}"
+      },
+      "created": 1542388029868,
+      "description": "Generates a Register-Token which can be used to give special permissions when creating an account with.\n\n- requires admin privileges\n\nJSON-structure is simple:\n```json\n{\n  \"account_type\": \"<account_type>\"\n}\n```",
+      "headers": [
+        {
+          "id": "pair_6ae5f5bb4a4f4642b5d0c8c017d3b73f",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1541775168965.538,
+      "method": "POST",
+      "modified": 1559230650204,
+      "name": "Generate Register Token",
+      "parameters": [],
+      "parentId": "fld_5aff71dc603949e28b810b1e1ff6fa95",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/generate-register-token",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_5aff71dc603949e28b810b1e1ff6fa95",
+      "created": 1559230520801,
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1559230520801,
+      "modified": 1559230520801,
+      "name": "RegisterToken",
+      "parentId": "fld_31bc59d3964d4450b7bc4594f90eeca4",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_6534776d6af345db9caee12aca460fe1",
+      "authentication": {
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"register_token\": \"EC93EJyH1Zb9udfwUkXN2plBcSRNnpCnZmb0rHJpZcUUiNG1h4ZhqFSKmZUE2GN13uRWKqEN8B_A92G2HwQp-TvSC2IaLHulTVxDoKvXvyz6z-gXmeVa7D7Ey7EA5ZXXGLd-3Udbbh0-up0HN7_KaUzYpvdQiFy-S-N2Sia4UEjjJHLZDZ3k7qX4ykHVm1Aq9-pHy7QC6pxDDkXQ-AP4czdSiludH7mdAmj9eNCCr2BCFuU8Ng7dU_Ww_xjXdkUIZhPB9Z_OA4HJSbLkrL1DjfnDybIvbmb5Mp-o_jBLH9wy5eUlKo5Br0BDjcRERcZt8VXIOdjZomW0nCfiBIKutb9yzORsen72vZ5gb1uda7RSiS_vNHt_hU4FQTzEmwLlfjaQYwDuZ84YerW2pE51vwWv-xzmMUT5Ns9BWpD529173WNV80OIWaPWge24LN28sr-YwF58iOKsjiOr7wa4JEo6fgA7r_igZP3zHmR06mSls8Qk7RBUpPZy5C-KgEH1QOAIVAufsD6rLZq8ScsvplCPTiSxVi3QMBfVDqIevseLe6mXPlL7w3v-4TOf6E2mewrOZFbN0Ly3Ka20COBoGOxXgR2Xv3MppKraDJkNBEHvWsY6u11BR2slen3Je-DBWYT8xIbwS99Z_op1C-CtQJQ_idEpdaDj-c1FZoE8eh0=\"\n}"
+      },
+      "created": 1542388158294,
+      "description": "Checks the validity of a given Register-Token. Also returns information about the token such as creation date, id and associated account_type.\n\n- **no** admin privileges required\n\nJSON-structure is simple:\n```json\n{\n  \"register_token\": \"<register_token>\"\n}\n```\n\nThe response has the following JSON-structure:\n```JSON\n{\n  \"message\": \"<successful|failure>\",\n  \"id\": \"<id (int)>\",\n  \"timestamp\": \"<creation date timestamp (int)>\",\n  \"account_type\": \"<account_type>\",\n  \"permanent\": \"<permanent (boolean)>\",\n  \"expireAt\": \"<expireAt (int)>\"\n}\n```",
+      "headers": [
+        {
+          "id": "pair_6ae5f5bb4a4f4642b5d0c8c017d3b73f",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1541775168915.538,
+      "method": "POST",
+      "modified": 1559230655241,
+      "name": "Validate Register Token",
+      "parameters": [],
+      "parentId": "fld_5aff71dc603949e28b810b1e1ff6fa95",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/validate-register-token",
+      "_type": "request"
+    },
+    {
+      "_id": "req_28d8f8be12b74e539d610756cd8222bf",
+      "authentication": {
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"id\": \"1\"\n}"
+      },
+      "created": 1542394620508,
+      "description": "Invalidates the given Register-Token. Done via the `id` of the Register-Token since knowing the whole token would be annoying to deal with.\n\n- requires admin privileges\n\n\n```JSON\n{\n  \"id\": \"<register_token_id>\"\n}\n```",
+      "headers": [
+        {
+          "id": "pair_6ae5f5bb4a4f4642b5d0c8c017d3b73f",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1541775168865.538,
+      "method": "DELETE",
+      "modified": 1559230656558,
+      "name": "Invalidate Register Token",
+      "parameters": [],
+      "parentId": "fld_5aff71dc603949e28b810b1e1ff6fa95",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/invalidate-register-token",
+      "_type": "request"
+    },
+    {
+      "_id": "req_f0b97071928547efb54229fc312df4b8",
+      "authentication": {
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {},
+      "created": 1558794485692,
+      "description": "Lists all the Register Tokens. No payload is required. The data can be found inside the `data`-property inside the response.\n\n- requires admin privileges\n\nThe response has the following JSON-structure:\n```JSON\n{\n  \"message\": \"retrieving register token list successful\",\n  \"register_tokens\": {\n    ...\n  },\n  \"count\": <amount of register tokens>,\n  \"status\": \"success\"\n}\n```\n\nIf an error occurs this the structure is:\n```JSON\n{\n  \"message\": \"<error message>\",\n  \"status\": \"failure\"\n}\n```",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1541775168815.538,
+      "method": "GET",
+      "modified": 1559230661819,
+      "name": "List Register Tokens",
+      "parameters": [],
+      "parentId": "fld_5aff71dc603949e28b810b1e1ff6fa95",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/list-register-tokens",
+      "_type": "request"
+    },
+    {
+      "_id": "req_f86d31384536441fa63d5a78df1687eb",
+      "authentication": {
+        "prefix": "",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"ip\": \"87.155.7.87\",\n\t\"user_agent\": \"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36\"\n}"
+      },
+      "created": 1559230776144,
+      "description": "Adding a device\n\nWith this endpoint users with **admin privileges** can add a new device with a specified ip address and user_agent. This endpoint can optionally add the newly created device to an existing user, to do this add a `user_id` property to the json body.\n\n```json\n{\n\t\"ip\": \"<ip>\",\n\t\"user_agent\": \"<user_agent>\"\n}\n```\n\n**Possible responses**\n\n```json\n{\n  \"message\": \"successfully added new device\",\n  \"status\": \"success\",\n  \"device_id\": \"<device_id>\"\n}\n```\n\n```json\n{\n  \"message\": \"could not validate requesting users account type\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n\n```json\n{\n  \"message\": \"failed to add new device\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"supply ip and useragent\",\n  \"status\": \"failure\"\n}\n```\n\n```json\n{\n  \"message\": \"account not permitted\",\n  \"status\": \"failure\"\n}\n```",
+      "headers": [
+        {
+          "id": "pair_29c41e1fb03944f0811a685df5b462ff",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230747351.5,
+      "method": "POST",
+      "modified": 1562097333891,
+      "name": "Add",
+      "parameters": [],
+      "parentId": "fld_ccc1aef71336436db3f78e784428fe6b",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/device/",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_ccc1aef71336436db3f78e784428fe6b",
+      "created": 1559230499529,
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1559230499529,
+      "modified": 1559230499529,
+      "name": "Devices",
+      "parentId": "fld_31bc59d3964d4450b7bc4594f90eeca4",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_da0b1eec758f4e29b182277e3b9214a8",
+      "authentication": {
+        "prefix": "",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"ip\": \"127.0.0.1\",\n\t\"user_agent\": \"Insomnia\",\n\t\"user_id\": 2\n}"
+      },
+      "created": 1559291003311,
+      "description": "Adding a device and adding it to a user\n\nWith this endpoint users with **admin privileges** can add a new device with a specified ip address and user_agent. This endpoint can optionally just add the device without adding it to a user, to do this just remove the `user_id` property from the json body\n\n```json\n{\n\t\"ip\": \"<ip>\",\n\t\"user_agent\": \"<user_agent>\",\n  \"user_id\": \"<user_id>\"\n}\n```\n\n**Possible responses**\n\n```json\n{\n  \"message\": \"successfully added new device\",\n  \"status\": \"success\",\n  \"device_id\": \"<device_id>\"\n}\n```\n\n```json\n{\n  \"message\": \"could not validate requesting users account type\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"failed to add new device to user <user_id>\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"failed to add new device\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"supply ip and useragent\",\n  \"status\": \"failure\"\n}\n```\n\n```json\n{\n  \"message\": \"account not permitted\",\n  \"status\": \"failure\"\n}\n```",
+      "headers": [
+        {
+          "id": "pair_29c41e1fb03944f0811a685df5b462ff",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230746042.75,
+      "method": "POST",
+      "modified": 1562097341546,
+      "name": "Add (User)",
+      "parameters": [],
+      "parentId": "fld_ccc1aef71336436db3f78e784428fe6b",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/device/",
+      "_type": "request"
+    },
+    {
+      "_id": "req_1ebd351b04fc429a986df4a7a1818db0",
+      "authentication": {
+        "prefix": " ",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"device_id\": \"\",\n\t\"ip\": \"\",\n\t\"user_agent\": \"\"\n}"
+      },
+      "created": 1559230734214,
+      "description": "Modifying a device\n\nWith this endpoint users with **admin privileges** can set the ip address and the user_agent of a device.\n\nThis is done via the json body:\n\n```json\n{\n\t\"device_id\": \"<device_id>\",\n\t\"ip\": \"<ip>\",\n\t\"user_agent\": \"<user_agent>\"\n}\n```\n\n**Possible responses**\n\n```json\n{\n  \"message\": \"successfully modified device <device_id>\",\n  \"status\": \"success\",\n  \"device\": {\n    ... // this includes ip location data\n  }\n}\n```\n\n```json\n{\n  \"message\": \"could not validate requesting users account type\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"failed to modify device <device_id>\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"account not permitted\",\n  \"status\": \"failure\"\n}\n```",
+      "headers": [
+        {
+          "id": "pair_8618c885246b43d9b61faa5adbaf2036",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230744734,
+      "method": "PATCH",
+      "modified": 1562097346938,
+      "name": "Modify",
+      "parameters": [],
+      "parentId": "fld_ccc1aef71336436db3f78e784428fe6b",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/device",
+      "_type": "request"
+    },
+    {
+      "_id": "req_20bd84022128425a82a71ba37f8962d7",
+      "authentication": {
+        "prefix": "",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"user_id\": 2,\n\t\"device_id\": \"23e8e1ce-8569-11e9-9514-0242ac110006\"\n}"
+      },
+      "created": 1559230762494,
+      "description": "Revoking device\n\n**Admin usage**\n\nAdmin privileges allows specifying user_id for which to revoke the device.\n\n```json\n{\n  \"user_id\": <user_id>,\n  \"device_id\": <device_id>\n}\n```\n\n**Normal usage**\n\nWith privileges other than admin the user_id defaults to user id of the requesting user.\n\n```json\n{\n  \"device_id\": <device_id\n}\n```\n\n**Possible responses**\n\n```json\n{\n  \"message\": \"...\",\n  \"status\": \"success\",\n  \"is_revoked\": <true / false>\n}\n```\n\n```json\n{\n  \"message\": \"...\",\n  \"status\": \"failure\",\n  \"error\": <err>\n}\n```\n\n```json\n{\n  \"message\": \"...\",\n  \"status\": \"failure\"\n}\n```",
+      "headers": [
+        {
+          "id": "pair_f4fd67f902bf4ef9ab2dd9203471ed5a",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230743425.25,
+      "method": "PATCH",
+      "modified": 1562097373153,
+      "name": "Revoke",
+      "parameters": [],
+      "parentId": "fld_ccc1aef71336436db3f78e784428fe6b",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/device/revoke",
+      "_type": "request"
+    },
+    {
+      "_id": "req_8620ed427c484a739e4a3e4b0fd95352",
+      "authentication": {
+        "prefix": "",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"ip\": \"127.0.0.1\"\n}"
+      },
+      "created": 1559230814183,
+      "description": "Get information about a specific IP address. This is basically a proxy for the ip-lookup service with the small exception that auth saves the queried IP address and the corresponding data to it's own database.\n\nThis endpoint is mostly for debugging / development and is thereby only available to admins.\n\n**Possible responses**\n\n```json\n{\n  \"message\": \"successfully retrieved ip information\",\n  \"status\": \"success\",\n  \"data\": {\n    \"ip\": \"<ip>\",\n    \"continent\": \"<continent>\",\n    \"continent_code\": \"<continent_code>\",\n    \"country\": \"<country>\",\n    \"country_code\": \"<country_code>\",\n    \"region\": \"<region>\",\n    \"region_code\": \"<region_code>\",\n    \"city\": \"<city>\",\n    \"zip\": \"<zip>\",\n    \"latitude\": <latitude>,\n    \"longitude\": <longitude>,\n    \"timezone\": \"<timezone>\",\n    \"timezone_code\": \"<timezone_code>\",\n    \"isp\": <isp>,\n    \"language\": <language[]>,\n    \"is_anonymous\": <true / false>,\n    \"is_threat\": <true / false>,\n    \"is_internal\": <true / false>,\n    \"creation_date\": \"2019-06-09T09:05:42.989Z\",\n    \"device_creation_date\": \"2019-06-09T09:05:42.965Z\",\n    \"is_revoked\": <true / false>\n  }\n}\n```\n\n```json\n{\n  \"message\": \"could not validate requesting users account type\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"failed to retrieve ip information from database\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"failed to retrieve ip information\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"failed to save newly retrieved internal ip information to database\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"failed to save newly retrieved ip information to database\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"account not permitted\", \n  \"status\": \"failure\"\n}\n```",
+      "headers": [
+        {
+          "id": "pair_27f2aee95e49424db8c0282b0b65f285",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230742770.875,
+      "method": "GET",
+      "modified": 1562097380255,
+      "name": "IP",
+      "parameters": [],
+      "parentId": "fld_ccc1aef71336436db3f78e784428fe6b",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/ip",
+      "_type": "request"
+    },
+    {
+      "_id": "req_6e9f9c649119434f9e9120e7939caf0c",
+      "authentication": {
+        "prefix": "",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {},
+      "created": 1559230721106,
+      "description": "Retrieving information about a specific device.\n\n**Admin usage**\n\nWith admin privileges it is possible to retrieve device information for other users identified by the `user_id` in the URL.\n\n`/device/:user_id/:device_id`\n\n**Normal usage**\n\nThe `user_id` defaults to the user_id of the requesting user.\n\n`/device/:device_id`\n\nEvery request to `/device/:user_id/:device_id` will return in an error with the exception of user_id being the user_id of the requesting user, in this case the endpoint functions just like using `/device/:device_id`.\n\n**Possible responses**\n\n```json\n{\n  \"message\": \"successfully retrieved device information\",\n  \"device\": {\n    \"device_id\": \"<device_id>\",\n    \"user_agent\": \"<user_agent>\",\n    \"ip\": \"<ip>\",\n    \"continent\": \"<continent>\",\n    \"continent_code\": \"<continent_code>\",\n    \"country\": \"<country>\",\n    \"country_code\": \"<country_code>\",\n    \"region\": \"<region>\",\n    \"region_code\": \"<region_code>\",\n    \"city\": \"<city>\",\n    \"zip\": \"<zip>\",\n    \"latitude\": <latitude>,\n    \"longitude\": <longitude>,\n    \"timezone\": \"<timezone>\",\n    \"timezone_code\": \"<timezone_code>\",\n    \"isp\": <isp>,\n    \"language\": <language[]>,\n    \"is_anonymous\": <true / false>,\n    \"is_threat\": <true / false>,\n    \"is_internal\": <true / false>,\n    \"creation_date\": \"2019-06-09T09:05:42.989Z\",\n    \"device_creation_date\": \"2019-06-09T09:05:42.965Z\",\n    \"is_revoked\": <true / false>,\n    \"user_id\": <user_id>,\n    \"username\": \"<username>\"\n  },\n  \"status\": \"success\"\n}\n```\n\n```json\n{\n  \"message\": \"error while getting device information\",\n  \"status\": \"failure\"\n}\n```\n\n```json\n{\n  \"message\": \"could not validate requesting users account type\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"error while getting device information\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"error while getting device information\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"account not permitted\", \n  \"status\": \"failure\"\n}\n```",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1559230734264,
+      "method": "GET",
+      "modified": 1562097400598,
+      "name": "Get",
+      "parameters": [],
+      "parentId": "fld_ccc1aef71336436db3f78e784428fe6b",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/device/2/c28412e6-8a95-11e9-92e1-0242ac110006",
+      "_type": "request"
+    },
+    {
+      "_id": "req_7f7baa49ad404c6eb12b89bab3e03235",
+      "authentication": {
+        "prefix": "",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {},
+      "created": 1559232673976,
+      "description": "Retrieving information about a specific device.\n\n**Admin usage**\n\nWith admin privileges it is possible to retrieve device information for other users identified by the `user_id` in the URL.\n\n`/device/:user_id/:device_id`\n\n**Normal usage**\n\nThe `user_id` defaults to the user_id of the requesting user.\n\n`/device/:device_id`\n\nEvery request to `/device/:user_id/:device_id` will return in an error with the exception of user_id being the user_id of the requesting user, in this case the endpoint functions just like using `/device/:device_id`.\n\n**Possible responses**\n\n```json\n{\n  \"message\": \"successfully retrieved device information\",\n  \"device\": {\n    \"device_id\": \"<device_id>\",\n    \"user_agent\": \"<user_agent>\",\n    \"ip\": \"<ip>\",\n    \"continent\": \"<continent>\",\n    \"continent_code\": \"<continent_code>\",\n    \"country\": \"<country>\",\n    \"country_code\": \"<country_code>\",\n    \"region\": \"<region>\",\n    \"region_code\": \"<region_code>\",\n    \"city\": \"<city>\",\n    \"zip\": \"<zip>\",\n    \"latitude\": <latitude>,\n    \"longitude\": <longitude>,\n    \"timezone\": \"<timezone>\",\n    \"timezone_code\": \"<timezone_code>\",\n    \"isp\": <isp>,\n    \"language\": <language[]>,\n    \"is_anonymous\": <true / false>,\n    \"is_threat\": <true / false>,\n    \"is_internal\": <true / false>,\n    \"creation_date\": \"2019-06-09T09:05:42.989Z\",\n    \"device_creation_date\": \"2019-06-09T09:05:42.965Z\",\n    \"is_revoked\": <true / false>,\n    \"user_id\": <user_id>,\n    \"username\": \"<username>\"\n  },\n  \"status\": \"success\"\n}\n```\n\n```json\n{\n  \"message\": \"error while getting device information\",\n  \"status\": \"failure\"\n}\n```\n\n```json\n{\n  \"message\": \"could not validate requesting users account type\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"error while getting device information\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"error while getting device information\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"account not permitted\", \n  \"status\": \"failure\"\n}\n```",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1559230734251.5,
+      "method": "GET",
+      "modified": 1562097326859,
+      "name": "Get (Self)",
+      "parameters": [],
+      "parentId": "fld_ccc1aef71336436db3f78e784428fe6b",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/device/2f6b98a2-82f8-11e9-9246-0242ac110006",
+      "_type": "request"
+    },
+    {
+      "_id": "req_01588f2beca349b98416302b1943e2f1",
+      "authentication": {
+        "prefix": "",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {},
+      "created": 1559230715591,
+      "description": "Retrieving a list of devices.\n\n**Admin usage**\n\nWith admin privileges it is possible to retrieve a list of devices for other users identified by the `user_id` in the URL.\n\n`/devices/:user_id`\n\n**Normal usage**\n\nThe `user_id` defaults to the user_id of the requesting user.\n\n`/devices/`\n\nEvery request to `/devices/:user_id` will return in an error with the exception of user_id being the user_id of the requesting user, in this case the endpoint does function like just using `/devices/`.\n\n**Possible responses**\n\n```json\n{\n  \"message\": \"...\",\n  \"status\": \"success\",\n  \"devices\": <devices[]>,\n  \"count\": <count>\n}\n```\n\n```json\n{\n  \"message\": \"...\",\n  \"status\": \"failure\",\n  \"error\": <err>\n}\n```\n\n```json\n{\n  \"message\": \"...\",\n  \"status\": \"failure\"\n}\n```",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1559230734239,
+      "method": "GET",
+      "modified": 1562097309656,
+      "name": "List",
+      "parameters": [
+        {
+          "id": "pair_e92fe4b6af7d4530ad33a88a828b5e54",
+          "name": "",
+          "value": ""
+        }
+      ],
+      "parentId": "fld_ccc1aef71336436db3f78e784428fe6b",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/devices/1",
+      "_type": "request"
+    },
+    {
+      "_id": "req_727d40959d614e21a546aea83312db2d",
+      "authentication": {
+        "prefix": "",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {},
+      "created": 1559232688421,
+      "description": "Retrieving a list of devices.\n\n**Admin usage**\n\nWith admin privileges it is possible to retrieve a list of devices for other users identified by the `user_id` in the URL.\n\n`/devices/:user_id`\n\n**Normal usage**\n\nThe `user_id` defaults to the user_id of the requesting user.\n\n`/devices/`\n\nEvery request to `/devices/:user_id` will return in an error with the exception of user_id being the user_id of the requesting user, in this case the endpoint does function like just using `/devices/`.\n\n**Possible responses**\n\n```json\n{\n  \"message\": \"...\",\n  \"status\": \"success\",\n  \"devices\": <devices[]>,\n  \"count\": <count>\n}\n```\n\n```json\n{\n  \"message\": \"...\",\n  \"status\": \"failure\",\n  \"error\": <err>\n}\n```\n\n```json\n{\n  \"message\": \"...\",\n  \"status\": \"failure\"\n}\n```",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1559230730419,
+      "method": "GET",
+      "modified": 1562097423637,
+      "name": "List (Self)",
+      "parameters": [
+        {
+          "id": "pair_e92fe4b6af7d4530ad33a88a828b5e54",
+          "name": "",
+          "value": ""
+        }
+      ],
+      "parentId": "fld_ccc1aef71336436db3f78e784428fe6b",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/devices/",
+      "_type": "request"
+    },
+    {
+      "_id": "req_2117ba888856421dae384514590d3dda",
+      "authentication": {
+        "prefix": "",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"user_id\": 1,\n\t\"device_id\": \"2f6b98a2-82f8-11e9-9246-0242ac110006\"\n}"
+      },
+      "created": 1559230726624,
+      "description": "Removing a device from an account\n\n**Admin usage**\n\nAdmins can delete devices from all accounts, other users can only delete their own devices from their account.\n\n```json\n{\n\t\"user_id\": <user_id>,\n\t\"device_id\": \"<device_id>\"\n}\n```\n\n**Normal usage**\n\nAs non-admin users cannot delete devices from other users the `user_id` property is not needed. It is not simply ignored, it results in an error unless the supplied user_id is the id of the requesting user.\n\n```json\n{\n\t\"device_id\": \"<device_id>\"\n}\n```\n\n**Possible responses**\n\n```json\n{\n  \"message\": \"successfully deleted device <device_id>\",\n  \"status\": \"success\"\n}\n```\n\n```json\n{\n  \"message\": \"failed to delete device <device_id>\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"could not validate requesting users account type\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"supply device id\",\n  \"status\": \"failure\"\n}\n```\n\n```json\n{\n  \"message\": \"account not permitted\",\n  \"status\": \"failure\"\n}\n```",
+      "headers": [
+        {
+          "id": "pair_943dae5d90824cf3a33c39b3b5b0eaf6",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230730394,
+      "method": "DELETE",
+      "modified": 1562097442037,
+      "name": "Delete",
+      "parameters": [],
+      "parentId": "fld_ccc1aef71336436db3f78e784428fe6b",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/device",
+      "_type": "request"
+    },
+    {
+      "_id": "req_1f1c74ac994f47279bb6e2c6a14a9505",
+      "authentication": {
+        "prefix": "",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"device_id\": \"2f6b98a2-82f8-11e9-9246-0242ac110006\"\n}"
+      },
+      "created": 1559236506602,
+      "description": "Removing a device from an account\n\n**Admin usage**\n\nAdmins can delete devices from all accounts, other users can only delete their own devices from their account.\n\n```json\n{\n\t\"user_id\": <user_id>,\n\t\"device_id\": \"<device_id>\"\n}\n```\n\n**Normal usage**\n\nAs non-admin users cannot delete devices from other users the `user_id` property is not needed. It is not simply ignored, it results in an error unless the supplied user_id is the id of the requesting user.\n\n```json\n{\n\t\"device_id\": \"<device_id>\"\n}\n```\n\n**Possible responses**\n\n```json\n{\n  \"message\": \"successfully deleted device <device_id>\",\n  \"status\": \"success\"\n}\n```\n\n```json\n{\n  \"message\": \"failed to delete device <device_id>\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"could not validate requesting users account type\",\n  \"status\": \"failure\",\n  \"error\": <error>\n}\n```\n\n```json\n{\n  \"message\": \"supply device id\",\n  \"status\": \"failure\"\n}\n```\n\n```json\n{\n  \"message\": \"account not permitted\",\n  \"status\": \"failure\"\n}\n```",
+      "headers": [
+        {
+          "id": "pair_943dae5d90824cf3a33c39b3b5b0eaf6",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230730369,
+      "method": "DELETE",
+      "modified": 1562097457834,
+      "name": "Delete (Self)",
+      "parameters": [],
+      "parentId": "fld_ccc1aef71336436db3f78e784428fe6b",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/device",
+      "_type": "request"
+    },
+    {
+      "_id": "req_b47f6254fb8f4c6db1d17f06b4e47802",
+      "authentication": {
+        "disabled": false,
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"register-token\": \"T-r-g6boK5GAHGQo04yz3ziUmoMpOv6OpFpw-MskNs7ncpmYRBP_ZXk9l-08ockblJS7skxKC4bCW_otfDMrbU-kfFGD2z6fE4bnfLNZ2tyCyMWTPhIAMJ4-N5G-4ZZLD4X0l2j-GKqWcXslDElTT5Km32mAxRVsUTMKoVfk22b9Exg7bVzRm9liJ1GdAqDOOWt5r3FKS1N8F4HNcdHdSTeD6GU5pssnMRC4GbZ3f0Dz84z6XGiJyoihZA8esIGOyeaGfi7T7DDQnUioUrVXopXYOy4LfnMYdJ5g_Yt3Mt1ufvzbNeF4BwZ1-YHS0QS1ismPMI4FbeBFbFbdpgf2akeKNCCOz0vF70nQ98xvctre89iAvA13bavlBKgN7_yZgE4Yocgqk-trZOPON1QUiU5cm9Y_vjA3zl7r0LC3j9M8UcJeTwSNbxEBOnGP9pr_FsHPSij02Hr9kBt8MjXVMFQui8MKhWpZqp6BObypvDvU-wtQdNKs8t4c6X0YULMmMY2bPzZVQ538eex5FNLCNMA_T8lYANuTlEe-h2mkPWf1K6nBoPbKq8ppF8-e_nxzPBM-LccBx4zjVHEk8waDsY4QWY9E2v1fKKmWQx0g0qAjNR3nN99dDCVCHkNSJZICB8RWCUwQpDfl5qJc-Ij38PhzGkDZ7HSM3Py_Iwix5TY=\",\n\t\"username\": \"test\",\n\t\"email\": \"test3@jannik.ml\",\n\t\"first_name\": \"<first_name>\",\n\t\"last_name\": \"<last_name>\",\n\t\"password\": \"test\",\n\t\"getRefreshToken\": true\n}"
+      },
+      "created": 1541774644314,
+      "description": "Adds a new account with `account_type=\"default\"`. The new account will be created only when username and email are unique. \n\nIf a `register_token` is specified, the account_type is set accordingly. \n\nThe `add`-request requires* the following JSON structure:\n```json\n{\n  \"register_token\": \"<register_token (optional)>\",\n\t\"username\": \"<username>\",\n\t\"email\": \"<email>\",\n\t\"first_name\": \"<first_name>\",\n\t\"last_name\": \"<last_name>\",\n\t\"password\": \"<password>\"\n}\n```\n> *: If not otherwise noted via \"(optional)\" all given fields are required.",
+      "headers": [
+        {
+          "id": "pair_fe4dbbbb463c47b3a5ec3ae14e66b6a9",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230504360,
+      "method": "POST",
+      "modified": 1559230623730,
+      "name": "Add Account",
+      "parameters": [],
+      "parentId": "fld_51f3c9a8f4e24d419f96f461930fb01e",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/users/add",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_51f3c9a8f4e24d419f96f461930fb01e",
+      "created": 1559230508991,
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1554866666888.1284,
+      "modified": 1559230703865,
+      "name": "User",
+      "parentId": "fld_31bc59d3964d4450b7bc4594f90eeca4",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_f50cfac1af91427bac97624f4e0e0679",
+      "authentication": {
+        "disabled": false,
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"username\": \"test\",\n\t\"email\": \"test@jannik.ml\",\n\t\"first_name\": \"first\",\n\t\"last_name\": \"last\",\n\t\"password\": null,\n\t\"account_type\": \"default\",\n\t\"is_passwordless\": true,\n  \"temp_account\": 0\n}"
+      },
+      "created": 1549099585915,
+      "description": "Adds a new account with the given values. The new account will be created only when username and email are unique. Requires admin privileges.\n\nThe `admin/add`-request requires* the following JSON structure:\n```json\n{\n  \"register_token\": \"<register_token (optional)>\",\n\t\"username\": \"<username>\",\n\t\"email\": \"<email>\",\n\t\"first_name\": \"<first_name>\",\n\t\"last_name\": \"<last_name>\",\n\t\"password\": \"<password>\",\n  \"is_passwordless\": \"<is_passwordless (optional; default false)>\",\n  \"temp_account\": \"<temp_account (optional; default 0)>\"\n}\n```\n> *: If not otherwise noted via \"(optional)\" all given fields are required.",
+      "headers": [
+        {
+          "id": "pair_fe4dbbbb463c47b3a5ec3ae14e66b6a9",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230504347.5,
+      "method": "POST",
+      "modified": 1559570554265,
+      "name": "Add Account (admin)",
+      "parameters": [],
+      "parentId": "fld_51f3c9a8f4e24d419f96f461930fb01e",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/users/admin/add",
+      "_type": "request"
+    },
+    {
+      "_id": "req_6b55e2e522774b15a20fbc49d913beca",
+      "authentication": {
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"username\": \"test\",\n\t\"account_type\": \"privileged\"\n}"
+      },
+      "created": 1541774846802,
+      "description": "Modify an account. This endpoint allows accounts with `account_type` of `admin` to change accounts. This does include fields like `password`, `first_name`, `last_name`, `email` and even `username`. It is noted that this endpoint is also kind of **dangerous** since modifying ones own account can happen easily. This is somewhat fixed by the newly added `/users/modify-self` route but not totally. \n\nThe required JSON structure is basically the same as used by `/users/add` (excluding `register_token`):\n```json\n{\n\t\"username\": \"<username>\",\n\t\"email\": \"<email>\"\n\t\"first_name\": \"<first_name>\",\n\t\"last_name\": \"<last_name>\",\n\t\"password\": \"<password>\",\n}\n```",
+      "headers": [
+        {
+          "id": "pair_7a2840649d5c4aeaa93de94e476b5fd9",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230504344.375,
+      "method": "POST",
+      "modified": 1559230631350,
+      "name": "Modify Account",
+      "parameters": [],
+      "parentId": "fld_51f3c9a8f4e24d419f96f461930fb01e",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/users/modify",
+      "_type": "request"
+    },
+    {
+      "_id": "req_4eff5ed5603a46fe9dabf68642babc15",
+      "authentication": {
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"first_name\": \"Jannik1\",\n\t\"last_name\": \"Wibker\"\n}"
+      },
+      "created": 1541774963588,
+      "description": "Modify the own account. This endpoint allows any kind of account to modify itself. This includes fields like `password`, `first_name` and `last_name`. The fields `email` and `username` cannot be modified unless the requesting user has an account status of `admin`.\n\nThe required JSON structure is basically the same as used by `/users/add` (excluding `register_token`, `email` and `username` (last two only for non-admin users)):\n```json\n{\n\t\"first_name\": \"<first_name>\",\n\t\"last_name\": \"<last_name>\",\n\t\"password\": \"<password>\",\n}\n```",
+      "headers": [
+        {
+          "id": "pair_7a2840649d5c4aeaa93de94e476b5fd9",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230504343.5938,
+      "method": "POST",
+      "modified": 1562074098647,
+      "name": "Modify Account (self)",
+      "parameters": [],
+      "parentId": "fld_51f3c9a8f4e24d419f96f461930fb01e",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/users/modify-self",
+      "_type": "request"
+    },
+    {
+      "_id": "req_3685a93a01d84ef6b5e4bf1d7cc8ce24",
+      "authentication": {
+        "disabled": false,
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"id\": 3\n}"
+      },
+      "created": 1541774999182,
+      "description": "**Deletes** the account that is making the request **except** if the account making the request is an account with `account_type` of `admin` and a `id` is given for the user that is to be deleted.\n\n- **Dangerous Endpoint**\n- may **delete** account making request\n- admins may delete other accounts using `id`",
+      "headers": [
+        {
+          "id": "pair_36de804bf8954db3ab6f84f336710432",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230504343.3984,
+      "method": "DELETE",
+      "modified": 1560084648272,
+      "name": "Delete Account",
+      "parameters": [],
+      "parentId": "fld_51f3c9a8f4e24d419f96f461930fb01e",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/users/",
+      "_type": "request"
+    },
+    {
+      "_id": "req_9a3e360448aa49b99a2b10475567270d",
+      "authentication": {
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"username\": \"jannik\"\n}"
+      },
+      "created": 1541775333540,
+      "description": "Allows getting account details about a user. If the user that data is being requested for is one self or the account that is requesting the information is an admin full information is given, else only limited information is given.\n\n- Requires Authorization\n- Requires `username` or uses requesting account as username\n- **Not** able to get details by id (this may change)\n\nThe response has the following JSON-structure:\n```JSON\n{\n  \"message\": \"retrieved user data successfully\",\n  \"status\": \"success\",\n  \"user\": {\n    \"username\": \"<username>\",\n    \"id\": <id>,\n    \"first_name\": \"<first name>\",\n    \"last_name\": \"<last name>\",\n    \"email\": \"<email>\",\n    \"creation_date\": \"<creation date>\",\n    \"modification_date\": \"<modification date>\",\n    \"account_type\": \"<account type (either admin, privileged or default)>\",\n    \"metadata\": <metadata>\n  }\n}\n```",
+      "headers": [
+        {
+          "id": "pair_707a486ebd5b41f1ac116868d279ab6c",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1559230504343.3008,
+      "method": "POST",
+      "modified": 1559230641475,
+      "name": "Get Account",
+      "parameters": [],
+      "parentId": "fld_51f3c9a8f4e24d419f96f461930fb01e",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/users/info",
+      "_type": "request"
+    },
+    {
+      "_id": "req_7016967fc6dd43178980981e272c698a",
+      "authentication": {
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {},
+      "created": 1541775275616,
+      "description": "Allows listing all users with one single request. No json or any other data needs to be given. This endpoint only works for accounts with high enough `account_type`. Minimum account type is `admin` (which is the highest).\n\n- Requires admin privileges\n- Does not require JSON body or data",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1559230504343.2031,
+      "method": "GET",
+      "modified": 1559484465430,
+      "name": "List Accounts",
+      "parameters": [],
+      "parentId": "fld_51f3c9a8f4e24d419f96f461930fb01e",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/users/list",
+      "_type": "request"
+    },
+    {
+      "_id": "req_bd482298ac124591a9d12cda4a357869",
+      "authentication": {
+        "disabled": false,
+        "prefix": "Bearer",
+        "token": "{{ token  }}",
+        "type": "bearer"
+      },
+      "body": {},
+      "created": 1541775014316,
+      "description": "Logs the request making account out. This does not invalidate Refresh-tokens, to accomplish something similar revoke access from every device using the `/device`-endpoint.",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1541775169065.5137,
+      "method": "POST",
+      "modified": 1562074196125,
+      "name": "Logout",
+      "parameters": [],
+      "parentId": "fld_6f26ec18bbb84abb9141ed8e2cdd7d5e",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/users/logout",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_6f26ec18bbb84abb9141ed8e2cdd7d5e",
+      "created": 1559230677443,
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1550502834247.2568,
+      "modified": 1559230679955,
+      "name": "Login/Logout",
+      "parentId": "fld_31bc59d3964d4450b7bc4594f90eeca4",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_2e8b13d6e37b4a9f8398075053573bcd",
+      "authentication": {},
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"username\": \"{{ username  }}\",\n\t\"password\": \"{{ password  }}\",\n\t\"isRefreshToken\": false,\n\t\"getRefreshToken\": false\n}"
+      },
+      "created": 1541774428554,
+      "description": "Login\n\n- requires `username`\n- requires `password`\n- optional: `isRefreshToken` & `getRefreshToken` (these are available via *Login (use Refresh-Token)* and *Login (get Refresh-Token)*)\n- returnes JWT (`$.token`)\n- may soon require some kind of 2fa verification code",
+      "headers": [
+        {
+          "id": "pair_59722d09d6214f78a2e81284365c4a08",
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "disabled": false,
+          "id": "pair_e14e6d4a1b2441cbb2ae09f7be6b649a",
+          "name": "Device-Id",
+          "value": "{{ device_id  }}"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1541775169053.0137,
+      "method": "POST",
+      "modified": 1562075026001,
+      "name": "Login",
+      "parameters": [],
+      "parentId": "fld_6f26ec18bbb84abb9141ed8e2cdd7d5e",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/users/login",
+      "_type": "request"
+    },
+    {
+      "_id": "req_835bfa41178449a4bfa65a7e70ef406a",
+      "authentication": {},
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"username\": \"{{ username  }}\",\n\t\"password\": \"{{ password  }}\",\n\t\"isRefreshToken\": false,\n\t\"getRefreshToken\": true\n}"
+      },
+      "created": 1547901469560,
+      "description": "Login (get Refresh-Token)\n\n- requires `username`\n- requires `password`\n- returnes JWT (`$.token`)\n- returnes Refresh-Token (`$.refreshToken`)\n- may soon require some kind of 2fa verification code",
+      "headers": [
+        {
+          "id": "pair_59722d09d6214f78a2e81284365c4a08",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1541775169040.5137,
+      "method": "POST",
+      "modified": 1559230687659,
+      "name": "Login (get Refresh-Token)",
+      "parameters": [],
+      "parentId": "fld_6f26ec18bbb84abb9141ed8e2cdd7d5e",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/users/login",
+      "_type": "request"
+    },
+    {
+      "_id": "req_73519bd15cf94868ae93527ffbfbf11c",
+      "authentication": {},
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n\t\"username\": \"{{ username  }}\",\n\t\"password\": \"{{ refreshToken  }}\",\n\t\"isRefreshToken\": true,\n\t\"getRefreshToken\": false\n}"
+      },
+      "created": 1547901374237,
+      "description": "Login (use Refresh-Token)\n\n- requires `username`\n- requires `password` (`refreshToken`)\n- returnes JWT (`$.token`)\n- uses Refresh-Token generated by *Login (get Refresh-Token*\n- may soon require some kind of 2fa verification code",
+      "headers": [
+        {
+          "id": "pair_59722d09d6214f78a2e81284365c4a08",
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "isPrivate": false,
+      "metaSortKey": -1541775169028.0137,
+      "method": "POST",
+      "modified": 1560071128085,
+      "name": "Login (use Refresh-Token)",
+      "parameters": [],
+      "parentId": "fld_6f26ec18bbb84abb9141ed8e2cdd7d5e",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_url  }}/users/login",
+      "_type": "request"
+    },
+    {
+      "_id": "req_bc64e5b3f8094d5bb7870235c0ca26b5",
+      "authentication": {},
+      "body": {},
+      "created": 1562073375934,
+      "description": "",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1562073375934,
+      "method": "GET",
+      "modified": 1562073424180,
+      "name": "Lookup",
+      "parameters": [],
+      "parentId": "fld_b9876c21620e4153904c3c3992668e2d",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_ip_lookup_url  }}/lookup/{{ ip_lookup_secret  }}/::1",
+      "_type": "request"
+    },
+    {
+      "_id": "fld_b9876c21620e4153904c3c3992668e2d",
+      "created": 1562073217669,
+      "description": "",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1541780743922,
+      "modified": 1562073221806,
+      "name": "IP-Lookup",
+      "parentId": "wrk_4b9706ac52404e41a8b61f78449c25c3",
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_1e324d8f44d444fd855c07731c6eee02",
+      "authentication": {},
+      "body": {},
+      "created": 1562073378878,
+      "description": "",
+      "headers": [],
+      "isPrivate": false,
+      "metaSortKey": -1561350897454,
+      "method": "GET",
+      "modified": 1562073433229,
+      "name": "Lookup (no secret)",
+      "parameters": [],
+      "parentId": "fld_b9876c21620e4153904c3c3992668e2d",
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingSendCookies": true,
+      "settingStoreCookies": true,
+      "url": "{{ base_ip_lookup_url  }}/lookup/::1",
+      "_type": "request"
+    },
+    {
+      "_id": "env_bc0ea59e7029453f8c643adc18dc9f68",
+      "color": null,
+      "created": 1541449503057,
+      "data": {},
+      "dataPropertyOrder": null,
+      "isPrivate": false,
+      "metaSortKey": 1541449503057,
+      "modified": 1541781226629,
+      "name": "New Environment",
+      "parentId": "wrk_4b9706ac52404e41a8b61f78449c25c3",
+      "_type": "environment"
+    },
+    {
+      "_id": "jar_1534881d2d634cafbd30871e3714d6a4",
+      "cookies": [
+        {
+          "creation": "2018-11-09T14:42:48.801Z",
+          "domain": "jannik.ml",
+          "expires": "2019-11-09T14:42:48.000Z",
+          "hostOnly": false,
+          "httpOnly": true,
+          "id": "8740897993481185",
+          "key": "__cfduid",
+          "lastAccessed": "2018-11-09T14:42:48.801Z",
+          "path": "/",
+          "value": "d20354f37daa5a4e8df0d9faccbc215d51541774568"
+        }
+      ],
+      "created": 1541449503063,
+      "modified": 1541774568803,
+      "name": "Default Jar",
+      "parentId": "wrk_4b9706ac52404e41a8b61f78449c25c3",
+      "_type": "cookie_jar"
+    },
+    {
+      "_id": "env_f5f7d632a1904773b6bd6ce9ce2289e9",
+      "color": "#ff2600",
+      "created": 1562073083078,
+      "data": {
+        "base_url": "http://localhost:3003",
+        "device_id": "{% response 'body', 'req_2e8b13d6e37b4a9f8398075053573bcd', 'b64::JC5kZXZpY2VfaWQ=::46b', 'never' %}",
+        "password": "<password>",
+        "refreshToken": "{% response 'body', 'req_835bfa41178449a4bfa65a7e70ef406a', 'b64::JC5yZWZyZXNoVG9rZW4=::46b', 'never' %}",
+        "token": "{% response 'body', 'req_2e8b13d6e37b4a9f8398075053573bcd', '$.token' %}",
+        "username": "<username>"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_url",
+          "username",
+          "password",
+          "token",
+          "refreshToken",
+          "device_id"
+        ]
+      },
+      "isPrivate": false,
+      "metaSortKey": 3,
+      "modified": 1562073697326,
+      "name": "example.auth.localhost",
+      "parentId": "env_bc0ea59e7029453f8c643adc18dc9f68",
+      "_type": "environment"
+    },
+    {
+      "_id": "env_9947e6434e1f4121ab3db5cfecc72a36",
+      "color": "#ff2600",
+      "created": 1562073607597,
+      "data": {
+        "base_analytics_url": "http://localhost:3008"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_analytics_url"
+        ]
+      },
+      "isPrivate": false,
+      "metaSortKey": 4,
+      "modified": 1562073697329,
+      "name": "example.analytics.localhost",
+      "parentId": "env_bc0ea59e7029453f8c643adc18dc9f68",
+      "_type": "environment"
+    },
+    {
+      "_id": "env_7d2cac98cc164e17ae298d377cad8d08",
+      "color": "#ff2600",
+      "created": 1562073643750,
+      "data": {
+        "base_ip_lookup_url": "http://localhost:3010",
+        "ip_lookup_secret": "<secret>"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_ip_lookup_url",
+          "ip_lookup_secret"
+        ]
+      },
+      "isPrivate": false,
+      "metaSortKey": 5,
+      "modified": 1562073697332,
+      "name": "example.iplookup.localhost",
+      "parentId": "env_bc0ea59e7029453f8c643adc18dc9f68",
+      "_type": "environment"
+    },
+    {
+      "_id": "env_09161e257b9a4dea8ab7b9e36c599ca7",
+      "color": "#ff2600",
+      "created": 1562073687150,
+      "data": {
+        "base_analytics_url": "http://localhost:3008",
+        "base_ip_lookup_url": "http://localhost:3010",
+        "base_url": "http://localhost:3003",
+        "device_id": "{% response 'body', 'req_2e8b13d6e37b4a9f8398075053573bcd', 'b64::JC5kZXZpY2VfaWQ=::46b', 'never' %}",
+        "ip_lookup_secret": "<secret>",
+        "password": "<password>",
+        "refreshToken": "{% response 'body', 'req_835bfa41178449a4bfa65a7e70ef406a', 'b64::JC5yZWZyZXNoVG9rZW4=::46b', 'never' %}",
+        "token": "{% response 'body', 'req_2e8b13d6e37b4a9f8398075053573bcd', '$.token' %}",
+        "username": "<username>"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_url",
+          "base_ip_lookup_url",
+          "ip_lookup_secret",
+          "base_analytics_url",
+          "username",
+          "password",
+          "token",
+          "refreshToken",
+          "device_id"
+        ]
+      },
+      "isPrivate": false,
+      "metaSortKey": 2,
+      "modified": 1562073758346,
+      "name": "example.localhost",
+      "parentId": "env_bc0ea59e7029453f8c643adc18dc9f68",
+      "_type": "environment"
+    }
+  ]
+}

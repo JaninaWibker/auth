@@ -60,18 +60,21 @@ const mapDevice = (device) => ({
 
 const listDevices = (req, res) =>
   db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
+
+    const user_id = req.params.user_id
+
     if(err) return sendError(res, 'could not validate requesting users account type', info)
-    if(req.params.user_id && req.params.user_id !== user.id && user.account_type === 'admin') {
-      db.Device.list(parseInt(req.params.user_id, 10), (err, devices, info) => {
+    if(user_id && user_id !== user.id && user.account_type === 'admin') {
+      db.Device.list(parseInt(user_id, 10), (err, devices, info) => {
         if(err || info) sendFailure(res, info ? info.message : err)
-        else            sendSuccess(res, 'sucecssfully retrieved list of devices for user ' + req.params.user_id, devices.map(mapDevice))
+        else            sendSuccess(res, 'successfully retrieved list of devices for user ' + user_id, devices.map(mapDevice))
       })
-    } else if(req.params.user_id && req.params.user_id !== user.id && user.account_type !== 'admin') {
+    } else if(user_id && user_id !== user.id && user.account_type !== 'admin') {
                         sendFailureNotPermitted(res)
     } else {
       db.Device.list(req.user.id, (err, devices, info) => {
         if(err || info) sendFailure(res, info ? info.message : err)
-        else            sendSuccess(res, 'sucecssfully retrieved list of devices for user ' + req.user.id, devices.map(mapDevice))
+        else            sendSuccess(res, 'successfully retrieved list of devices for user ' + req.user.id, devices.map(mapDevice))
       })
     }
   })

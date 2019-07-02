@@ -107,14 +107,5 @@ node index.js
 
 *auth* can either be used as a **kind of** OAuth Login Provider or directly via the APIs. 
 
-### APIs
-
-#### Miscellaneous
-
-#### Users
-
-#### Devices
-
-#### Services
-
-#### Register-tokens
+API documentation can be found [here](/documentation/index.md).
+Incase you are using [Insomnia](https://insomnia.rest) as your REST client, you can import the API definitions (only auth) directly ([API definitions](/documentation/Insomnia-auth.json)). If you also need the API definitions for ip-lookup and analytics aswell use [this file](/documentation/Insomnia-all.json) instead.

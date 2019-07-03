@@ -1,7 +1,7 @@
 # auth
 
 **auth** is a selfmade authentication server that works with many of my other running projects. It provides a central account for all services.
-The authentication server and the other services using it rely on server-to-server communication as well as Json Web Tokens for authentication.
+The authentication server and the other services using it rely on server-to-server communication as well as JWTs for authentication.
 
 *auth* is planned to have a ldap frontend as well as the already existing one, which would allow *auth* to be used for many more services such as private git servers.
 

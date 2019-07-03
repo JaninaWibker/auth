@@ -3,8 +3,25 @@
 **auth** is a selfmade authentication server that works with many of my other running projects. It provides a central account for all services.
 The authentication server and the other services using it rely on server-to-server communication as well as JWTs for authentication.
 
-*auth* is planned to have a ldap frontend as well as the already existing one, which would allow *auth* to be used for many more services such as private git servers.
+![auth login page (viewed on desktop with light theme)](./documentation/screenshots/auth-login-desktop-light.png)
+![auth login page (viewed on mobile with dark theme)](./documentation/screenshots/auth-login-mobile-dark.png)
 
+## Features
+
+*auth* offers many features besides just having user accounts and being able to log in. These features include
+- easy login provider for other applications via login flow *similar* to OAuth,
+- a dashboard to edit ones account,
+- a way to remember the logged in user (implemented using Refresh-Tokens),
+- a dark mode,
+- easy configurabilty (choose between sqlite and postgres as database) and modularity (ip-lookup and analytics are split into their own projects; auth will function without them),
+- Devices API (maps an ip address and a user_agent to one or more users),
+- automatic ip lookup with location information for devices,
+- Register-Tokens which give users a specific account status and metadata when used while logging in (with this a new user can create the account themself while still getting the special permissions intended for him),
+- passwordless accounts (prompted for password when logging in, another way of dealing with the same issue Register-Tokens solve),
+- temporary accounts,
+- build in Docker support
+
+*auth* is planned to have a ldap frontend as well as the already existing one, which would allow *auth* to be used with many more services such as private git servers (gogs, gitea).
 
 ## How to setup
 
@@ -48,7 +65,7 @@ the `PORT` and `LDAP_PORT` options are pretty selfexplainatory. They specify wha
 
 `ENABLE_LDAP` enables or disables the LDAP server. LDAP is not fully implementet at the time of writing and cannot be used for authentication **yet**. This will come in the future but may take a little bit of time until it is implemented completely. This option, aswell as `LDAP_PORT`, is just for future proofing the running installation of *auth*. When LDAP is available it should not be necessary to change the file, when it is configured correctly now.
 
-### database
+### Database
 
 *auth* can either use sqlite or postgres as it's database. This is configurable via the `DB_DRIVER`-option in the `.env`-file.
 

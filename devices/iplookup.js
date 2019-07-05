@@ -66,20 +66,18 @@ const getFromDatabaseOrFromServiceAndThenSaveToDatabase = (ip, cb) => {
   })
 }
 
-const iplookup = (req, res) =>
-  db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(err) return  sendError(res, 'could not validate requesting users account type', info)
-    if(user.account_type === 'admin') {
+const iplookup = (req, res) => {
+  if(req.user.account_type === 'admin') {
 
-      getFromDatabaseOrFromServiceAndThenSaveToDatabase(req.body.ip, (err, data, message) => {
-        if(err)     sendError(res, message, err)
-        else        sendSuccess(res, message, data)
-      })
+    getFromDatabaseOrFromServiceAndThenSaveToDatabase(req.body.ip, (err, data, message) => {
+      if(err) sendError(res, message, err)
+      else    sendSuccess(res, message, data)
+    })
 
-    } else {
-                    sendFailureNotPermitted(res)
-    }
-  })
+  } else {
+              sendFailureNotPermitted(res)
+  }
+}
 
 module.exports = {
   getFromDatabaseOrFromServiceAndThenSaveToDatabase,

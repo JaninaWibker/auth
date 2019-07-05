@@ -43,22 +43,20 @@ const addDeviceIntermediate = ({ ip, user_agent, user_id }, cb) => {
 }
 */
 
-const addDevice = (req, res) => 
-  db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(err) return  sendError(res, 'could not validate requesting users account type', info)
-    if(user.account_type === 'admin') {
-      if(!req.body.ip || !req.body.user_agent) {
-                    sendFailure(res, 'supply ip and useragent')
-      } else {
-        addDeviceIntermediate({ ip: req.body.ip, user_agent: req.body.user_agent, user_id: req.body.user_id }, (err, device_id, message) => {
-          if(err)   sendError(res, message, err)
-          else      sendSuccess(res, message, device_id)
-        })
-      }
+const addDevice = (req, res) => {
+  if(req.user.account_type === 'admin') {
+    if(!req.body.ip || !req.body.user_agent) {
+                sendFailure(res, 'supply ip and useragent')
     } else {
-                    sendFailureNotPermitted(res)
+      addDeviceIntermediate({ ip: req.body.ip, user_agent: req.body.user_agent, user_id: req.body.user_id }, (err, device_id, message) => {
+        if(err) sendError(res, message, err)
+        else    sendSuccess(res, message, device_id)
+      })
     }
-  })
+  } else {
+                sendFailureNotPermitted(res)
+  }
+}
 
 module.exports = {
   addDevice,

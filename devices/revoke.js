@@ -10,11 +10,6 @@ const sendError = (res, message, err) => res.status(500).json({
   error: err
 })
 
-const sendFailure = (res, message) => res.status(500).json({
-  message: message,
-  status: 'failure'
-})
-
 const sendSuccess = (res, message, status) => res.status(200).json({
   message: message,
   status: 'success',

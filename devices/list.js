@@ -4,12 +4,6 @@ const sendFailureNotPermitted = (res) => res.status(403).json({
   message: 'account not permitted', status: 'failure'
 })
 
-const sendError = (res, message, err) => res.status(500).json({
-  message: message,
-  status: 'failure',
-  error: err
-})
-
 const sendFailure = (res, message) => res.status(500).json({
   message: message,
   status: 'failure'

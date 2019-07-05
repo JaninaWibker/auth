@@ -1,6 +1,6 @@
 const db = require('../db.js')
 
-const sendNotAuthorized = (res) => res.status(401).json({
+const sendNotAuthorized = (res) => res.status(403).json({
   message: 'account not permitted',
   status: 'failure'
 })

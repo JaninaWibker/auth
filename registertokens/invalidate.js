@@ -1,22 +1,32 @@
-const db = require('../db.js')
+const sendFailureNotPermitted = (res) => res.status(403).json({
+  message: 'account not permitted',
+  status: 'failure'
+})
+
+const sendFailure = (res, message) => res.status(500).json({
+  message: message,
+  status: 'failure'
+})
+
+const sendSuccess = (res, message) => res.status(200).json({
+  message: message,
+  status: 'success'
+})
 
 module.exports = (registerTokenCache) => (validateRegisterToken) => (req, res) => {
-  db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(err) res.status(500).json({ message: 'failed to validate user', status: 'failure' })
-    if(user.account_type === 'admin') {
-      if(req.body.id || req.body.register_token) {
-        if(req.body.id) {
-          registerTokenCache.del(req.body.id)
-          res.json({ message: 'register token invalidated successfully' })
-        } else {
-          registerTokenCache.del(validateRegisterToken(req.body.register_token).id)
-          res.json({ message: 'register token invalidated successfully', status: 'success' })
-        }
+  if(req.user.account_type === 'admin') {
+    if(req.body.id || req.body.register_token) {
+      if(req.body.id) {
+        registerTokenCache.del(req.body.id)
+        sendSuccess(res, 'register token invalidated successfully')
       } else {
-        res.status(500).json({ message: 'supply register token id or token', status: 'failure' })
+        registerTokenCache.del(validateRegisterToken(req.body.register_token).id)
+        sendSuccess(res, 'register token invalidated successfully')
       }
     } else {
-      res.status(403).json({ message: 'account not permitted', status: 'failure' })
+      sendFailure(res, 'supply register token id or token')
     }
-  })
+  } else {
+    sendFailureNotPermitted(res)
+  }
 }

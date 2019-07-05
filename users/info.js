@@ -14,22 +14,20 @@ const sendSuccess = (res, user) => res.status(200).json({
 module.exports = (req, res) => {
   const username = req.params.username || req.body.username
 
-  db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(username === undefined) {
-      sendSuccess(res, user)
-    }
-    else if(username === req.user.username) {
-      sendSuccess(res, user)
-    } else if(user.account_type === 'admin') {
-      db.getUserIfExists(username, (err, user) => {
-        if(err) sendFailure(res)
-        else    sendSuccess(res, user)
-      })
-    } else {
-      db.getUserLimitedIfExists(username, (err, user) => {
-        if(err) sendFailure(res)
-        else    sendSuccess(res, user)
-      })
-    }
-  })
+  if(username === undefined) {
+    sendSuccess(res, req.user)
+  } else if(username === req.user.username) {
+    sendSuccess(res, req.user)
+  } else if(req.user.account_type === 'admin') {
+    db.getUserIfExists(username, (err, user) => {
+      if(err) sendFailure(res)
+      else    sendSuccess(res, user)
+    })
+  } else {
+    db.getUserLimitedIfExists(username, (err, user) => {
+      if(err) sendFailure(res)
+      else    sendSuccess(res, user)
+    })
+  }
+
 }

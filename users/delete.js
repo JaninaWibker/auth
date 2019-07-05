@@ -17,25 +17,22 @@ const sendSuccess = (res) => res.status(200).json({
 
 
 module.exports = (req, res) => {
-  db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(err) return res.status(500).json(info)
+  
+  let userIdToBeDeleted
 
-    let userIdToBeDeleted
-
-    if(req.body.id !== undefined) {
-      if(user.account_type === 'admin') {
-        userIdToBeDeleted = req.body.id
-      } else {
-        return sendNotAuthorized(res)
-      }
+  if(req.body.id !== undefined) {
+    if(req.user.account_type === 'admin') {
+      userIdToBeDeleted = req.body.id
     } else {
-      userIdToBeDeleted = req.user.id
+      return sendNotAuthorized(res)
     }
+  } else {
+    userIdToBeDeleted = req.user.id
+  }
 
-    db.deleteUser(userIdToBeDeleted, (err, rows_affected) => {
-      if(err) sendFailure(res)
-      else    sendSuccess(res)
-    })
-
+  db.deleteUser(userIdToBeDeleted, (err, rows_affected) => {
+    if(err) sendFailure(res)
+    else    sendSuccess(res)
   })
+
 }

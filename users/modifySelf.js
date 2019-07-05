@@ -1,26 +1,29 @@
 const db = require('../db.js')
 
+const sendFailure = (res, message) => res.status(500).json({
+  message: message,
+  status: 'failure'
+})
+
+const sendSuccess = (res, message) => res.status(200).json({
+  message: message,
+  status: 'success'
+})
+
 module.exports = (Logout) => (req, res) => {
-  if(req.user.id) {
 
-    console.log('[MODIFYSELF]', req.body)
-
-    db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-      if(err) return res.status(500).json(info)
-      if(user.account_type === 'admin') db.privilegedModifyUser(req.user.id, req.body, (err, x) => {
-          if(err) res.status(500).json({ message: 'privileged account modification failed', status: 'failure' })
-          else Logout(req.user.id, bool => res.json({ message: 'privileged account modification ' + (bool ? 'successful' : 'failed'), status: bool ? 'success' : 'failure' }))
-        })
-      else db.modifyUser(req.user.id, req.body, (err, x) => {
-          if(err) res.status(500).json({ message: 'account modification failed', status: 'failure' })
-          else Logout(req.user.id, bool => res.json({ message: 'account modification ' + (bool ? 'successful' : 'failed'), status: bool ? 'success' : 'failure' }))
-        })
-    })
-
-  } else {
-    res.json({ message: 'supply id', status: 'failure' })
-  }
+  if(req.user.account_type === 'admin') db.privilegedModifyUser(req.user.id, req.body, (err, _res) => {
+    if(err) sendFailure(res, 'privileged account modification failed')
+    else Logout(req.user.id, bool => bool
+      ? sendSuccess(res, 'privileged account modification successful')
+      : sendFailure(res, 'privileged account modification failed')
+    )
+  })
+  else db.modifyUser(req.user.id, req.body, (err, _res) => {
+    if(err) sendFailure(res, 'account modification failed')
+    else Logout(req.user.id, bool => bool
+      ? sendSuccess(res, 'account modification successful')
+      : sendFailure(res, 'account modification failed')
+    )
+  })
 }
-
-
-// removed req.body.id || from 3 places, why was this even here? I thought modifySelf existed specifically to not be able to modify others

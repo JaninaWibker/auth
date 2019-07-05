@@ -22,17 +22,16 @@ const sendSuccess = (res, users) => res.status(200).json({
 })
 
 const listUsers = (req, res) => {
-  db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(err) return sendError(res, 'could not validate requesting users account type', info)
-    if(user.account_type === 'admin') {
-      db.getUserList((err, users, info) => {
-        if(err || info) sendFailure(res, info.message)
-        else            sendSuccess(res, users)
-      })
-    } else {
-      sendFailureNotPermitted(res)
-    }
-  })
+
+  if(req.user.account_type === 'admin') {
+    db.getUserList((err, users, info ) => {
+      if(err || info) sendFailure(res, info.message)
+      else            sendSuccess(res, users)
+    })
+  } else {
+    sendFailureNotPermitted(res)
+  }
+  
 }
 
 module.exports = listUsers

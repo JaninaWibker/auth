@@ -399,7 +399,7 @@ const deleteDeviceByDeviceId = (device_id, cb) => {
   )
 }
 
-const allInOneDeviceModify = (user_id, device_id, { ip, user_agent }, ip_lookup, save_to_db,  cb) => pool.connect().then(client => {
+const allInOneDeviceModify = (user_id, device_id, { ip, user_agent }, ip_lookup, save_to_db, perform_user_actions, cb) => pool.connect().then(client => {
   const get_query = `WITH
   device AS ( SELECT * FROM device WHERE id = $1::uuid ), 
   ip AS ( SELECT * FROM ip WHERE ip = $2::text ), 
@@ -409,13 +409,19 @@ const allInOneDeviceModify = (user_id, device_id, { ip, user_agent }, ip_lookup,
   LEFT JOIN ip ON ip.ip = $2::text
   `
 
-  const update_query = `WITH updated_it_device_user AS (
+  const update_query_user_actions = `WITH updated_it_device_user AS (
     UPDATE it_device_user SET last_used = CURRENT_TIMESTAMP WHERE device_id = $3::uuid AND user_id = $4::int
   ), updated_device AS (
     UPDATE device SET ip = $1::text, user_agent = $2::text WHERE id = $3::uuid
   )
 
   SELECT * FROM device LEFT JOIN it_device_user ON id = device_id WHERE device_id = $3::uuid AND user_id = $4::int;`
+
+  const update_query_no_user_actions = `WITH updated_device AS (
+    UPDATE device SET ip = $1::text, user_agent = $2::text WHERE id = $3::uuid
+  )
+
+  SELECT * FROM device WHERE id = $3::uuid;`
   
   client.query(get_query, [device_id, ip])
     .then(res => {
@@ -425,9 +431,14 @@ const allInOneDeviceModify = (user_id, device_id, { ip, user_agent }, ip_lookup,
           else save_to_db(ip, data, console.log)
         })
       }
-      
-      return client.query(update_query, [ip, user_agent, device_id, user_id])
-        .then(res => cb(null, res.rows[0]))
+
+      if(perform_user_actions) {
+        return client.query(update_query_user_actions, [ip, user_agent, device_id, user_id])
+          .then(res => cb(null, res.rows[0]))
+      } else {
+        return client.query(update_query_no_user_actions, [ip, user_agent, device_id])
+          .then(res => cb(null, res.rows[0]))
+      }
     })
     .then(release_then(client))
     .catch(release_catch(client))

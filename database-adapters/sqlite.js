@@ -337,24 +337,24 @@ const deleteDeviceByDeviceId = (device_id, cb) => {
   })
 }
 
-const allInOneDeviceModify = (user_id, device_id, { ip, user_agent }, ip_lookup, save_to_db,  cb) => dbPromise.then(db => {
+const allInOneDeviceModify = (user_id, device_id, { ip, user_agent }, ip_lookup, save_to_db,  perform_user_actions, cb) => dbPromise.then(db => {
   const queries = [
     'INSERT INTO iplocation ( ip, is_internal ) SELECT @ip, 1 WHERE NOT EXISTS ( SELECT ip FROM iplocation WHERE ip = @ip);',
     'UPDATE it_device_user SET last_used = datetime("now") WHERE device_id = @device_id AND user_id = @user_id;',
     'UPDATE device SET ip = @ip, user_agent = @user_agent WHERE rowid = @device_id;',
     `SELECT ( SELECT ip FROM iplocation WHERE ip = @ip ) IS NULL as requires_ip_lookup, * FROM device
     LEFT JOIN iplocation ON iplocation.ip = @ip
-    LEFT JOIN it_device_user ON device.rowid = device_id
-    WHERE device.rowid = @device_id AND user_id = @user_id AND iplocation.ip = @ip;`
+    ${perform_user_actions ? 'LEFT JOIN it_device_user ON device.rowid = device_id' : ''}
+    WHERE device.rowid = @device_id ${perform_user_actions ? 'AND user_id = @user_id' : ''} AND iplocation.ip = @ip;`
   ]
 
   return Promise.all([
     db.run(queries[0], { '@ip': ip }),
-    db.run(queries[1], { '@device_id': device_id, '@user_id': user_id }),
+    perform_user_actions ? db.run(queries[1], { '@device_id': device_id, '@user_id': user_id }) : null, // this null does not cause Promise.all to reject
     db.run(queries[2], { '@ip': ip, '@user_agent': user_agent, '@device_id': device_id })
   ])
     .then(_values => {
-      db.get(queries[3], { '@ip': ip, '@user_id': user_id, '@device_id': device_id })
+      db.get(queries[3], perform_user_actions ? ({ '@ip': ip, '@user_id': user_id, '@device_id': device_id }) : ({ '@ip': ip, '@device_id': device_id }))
       .then(row => {
         if(!row) {
           console.log('couldn\'t get row from database, something might be wrong')

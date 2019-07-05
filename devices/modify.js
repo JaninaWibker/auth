@@ -23,7 +23,7 @@ const sendSuccess = (res, message, device) => res.status(200).json({
 })
 
 const modifyDeviceIntermediate = (user_id, device_id, { ip, user_agent }, cb) => {
-  return db.allInOneDeviceModify(user_id, device_id, { ip, user_agent }, iplookup.request, iplookup.saveToDatabase, cb)
+  return db.allInOneDeviceModify(user_id, device_id, { ip, user_agent }, iplookup.request, iplookup.saveToDatabase, true, cb)
 }
 
 /*
@@ -34,23 +34,24 @@ const modifyDeviceIntermediate = (user_id, device_id, { ip, user_agent }, cb) =>
   }
 */
 
-const modifyDevice = (req, res) =>
-  db.getUserFromIdIfExists(req.user.id, (err, user, info) => {
-    if(err) return sendError(res, 'could not validate requesting users account type', info)
-    if(user.account_type === 'admin') {
+const modifyDevice = (req, res) => {
 
-      const device_id = req.body.device_id
-      const ip = req.body.ip
-      const user_agent = req.body.user_agent
+  if(req.user.account_type === 'admin') {
 
-      modifyDeviceIntermediate(device_id, { ip: ip, user_agent: user_agent }, (err, device) => { // TODO: fix this; this assumes that modifyDeviceIntermediate does NOT need a user_id
-        if(err) sendError(res, 'failed to modify device ' + device_id, err)
-        else    sendSuccess(res, 'successfully modified device ' + device_id, device)
-      })
-    } else {
-      sendFailureNotPermitted(res)
-    }
-  })
+    const device_id = req.body.device_id
+    const ip = req.body.ip
+    const user_agent = req.body.user_agent
+
+    db.allInOneDeviceModify(null, device_id, { ip: ip, user_agent: user_agent }, iplookup.request, iplookup.saveToDatabase, false, (err, device) => {
+      if(err) console.log(err)
+      if(err) sendError(res, 'failed to modify device ' + device_id, err)
+      else    sendSuccess(res, 'successfully modified device ' + device_id, device)
+    })
+    
+  } else {
+    sendFailureNotPermitted(res)
+  }
+}
 
 module.exports = {
   modifyDevice,

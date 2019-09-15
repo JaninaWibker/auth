@@ -47,7 +47,7 @@ function testIfJwtWorks(token, cb, alternativeOrigin='') {
   })
     .then(function(res) { return res.json() })
     .then(function(json) {
-      if(json.status === 'successful') {
+      if(json.status === 'success') {
         setStorage('user', JSON.stringify(json.user))
         return cb(null, true)
       } else {
@@ -60,7 +60,7 @@ function testIfJwtWorks(token, cb, alternativeOrigin='') {
 
 function testIfRefreshTokenWorks(token, cb, alternativeOrigin="") {
   login(storageObject.username, token, true, false, alternativeOrigin)
-    .then(function(res) { return res.json() })
+    // .then(function(res) { return res.json() })
     .then(function(json) {
       if(json.status === 'failure') {
         return cb(null, false)

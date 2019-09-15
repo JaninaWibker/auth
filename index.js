@@ -96,7 +96,7 @@ app.post('/validate-register-token', passport.authenticate('jwt', { session: fal
 
 app.delete('/invalidate-register-token', passport.authenticate('jwt', { session: false }), registertokens.invalidate(validateRegisterToken))
 
-app.get('/list-register-tokens', passport.authenticate('jwt', { session: false }), registertokens.list())
+app.get('/list-register-tokens/:extra?', passport.authenticate('jwt', { session: false }), registertokens.list(validateRegisterToken))
 
 // login / logout endpoint
 

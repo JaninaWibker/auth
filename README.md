@@ -69,7 +69,7 @@ the `PORT` and `LDAP_PORT` options are pretty selfexplainatory. They specify wha
 
 *auth* can either use sqlite or postgres as it's database. This is configurable via the `DB_DRIVER`-option in the `.env`-file.
 
-To get started the database has to be initialized. This can be done through the `tasks/setup.js`-file. This file will run the required setup process for the current database driver (assuming an empty database already exists and permissions are set correctly, if not see *setting up postgreSQL for the first time*). When using postgres an important detail is that the extension `"uuid-ossp"` is required for using auth. Since the database user that auth uses is probably not permitted to install extensions this needs to be done prior via this SQL statement:
+To get started the database has to be initialized. This can be done through the `tasks/setup.js`-file. This file will run the required setup process for the current database driver (assuming an empty database already exists and permissions are set correctly, if not see *setting up postgreSQL for the first time* or [this](https://www.notion.so/jannikwibker/Installing-and-setting-up-PostgreSQL-d64b63d8dbf84dac903c53346c9f0fdc)). When using postgres an important detail is that the extension `"uuid-ossp"` is required for using auth. Since the database user that auth uses is probably not permitted to install extensions this needs to be done prior via this SQL statement:
 
 ```sql
 create extension if not exists "uuid-ossp";
@@ -96,7 +96,7 @@ psql -h localhost -U auth auth
 > create extension if not exists "uuid-ossp";
 ```
 
-
+> For more information see [this](https://www.notion.so/jannikwibker/Installing-and-setting-up-PostgreSQL-d64b63d8dbf84dac903c53346c9f0fdc)
 
 ### private/public rsa key pairs
 

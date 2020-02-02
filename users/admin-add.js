@@ -6,7 +6,7 @@ module.exports = (req, res) => {
   
     if(data.username  && data.first_name && data.last_name && data.email) {
       const account_type = data.account_type || 'default'
-      const metadata = data.metadata || '{}'
+      const metadata = data.metadata || '{}' // make sure this is actually a JSON string and not a JSON object or something else entirely.
       const is_passwordless = data.is_passwordless || false
       const temp_account = data.temp_account || 0
 

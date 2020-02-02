@@ -19,13 +19,13 @@ const sendSuccess = (res, message, data) => res.status(200).json({
   })
 
 const request = (ip, cb) => {
-  if(IP_LOOKUP_DISABLED) return cb(null, {
+  if(IP_LOOKUP_DISABLED) return cb(null, { data: {
     ip: ip, 
     status: 'success', 
-    continent: 'None', continent_code: null, country: null, country_code: null, region: null, region_code: null, city: null, zip: null, latitude: 0, longitude: 0, timezone: null, timezone_code: null, isp: null, thread: { is_mobile: false, is_anonymous: false, is_threat: false },
+    continent: 'None', continent_code: null, country: null, country_code: null, region: null, region_code: null, city: null, zip: null, latitude: 0, longitude: 0, timezone: null, timezone_code: null, isp: null, threat: { is_mobile: false, is_anonymous: false, is_threat: false },
     is_internal: true,
     is_disabled: true
-  })
+  } })
 
   fetch(process.env.IP_LOOKUP_ENDPOINT + '/lookup/' + process.env.IP_LOOKUP_SECRET + '/' + ip)
     .then(res => res.json())

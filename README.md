@@ -69,7 +69,7 @@ the `PORT` and `LDAP_PORT` options are pretty selfexplainatory. They specify wha
 
 *auth* can either use sqlite or postgres as it's database. This is configurable via the `DB_DRIVER`-option in the `.env`-file.
 
-To get started the database has to be initialized. This can be done through the `tasks/setup.js`-file. This file will run the required setup process for the current database driver. When using postgres an important detail is that the extension `"uuid-ossp"` is required for using auth. Since the database user that auth uses is probably not permitted to install extensions this needs to be done prior via this SQL statement:
+To get started the database has to be initialized. This can be done through the `tasks/setup.js`-file. This file will run the required setup process for the current database driver (assuming an empty database already exists and permissions are set correctly, if not see *setting up postgreSQL for the first time*). When using postgres an important detail is that the extension `"uuid-ossp"` is required for using auth. Since the database user that auth uses is probably not permitted to install extensions this needs to be done prior via this SQL statement:
 
 ```sql
 create extension if not exists "uuid-ossp";
@@ -83,6 +83,20 @@ When running for the first time there might be some warnings about tables not ex
 
 
 Resetting the database (deleting all entries, not dropping the tables) can be done via `node tasks/reset.js`
+
+#### setting up postgreSQL for the first time
+
+Install postgres, installation varies depending on OS. On Mac OS using homebrew is pretty easy to do. On Linux use your systems default package manager like apt-get, pacman, ...
+
+Setting up the databases and users:
+```sh
+createuser auth --interactive --pwprompt
+createdb -O auth auth
+psql -h localhost -U auth auth
+> create extension if not exists "uuid-ossp";
+```
+
+
 
 ### private/public rsa key pairs
 

@@ -917,6 +917,22 @@ td.table-data .delete-wrapper {
   display: inline-block;
 }
 
+.user-add .user-profile-field-block > * {
+  margin: 4px;
+}
+
+.user-add .user-profile-field-block > *:first-child {
+  margin-left: 0px;
+}
+
+.user-add .user-profile-field-block > *:last-child {
+  margin-right: 0px;
+}
+
+.user-add .user-profile-field-block #user-add-metadata {
+  width: 288px;
+}
+
 *[tooltip-top], *[tooltip-left], *[tooltip-bottom], *[tooltip-right] {
   position: relative;
 }

@@ -56,7 +56,7 @@ app.set('trust proxy', 'uniquelocal') // trust nginx to proxy the correct ip add
 
 passport.use(JWTStrategy)
 
-app.use(express.static('public', { index: 'index.html', extensions: ['html'] }))
+app.use(express.static('frontend/build', { index: 'index.html', extensions: ['html'] }))
 
 // this is placed below express.static since it would otherwise also log every access to static content.
 morgan.token('user', req => req.user && req.user.username)

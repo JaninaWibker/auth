@@ -11,12 +11,11 @@ module.exports = ({ registerTokenCache, validateRegisterToken, signJwtNoCheck, g
     if(data.register_token) {
       const registerTokenData = validateRegisterToken(data.register_token)
       if(registerTokenData.status !== 'failure' && registerTokenCache.get(registerTokenData.id) !== null) {
+        // TODO: check if register_token is expired already (if yes delete it)
         account_type = registerTokenData.account_type || 'default'
         metadata = registerTokenData.metadata || {}
         registerTokenStatus = 'register token used successfully'
-        // I strongly believe that this should NOT be `serviceCache`, it should probably be `registerTokenCache`.
-        // changed it now, still have to find out if this is actually the right thing.
-        registerTokenCache.del(registerTokenData.id)
+        registerTokenCache.del(registerTokenData.id) // TODO: should probably not delete all the time, incorporate permanent flag and usage_count maybe?
       } else {
         registerTokenStatus = "supplied register token was not valid, could not be used"
       }

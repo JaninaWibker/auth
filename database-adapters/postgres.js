@@ -182,7 +182,7 @@ const addUser = (username, password, first_name, last_name, email, account_type 
     hash_password(password, salt),
     salt,
     account_type,
-    metadata,
+    typeof metadata != 'string' ? JSON.stringify(metadata) : metadata, // TODO: is this needed?
     false, // 2fa
     null, // 2fa_secret
     is_passwordless,
@@ -425,7 +425,8 @@ const allInOneDeviceModify = (user_id, device_id, { ip, user_agent }, ip_lookup,
   
   client.query(get_query, [device_id, ip])
     .then(res => {
-      if(res.rows[0].requires_ip_lookup) {
+      console.log(res)
+      if(res.rows[0] && res.rows[0].requires_ip_lookup) {
         ip_lookup(ip, (err, data) => {
           if(err) console.log(err)
           else save_to_db(ip, data, console.log)

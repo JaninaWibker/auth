@@ -144,7 +144,9 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
 
   const generateRegisterToken = (data) => {
     return Buffer.from(rsa.encryptPrivate(Buffer.from(JSON.stringify(data))))
-      .toString('base64').replace(/\+/g, '-').replace(/\//g, '_')
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
   }
 
   validateService = (tokenBuffer, service) => {

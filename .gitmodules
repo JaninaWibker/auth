@@ -1,3 +1,3 @@
 [submodule "frontend"]
 	path = frontend
-	url = https://git.jannik.ml/jannik/auth-react-dashboard
+	url = https://github.com/JannikWibker/auth-react-dashboard

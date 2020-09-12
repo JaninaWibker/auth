@@ -18,7 +18,7 @@
     "ldapjs": "^1.0.2",
     "memory-cache": "^0.2.0",
     "morgan": "^1.9.1",
-    "node-fetch": "^2.2.0",
+    "node-fetch": "^2.6.1",
     "node-rsa": "^1.0.1",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",

@@ -1,9 +1,11 @@
 {
   "name": "auth",
+  "description": "self-made identity provider",
   "version": "1.4.3",
   "main": "index.js",
   "author": "Jannik Wibker",
   "license": "MIT",
+  "repository": "https://github.com/JannikWibker/auth",
   "scripts": {
     "gen-docs": "cd documentation && node generate_docs.js"
   },
@@ -23,7 +25,9 @@
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
     "pg": "^7.11.0",
-    "speakeasy": "^2.0.0",
+    "speakeasy": "^2.0.0"
+  },
+  "optionalDependencies": {
     "sqlite": "^3.0.0"
   },
   "devDependencies": {}

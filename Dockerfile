@@ -16,6 +16,15 @@ RUN if [ "$INSTALL_NANO" = "true" ] ; then apt-get -yq install nano ; fi
 COPY . /app
 WORKDIR /app
 
+# install node packages
+RUN npm install
+# check if frontend submodule exists
+RUN if [ -d "frontend/.git" ] ; then git submodule update --init --recursive ; fi
+# install node modules for submodule and build
+WORKDIR /app/frontend
+RUN npm install && npm run build
+WORKDIR /app
+
 RUN if [ "$DB" = "sqlite" ] ; then npm i sqlite3 --build-from-source --sqlite=/usr ; fi
 RUN if [ "$DB" = "postgres" ] ; then npm uninstall sqlite3 sqlite --save ; fi
 RUN if [ "$DB" = "postgres" ] ; then npm install ; fi

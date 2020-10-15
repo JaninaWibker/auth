@@ -1,4 +1,5 @@
 const db = require('../db.js')
+const parse_ua = require('../utils/simplify-user-agent.js')
 
 const sendFailureNotPermitted = (res) => res.status(403).json({
   message: 'account not permitted', status: 'failure'
@@ -25,6 +26,7 @@ const sendSuccess = (res, message, devices) => res.status(200).json({
 const mapDevice = (device) => ({
   device_id: device.device_id,
   user_agent: device.user_agent,
+  parsed_user_agent: parse_ua(device.user_agent),
   device_creation_date: device.device_creation_date,
   creation_date: device.creation_date,
   is_revoked: device.is_revoked,

@@ -1,4 +1,5 @@
 const db = require('../db.js')
+const parse_ua = require('../utils/simplify-user-agent.js')
 
 const sendFailureNotPermitted = (res) => res.status(403).json({
   message: 'account not permitted', status: 'failure'
@@ -36,6 +37,7 @@ const getDevice = (req, res) => {
     if(!device_id) {
       sendError(res, 'supply device id to retrieve device information')
     } else if(user_id && req.user.account_type === 'admin') {
+      device.parsed_user_agent = parse_ua(device.user_agent)
       db.Device.get(parseInt(user_id, 10), device_id, (err, device, info) => {
         if(err || info) sendError(res, 'error while getting device information', info)
         else if(device) sendSuccess(res, 'successfully retrieved device information', device)

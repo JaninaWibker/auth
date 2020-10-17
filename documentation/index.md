@@ -30,6 +30,7 @@
     - [Modify Account (self)](#modify-account-self)
     - [Delete Account](#delete-account)
     - [Get Account](#get-account)
+    - [Test Account](#test-account)
     - [List Accounts](#list-accounts)
   - [Login/Logout](#loginlogout)
     - [Logout](#logout)
@@ -67,7 +68,28 @@ headers: "Content-Type": "application/json"
 
 </details>
 
-Register a service as an auth consumer
+Register a service as an auth consumer. This endpoint returns the public key used for validating JWTs. This endpoint requires the shared secret. It is needed for generating a valid Bearer token for Authorization. The token can be calculated like this: `base64(rsa(json({ ...payload, timestamp, secret })))`
+
+The following JSON structure is required:
+```json
+{
+	"data": {
+		"name": "<name>",
+		"id": "<id>",
+		"url": "<callback_url>",
+		"app": "<app_url>"
+	}
+}
+```
+
+The response will look something like this:
+```json
+{
+  "message": "registration successful",
+  "status": "success",
+  "public_key": "-----BEGIN PUBLIC KEY-----\n<public_key>\n-----END PUBLIC KEY-----\n"
+}
+```
 
 #### Get Public Key
 
@@ -80,7 +102,7 @@ Retrieve the public key used to verify Json Web Tokens. This key is also given b
 #### Get Service (id)
 
 ```
-GET /service/by-id/notes
+GET /service/by-id/code-server
 ```
 
 Get Service (id)
@@ -229,7 +251,7 @@ Invalidates the given Register-Token. Done via the `id` of the Register-Token si
 #### List Register Tokens
 
 ```
-GET /list-register-tokens
+GET /list-register-tokens/decrypt
 authentication: bearer
 ```
 
@@ -301,14 +323,6 @@ With this endpoint users with **admin privileges** can add a new device with a s
 }
 ```
 
-```json
-{
-  "message": "could not validate requesting users account type",
-  "status": "failure",
-  "error": <error>
-}
-```
-
 
 ```json
 {
@@ -375,13 +389,6 @@ With this endpoint users with **admin privileges** can add a new device with a s
 }
 ```
 
-```json
-{
-  "message": "could not validate requesting users account type",
-  "status": "failure",
-  "error": <error>
-}
-```
 
 ```json
 {
@@ -416,7 +423,7 @@ With this endpoint users with **admin privileges** can add a new device with a s
 #### Modify
 
 ```
-PATCH /device
+PATCH /device/
 authentication: bearer
 headers: "Content-Type": "application/json"
 ```
@@ -426,9 +433,9 @@ headers: "Content-Type": "application/json"
 
 ```json
 {
-  "device_id": "",
-  "ip": "",
-  "user_agent": ""
+  "device_id": "c28412e6-8a95-11e9-92e1-0242ac110006",
+  "ip": "::1",
+  "user_agent": "testing (insomnia/6.5.4)"
 }
 ```
 
@@ -457,14 +464,6 @@ This is done via the json body:
   "device": {
     ... // this includes ip location data
   }
-}
-```
-
-```json
-{
-  "message": "could not validate requesting users account type",
-  "status": "failure",
-  "error": <error>
 }
 ```
 
@@ -606,13 +605,6 @@ This endpoint is mostly for debugging / development and is thereby only availabl
 }
 ```
 
-```json
-{
-  "message": "could not validate requesting users account type",
-  "status": "failure",
-  "error": <error>
-}
-```
 
 ```json
 {
@@ -721,14 +713,6 @@ Every request to `/device/:user_id/:device_id` will return in an error with the 
 
 ```json
 {
-  "message": "could not validate requesting users account type",
-  "status": "failure",
-  "error": <error>
-}
-```
-
-```json
-{
   "message": "error while getting device information",
   "status": "failure",
   "error": <error>
@@ -753,7 +737,7 @@ Every request to `/device/:user_id/:device_id` will return in an error with the 
 #### Get (Self)
 
 ```
-GET /device/2f6b98a2-82f8-11e9-9246-0242ac110006
+GET /device/c28412e6-8a95-11e9-92e1-0242ac110006
 authentication: bearer
 ```
 
@@ -813,14 +797,6 @@ Every request to `/device/:user_id/:device_id` will return in an error with the 
 {
   "message": "error while getting device information",
   "status": "failure"
-}
-```
-
-```json
-{
-  "message": "could not validate requesting users account type",
-  "status": "failure",
-  "error": <error>
 }
 ```
 
@@ -1005,13 +981,6 @@ As non-admin users cannot delete devices from other users the `user_id` property
 }
 ```
 
-```json
-{
-  "message": "could not validate requesting users account type",
-  "status": "failure",
-  "error": <error>
-}
-```
 
 ```json
 {
@@ -1086,13 +1055,6 @@ As non-admin users cannot delete devices from other users the `user_id` property
 }
 ```
 
-```json
-{
-  "message": "could not validate requesting users account type",
-  "status": "failure",
-  "error": <error>
-}
-```
 
 ```json
 {
@@ -1124,13 +1086,13 @@ headers: "Content-Type": "application/json"
 
 ```json
 {
-  "register-token": "T-r-g6boK5GAHGQo04yz3ziUmoMpOv6OpFpw-MskNs7ncpmYRBP_ZXk9l-08ockblJS7skxKC4bCW_otfDMrbU-kfFGD2z6fE4bnfLNZ2tyCyMWTPhIAMJ4-N5G-4ZZLD4X0l2j-GKqWcXslDElTT5Km32mAxRVsUTMKoVfk22b9Exg7bVzRm9liJ1GdAqDOOWt5r3FKS1N8F4HNcdHdSTeD6GU5pssnMRC4GbZ3f0Dz84z6XGiJyoihZA8esIGOyeaGfi7T7DDQnUioUrVXopXYOy4LfnMYdJ5g_Yt3Mt1ufvzbNeF4BwZ1-YHS0QS1ismPMI4FbeBFbFbdpgf2akeKNCCOz0vF70nQ98xvctre89iAvA13bavlBKgN7_yZgE4Yocgqk-trZOPON1QUiU5cm9Y_vjA3zl7r0LC3j9M8UcJeTwSNbxEBOnGP9pr_FsHPSij02Hr9kBt8MjXVMFQui8MKhWpZqp6BObypvDvU-wtQdNKs8t4c6X0YULMmMY2bPzZVQ538eex5FNLCNMA_T8lYANuTlEe-h2mkPWf1K6nBoPbKq8ppF8-e_nxzPBM-LccBx4zjVHEk8waDsY4QWY9E2v1fKKmWQx0g0qAjNR3nN99dDCVCHkNSJZICB8RWCUwQpDfl5qJc-Ij38PhzGkDZ7HSM3Py_Iwix5TY=",
-  "username": "test",
-  "email": "test3@jannik.ml",
+  "register-token": "",
+  "username": "test2331",
+  "email": "test43@jannik.ml",
   "first_name": "<first_name>",
   "last_name": "<last_name>",
   "password": "test",
-  "getRefreshToken": true
+  "getRefreshToken": false
 }
 ```
 
@@ -1143,14 +1105,42 @@ If a `register_token` is specified, the account_type is set accordingly.
 The `add`-request requires* the following JSON structure:
 ```json
 {
-  "register_token": "<register_token (optional)>",
-	"username": "<username>",
-	"email": "<email>",
-	"first_name": "<first_name>",
-	"last_name": "<last_name>",
-	"password": "<password>"
+  "register_token": "<register_token>" (optional),
+  "username": "<username>",
+  "email": "<email>",
+  "first_name": "<first_name>",
+  "last_name": "<last_name>",
+  "password": "<password>",
+  "getRefreshToken": true|false (optional)
 }
 ```
+
+The endpoint returns the created user in this format if the action was performed successfully:
+
+```json
+{
+  "message": "account creation successful",
+  "status": "success",
+  "data": {
+    "id": "<id>",
+    "username": "<username>",
+    "first_name": "<first_name>",
+    "last_name": "<last_name>",
+    "email": "<email>",
+    "account_type": "<account_type>",
+    "metadata": "<metadata>",
+    "creation_date": "<creation_date>",
+    "modification_date": "<modification_date>",
+  },
+  "refreshToken": "<refreshToken>" (conditional),
+  "registerTokenStatus": "<registerTokenStatus>" (conditional)
+}
+```
+
+> If `getRefreshToken` is specified and `true` an extra (top level) field called `refreshToken` is added with the refresh token, otherwise it is omitted.
+>
+> If a register token was specified an extra (top level) field called `registerTokenStatus` is added which is either `"register token used successfully"` or `"supplied register token was not valid, could not be used"`
+
 > *: If not otherwise noted via "(optional)" all given fields are required.
 
 #### Add Account (admin)
@@ -1173,7 +1163,8 @@ headers: "Content-Type": "application/json"
   "password": null,
   "account_type": "default",
   "is_passwordless": true,
-  "temp_account": 0
+  "temp_account": 0,
+  "metadata": "{}"
 }
 ```
 
@@ -1194,6 +1185,27 @@ The `admin/add`-request requires* the following JSON structure:
   "temp_account": "<temp_account (optional; default 0)>"
 }
 ```
+
+The endpoint returns the created user in this format if the action was performed successfully:
+
+```json
+{
+  "message": "account creation successful",
+  "status": "success",
+  "data": {
+    "id": <user_id>,
+    "username": "<username>",
+    "first_name": "<first_name>",
+    "last_name": "<last_name>",
+    "email": "<email>",
+    "account_type": "<account_type>",
+    "metadata": "<metadata>",
+    "creation_date": "<creation_date>",
+    "modification_date": "<modification_date>",
+  }
+}
+```
+
 > *: If not otherwise noted via "(optional)" all given fields are required.
 
 #### Modify Account
@@ -1209,8 +1221,8 @@ headers: "Content-Type": "application/json"
 
 ```json
 {
-  "username": "test",
-  "account_type": "privileged"
+  "username": "lennard",
+  "account_type": "admin"
 }
 ```
 
@@ -1229,6 +1241,18 @@ The required JSON structure is basically the same as used by `/users/add` (exclu
 }
 ```
 
+The response is always of the following format:
+
+```json
+{
+  "message": "<message>",
+  "status": "<success|failure>",
+  "err": "<error>" (conditional)
+}
+```
+
+> The `err`-field is only present if `status` is `"failure"`
+
 #### Modify Account (self)
 
 ```
@@ -1242,7 +1266,7 @@ headers: "Content-Type": "application/json"
 
 ```json
 {
-  "first_name": "Jannik1",
+  "first_name": "Jannik",
   "last_name": "Wibker"
 }
 ```
@@ -1273,7 +1297,7 @@ headers: "Content-Type": "application/json"
 
 ```json
 {
-  "id": 3
+  "id": 9
 }
 ```
 
@@ -1284,6 +1308,28 @@ headers: "Content-Type": "application/json"
 - **Dangerous Endpoint**
 - may **delete** account making request
 - admins may delete other accounts using `id`
+
+The request needs to look like this:
+
+```json
+{
+  "id": <user_id> (optional)
+}
+```
+
+In case `id` is not specified **THE ACCOUNT SENDING THE REQUEST IS THE ACCOUNT TO BE DELETED**.
+
+The response is always of the following format:
+
+```json
+{
+  "message": "<message>",
+  "status": "<success|failure>",
+  "err": "<error>" (conditional)
+}
+```
+
+> The `err`-field is only present if `status` is `"failure"`
 
 #### Get Account
 
@@ -1298,7 +1344,7 @@ headers: "Content-Type": "application/json"
 
 ```json
 {
-  "username": "jannik"
+  "username": "guest"
 }
 ```
 
@@ -1317,13 +1363,44 @@ The response has the following JSON-structure:
   "status": "success",
   "user": {
     "username": "<username>",
-    "id": <id>,
-    "first_name": "<first name>",
-    "last_name": "<last name>",
+    "id": <user_id>,
+    "first_name": "<first_name>",
+    "last_name": "<last_name>",
     "email": "<email>",
-    "creation_date": "<creation date>",
-    "modification_date": "<modification date>",
-    "account_type": "<account type (either admin, privileged or default)>",
+    "creation_date": "<creation_date>",
+    "modification_date": "<modification_date>",
+    "account_type": "<account_type (either admin, privileged or default)>",
+    "metadata": <metadata>
+  }
+}
+```
+
+#### Test Account
+
+```
+POST /users/test
+authentication: bearer
+headers: "Content-Type": "application/json"
+```
+
+Allows getting account details about own account.
+
+- Requires Authorization
+
+The response has the following JSON-structure:
+```JSON
+{
+  "message": "authenticated",
+  "status": "success",
+  "user": {
+    "username": "<username>",
+    "id": <user_id>,
+    "first_name": "<first_name>",
+    "last_name": "<last_name>",
+    "email": "<email>",
+    "creation_date": "<creation_date>",
+    "modification_date": "<modification_date>",
+    "account_type": "<account_type (either admin, privileged or default)>",
     "metadata": <metadata>
   }
 }
@@ -1340,6 +1417,31 @@ Allows listing all users with one single request. No json or any other data need
 
 - Requires admin privileges
 - Does not require JSON body or data
+
+
+The response will have the following structure:
+```json
+{
+  "users": [
+    {
+      "username": "<username>",
+      "id": <user_id>,
+      "first_name": "<first_name>",
+      "last_name": "<last_name>",
+      "email": "<email>",
+      "creation_date": "<creation_date>",
+      "modification_date": "<modification_date>",
+      "account_type": "<account_type>",
+      "metadata": "<metadata>"
+    },
+    <...>
+  ],
+  "count": <user count>,
+  "status": "success"
+}
+```
+
+The output for each account is similar to the output of **Get Account**
 
 
 ### Login/Logout
@@ -1382,6 +1484,8 @@ Login
 - returnes JWT (`$.token`)
 - may soon require some kind of 2fa verification code
 
+If no Device ID is sent (`Device-Id` custom header) then a Device ID is generated and assigned which should then be used on subsequent calls.
+
 #### Login (get Refresh-Token)
 
 ```
@@ -1410,6 +1514,8 @@ Login (get Refresh-Token)
 - returnes JWT (`$.token`)
 - returnes Refresh-Token (`$.refreshToken`)
 - may soon require some kind of 2fa verification code
+
+If no Device ID is sent (`Device-Id` custom header) then a Device ID is generated and assigned which should then be used on subsequent calls.
 
 #### Login (use Refresh-Token)
 
@@ -1440,10 +1546,12 @@ Login (use Refresh-Token)
 - uses Refresh-Token generated by *Login (get Refresh-Token*
 - may soon require some kind of 2fa verification code
 
+If no Device ID is sent (`Device-Id` custom header) then a Device ID is generated and assigned which should then be used on subsequent calls.
+
 
 
 
 ---
 
-> documentation export date: 2019-07-02T21
-> documentation auto generation date: 2019-07-02T21
+> documentation export date: 2020-10-17T15
+> documentation auto generation date: 2020-10-17T15

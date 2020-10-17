@@ -53,7 +53,9 @@ module.exports = ({ registerTokenCache, validateRegisterToken, signJwtNoCheck, g
                 first_name: data.first_name,
                 last_name: data.last_name,
                 email: data.email,
-                account_type: account_type
+                account_type: account_type,
+                creation_date: row.creation_date,
+                modification_date: row.modification_date,
               },
               ...(getRefreshToken ? { refreshToken: refreshToken } : {}),
               ...(registerTokenStatus ? { registerTokenStatus: registerTokenStatus } : {})

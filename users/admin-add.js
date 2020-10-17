@@ -28,7 +28,9 @@ module.exports = (req, res) => {
               last_name: data.last_name,
               email: data.email,
               account_type: account_type,
-              metadata: metadata
+              metadata: metadata,
+              creation_date: row.creation_date,
+              modification_date: row.modification_date,
             }
           })
         }

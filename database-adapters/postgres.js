@@ -196,7 +196,7 @@ const addUser = (username, password, first_name, last_name, email, account_type 
           const userKeys = 'first_name, last_name, email, username, password, salt, creation_date, modification_date, account_type, metadata, twofa, twofa_secret, passwordless, temp_account'
           const userValues = '$1::text, $2::text, $3::text, $4::text, $5::text, $6::text, current_timestamp, current_timestamp, $7::account_type, $8::jsonb, $9::boolean, $10::text, $11::boolean, to_timestamp($12)::timestamptz'
           client.query('INSERT INTO auth_user ( ' + userKeys + ' ) VALUES ( ' + userValues + ' )', newUser)
-            .then(() => client.query('SELECT id::int FROM auth_user WHERE username = $1::text', [username])
+            .then(() => client.query('SELECT id::int, creation_date::timestamptz, modification_date::timestamptz FROM auth_user WHERE username = $1::text', [username])
               .then(res => cb(null, select_postgres_to_general(res).rows[0]))
               .then(release_then(client))
             ).catch(err => cb(err, null))

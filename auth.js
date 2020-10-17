@@ -50,7 +50,12 @@ const auth = ({private_key, public_key, secret, onAdd=() => {}, onDelete=() => {
         cb(err, null, null)
       } else {
         const checkCache = true
-        if(!checkCache || jwtCache.get(user.id) !== null) {
+        const cachedToken = jwtCache.get(user.id)
+        // TODO: this only saves one jwt token (the one that got sent back last); therefore even if multiple tokens are valid checking wether they equal to
+        // TODO: the saved one does not work because this would produce false negatives. Therefore it is just checked wether any token whatsoever is saved.
+        // TODO: This token is not compared to the one being used right now. This means that if a token is saved and the token that got sent is still valid
+        // TODO: (timing, signed) it can be used even if it has never been added to the cache (this means that tokens can sometimes survive a server restart)
+        if(!checkCache || cachedToken !== null) {
           console.log('[strategy] authorization successful (' + user.id + ': ' + jwtCache.get(user.id).substring(0, 96) + ' )')
           cb(null, user, null)
         } else {

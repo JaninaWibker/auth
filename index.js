@@ -1,3 +1,4 @@
+'use strict';
 const config = require('dotenv').config().parsed
 const express = require('express')
 const morgan = require('morgan')
@@ -90,43 +91,46 @@ app.get(['/by-cb/:id?', '/service/by-cb/:id?'], services.get('by-cb'))
 
 // register-token endpoint
 
-app.post('/generate-register-token', passport.authenticate('jwt', { session: false }), registertokens.generate(generateRegisterToken))
+const _passport_mw = passport.authenticate('jwt', { session: false })
+const passport_mw = (req, res, next) => _passport_mw(req, res, next)
 
-app.post('/validate-register-token', passport.authenticate('jwt', { session: false }), registertokens.validate(validateRegisterToken))
+app.post('/generate-register-token', passport_mw, registertokens.generate(generateRegisterToken))
 
-app.delete('/invalidate-register-token', passport.authenticate('jwt', { session: false }), registertokens.invalidate(validateRegisterToken))
+app.post('/validate-register-token', passport_mw, registertokens.validate(validateRegisterToken))
 
-app.get('/list-register-tokens/:extra?', passport.authenticate('jwt', { session: false }), registertokens.list(validateRegisterToken))
+app.delete('/invalidate-register-token', passport_mw, registertokens.invalidate(validateRegisterToken))
+
+app.get('/list-register-tokens/:extra?', passport_mw, registertokens.list(validateRegisterToken))
 
 // login / logout endpoint
 
 app.post(['/login', '/users/login'], users.login(Login))
 
-app.post(['/logout', '/users/logout'], passport.authenticate('jwt', { session: false }), users.logout(Logout))
+app.post(['/logout', '/users/logout'], passport_mw, users.logout(Logout))
 
 // users endpoint
 
 app.post(['/add', '/users/add'], users.add({ registerTokenCache: registertokens.registerTokenCache, validateRegisterToken, signJwtNoCheck, generateRefreshToken, manualAddToCache }))
 
-app.post(['/admin/add', '/users/admin/add'], passport.authenticate('jwt', { session: false }), users.adminAdd)
+app.post(['/admin/add', '/users/admin/add'], passport_mw, users.adminAdd)
 
-app.post(['/modify', '/users/modify'],  passport.authenticate('jwt', { session: false }), users.modify(Logout))
-app.put(['/users', '/users/modify'],    passport.authenticate('jwt', { session: false }), users.modify(Logout)) // TODO: find out if this should be PATCH or PUT, I feel like it should be patch
+app.post(['/modify', '/users/modify'],  passport_mw, users.modify(Logout))
+app.put(['/users', '/users/modify'],    passport_mw, users.modify(Logout)) // TODO: find out if this should be PATCH or PUT, I feel like it should be patch
 
-app.post(['/modify-self', '/users/modify-self'],  passport.authenticate('jwt', { session: false }), users.modifySelf(Logout))
-app.put(['/users/self', '/users/modify-self'],    passport.authenticate('jwt', { session: false }), users.modifySelf(Logout)) // TODO: find out if this should be PATCH or PUT, I feel like it should be patch
+app.post(['/modify-self', '/users/modify-self'],  passport_mw, users.modifySelf(Logout))
+app.put(['/users/self', '/users/modify-self'],    passport_mw, users.modifySelf(Logout)) // TODO: find out if this should be PATCH or PUT, I feel like it should be patch
 
-app.post(['/delete', '/users/delete'],  passport.authenticate('jwt', { session: false }), users.delete)
-app.delete(['/users', '/users/delete'], passport.authenticate('jwt', { session: false }), users.delete)
+app.post(['/delete', '/users/delete'],  passport_mw, users.delete)
+app.delete(['/users', '/users/delete'], passport_mw, users.delete)
 
-app.post(['/test', '/users/test'],  passport.authenticate('jwt', { session: false }), users.test)
-app.get(['/test', '/users/test'],   passport.authenticate('jwt', { session: false }), users.test)
+app.post(['/test', '/users/test'],  passport_mw, users.test)
+app.get(['/test', '/users/test'],   passport_mw, users.test)
 
-app.post(['/info', '/users/info'],                    passport.authenticate('jwt', { session: false }), users.info)
-app.get(['/info/:username', '/users/info/:username'], passport.authenticate('jwt', { session: false }), users.info)
+app.post(['/info', '/users/info'],                    passport_mw, users.info)
+app.get(['/info/:username', '/users/info/:username'], passport_mw, users.info)
 
-app.post(['/list', '/users/list'], passport.authenticate('jwt', { session: false }), users.list)
-app.get( ['/list', '/users/list'], passport.authenticate('jwt', { session: false }), users.list)
+app.post(['/list', '/users/list'], passport_mw, users.list)
+app.get( ['/list', '/users/list'], passport_mw, users.list)
 
 app.get(['/username-already-taken/:username?', '/users/username-already-taken/:username?'], users.username_already_taken)
 
@@ -134,18 +138,18 @@ app.get(['/is-passwordless/:username?', '/users/is-passwordless/:username?'], us
 
 app.patch(['/set-password', '/users/set-password'], users.set_password)
 
-app.post(['/verify-password-validity', '/users/verify-password-validity'], passport.authenticate('jwt', { session: false }), users.verify_password_validity)
+app.post(['/verify-password-validity', '/users/verify-password-validity'], passport_mw, users.verify_password_validity)
 
 // device endpoint
 
-app.post(['/device', '/device/add'], passport.authenticate('jwt', { session: false }), device.add)
-app.delete(['/device', '/device/delete'], passport.authenticate('jwt', { session: false }), device.delete)
-app.patch(['/device', '/device/modify'], passport.authenticate('jwt', { session: false }), device.modify)
-app.patch(['/device/revoke'], passport.authenticate('jwt', { session: false }), device.revoke)
-app.get(['/device/:device_id', '/device/get/:device_id'], passport.authenticate('jwt', { session: false }), device.get)
-app.get(['/device/:user_id/:device_id', '/device/get/:user_id/:device_id'], passport.authenticate('jwt', { session: false }), device.get)
-app.get(['/devices/:user_id?', '/devices/get/:user_id?'], passport.authenticate('jwt', { session: false }), device.list)
+app.post(['/device', '/device/add'], passport_mw, device.add)
+app.delete(['/device', '/device/delete'], passport_mw, device.delete)
+app.patch(['/device', '/device/modify'], passport_mw, device.modify)
+app.patch(['/device/revoke'], passport_mw, device.revoke)
+app.get(['/device/:device_id', '/device/get/:device_id'], passport_mw, device.get)
+app.get(['/device/:user_id/:device_id', '/device/get/:user_id/:device_id'], passport_mw, device.get)
+app.get(['/devices/:user_id?', '/devices/get/:user_id?'], passport_mw, device.list)
 
-app.get(['/ip/'], passport.authenticate('jwt', { session: false }), device.iplookup)
+app.get(['/ip/'], passport_mw, device.iplookup)
 
 app.listen(config.PORT || 3003, () => console.log('HTTP server listening on port ' + (config.PORT || 3003)))

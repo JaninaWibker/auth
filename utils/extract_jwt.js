@@ -32,7 +32,7 @@ const extractors = {
 
   fromAuthHeaderWithScheme: auth_scheme => req => {
     let token = null
-    if(request.headers[AUTH_HEADER]) {
+    if(req.headers[AUTH_HEADER]) {
       const auth_params = parse_auth_header(req.headers[AUTH_HEADER])
       if(auth_params && auth_scheme.toLowerCase() === auth_params.scheme.toLowerCase()) {
         token = auth_params.value

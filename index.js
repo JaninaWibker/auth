@@ -1,4 +1,5 @@
 'use strict';
+require('use-strict')
 const config = require('dotenv').config().parsed
 const express = require('express')
 const morgan = require('morgan')

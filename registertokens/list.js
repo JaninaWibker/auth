@@ -24,7 +24,7 @@ module.exports = (registerTokenCache) => (validateRegisterToken) => (req, res) =
           metadata: metadata,
         }
       } else {
-        tokens[keys[i]] = registerTokenCache.get(keys[i])
+        tokens[keys[i]] = { register_token: registerTokenCache.get(keys[i]) }
       }
       
     }

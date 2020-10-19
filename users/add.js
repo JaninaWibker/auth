@@ -11,11 +11,23 @@ module.exports = ({ registerTokenCache, validateRegisterToken, signJwtNoCheck, g
     if(data.register_token) {
       const registerTokenData = validateRegisterToken(data.register_token)
       if(registerTokenData.status !== 'failure' && registerTokenCache.get(registerTokenData.id) !== null) {
-        // TODO: check if register_token is expired already (if yes delete it)
-        account_type = registerTokenData.account_type || 'default'
-        metadata = registerTokenData.metadata || {}
-        registerTokenStatus = 'register token used successfully'
-        registerTokenCache.del(registerTokenData.id) // TODO: should probably not delete all the time, incorporate permanent flag and usage_count maybe?
+        if(registerTokenData.permanent || Date.now() < (registerTokenData.timestamp + registerTokenData.expireAt)) {
+          account_type = registerTokenData.account_type || 'default'
+          metadata = registerTokenData.metadata || {}
+          registerTokenStatus = 'register token used successfully'
+          if(!registerTokenData.permanent) {
+            const usages_left = 1 // TODO: where can usage_count be saved without regenerating/modifying the token?
+            if(usages_left === 1) {
+              registerTokenCache.del(registerTokenData.id)
+            } else {
+              // TODO: usages_left - 1
+              // TODO: somehow decrement usage_count
+            }
+          }
+        } else {
+          registerTokenStatus = 'register token expired'
+          registerTokenCache.del(registerTokenData.id)
+        }
       } else {
         registerTokenStatus = "supplied register token was not valid, could not be used"
       }

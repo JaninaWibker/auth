@@ -1,0 +1,13 @@
+{
+  "quiet": true,
+  "watch": [
+    "src"
+  ],
+  "ignore": [
+    "src/test",
+    "src/**/*.test.ts",
+    "src/**/*test.js"
+  ],
+  "ext": ".ts,.js,.json",
+  "exec": "./on-watch.sh"
+}

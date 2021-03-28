@@ -1,0 +1,15 @@
+# node modules
+node_modules
+
+# build directory
+dist
+
+# build cache
+.buildcache
+
+# mac os stuff
+.DS_Store
+._.DS_Store
+
+# secrets
+.env

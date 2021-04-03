@@ -13,3 +13,4 @@ dist
 
 # secrets
 .env
+certs

@@ -1,7 +1,8 @@
 {
   "quiet": true,
   "watch": [
-    "src"
+    "src",
+    "@types"
   ],
   "ignore": [
     "src/test",

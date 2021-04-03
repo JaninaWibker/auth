@@ -38,6 +38,9 @@
     ],
     "no-lone-blocks": [
       0
-    ]
+    ],
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-empty-function": "warn",
+    "@typescript-eslint/no-explicit-any": "off"
   }
 }

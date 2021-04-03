@@ -19,11 +19,15 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "resolveJsonModule": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "typeRoots": [
+      "./src/@types",
+      "./node_modules/@types"
+    ],
   },
   "include": [
     "./src/**/*.ts",
-    "./package.json"
+    "src/@types/**/*.d.ts"
   ],
   "exclude": [
     "./src/test",

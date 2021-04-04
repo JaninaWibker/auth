@@ -1,13 +1,15 @@
 import jwt from 'jsonwebtoken'
+import Optional from './Optional'
 import type { NextFunction, Request, Response } from 'express'
 import type { Config } from '../types/config'
 import type { Strategy } from '../types/strategy'
+import type { User } from '../types/user'
 
-const unauthorized = (res: Response) => res.status(401).end('Unauthorized')
+const unauthorized = (res: Response, msg?: string) => res.status(401).end('Unauthorized' + (msg ? ': ' + msg : ''))
 
 const jwt_strategy = (config: Config): Strategy => {
 
-  const jwtOptions = {
+  const jwt_options = {
     private_key: config.private_key,
     public_key: config.public_key,
     algorithm: 'ES256' as const,
@@ -16,38 +18,53 @@ const jwt_strategy = (config: Config): Strategy => {
     aud: config.jwt.aud,
   }
 
-  const authenticated = (req: Request, res: Response, next: NextFunction) => {
-
+  const extract_token = (req: Request): Optional<string> => {
     const bearer = req.headers['authorization']
 
-    if(!bearer) return unauthorized(res)
-    if(typeof bearer !== 'string') return unauthorized(res)
+    if(!bearer)                      return Optional.reject<string>(new Error('Bearer token not supplied'))
+    if(typeof bearer !== 'string')   return Optional.reject<string>(new Error('Bearer token is not a string'))
+    if(!bearer.startsWith('Bearer')) return Optional.reject<string>(new Error('Bearer token has invalid prefix'))
 
     const token = bearer.substring('Bearer '.length)
 
-    console.log(token)
-
-    req.jwt = token
-
-    jwt.verify(token, jwtOptions.public_key, (err, decoded) => {
-      console.log(err, decoded)
-    })
-
-    next()
+    return Optional.resolve(token)
   }
 
-  const generate = () => {
+  const verify_token = (req: Request, token: string) => new Promise<{ decoded: Record<string, unknown>, jwt: string }>((resolve, reject) => {
+    jwt.verify(token, jwt_options.public_key, (err, decoded) => {
+      // TODO: check if the user actually exists
+      // TODO: check that the jwt isn't expired yet
+      if(err) reject(err)
+      else resolve({ decoded: decoded as Record<string, unknown>, jwt: token })
+    })
+  })
 
-    const jti = 'idk' // TODO: this should be something unique per jwt; this can then be used with a bloom filter potentially
-    const sub = 'TODO' // TODO: what should this be?
+  const authenticated = (req: Request, res: Response, next: NextFunction) => {
+    extract_token(req)
+      .then(token => verify_token(req, token))
+      .observe_catch(err => unauthorized(res, config.env === 'dev' ? err.message : undefined))
+      .then(promise => promise
+        .then(({ jwt, decoded }) => { // TODO: improve the type of decoded
+          req.jwt = jwt
+          console.log(jwt, decoded)
+          next()
+        })
+        .catch(err => unauthorized(res, config.env === 'dev' ? err : undefined))
+      )
+  }
+
+  const generate = (user: User, jti: string) => {
+
+    // const jti = 'idk' // TODO: this should be something unique per jwt; this can then be used with a bloom filter potentially
+    const sub = 'TODO'   // TODO: what should this be?
 
     return jwt.sign({
-      // TODO: what goes into the
-    }, jwtOptions.private_key, {
-      algorithm: jwtOptions.algorithm,
-      expiresIn: jwtOptions.expires_in,
-      issuer: jwtOptions.iss,
-      audience: jwtOptions.aud,
+      user: user
+    }, jwt_options.private_key, {
+      algorithm: jwt_options.algorithm,
+      expiresIn: jwt_options.expires_in,
+      issuer: jwt_options.iss,
+      audience: jwt_options.aud,
       subject: sub,
       jwtid: jti
     })

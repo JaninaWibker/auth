@@ -26,12 +26,13 @@ const startup_time = +new Date()
 const config = transform(dotenv.config().parsed as Environment, private_key, public_key)
 
 console.log('Starting the server with the following configuration:')
-console.log(Object.assign(config, { public_key: '<omitted>', private_key: '<omitted>' }))
+console.log(Object.assign({}, config, { public_key: '<omitted>', private_key: '<omitted>' }))
 
 const app = express()
 
 morgan.token('user',    (req: Request) => req.user && req.user.username)
 morgan.token('user_id', (req: Request) => req.user && req.user.id)
+morgan.token('jwt',     (req: Request) => req.jwt)
 
 const morgan_skip = (req: Request) => {
   if(req.method === 'OPTIONS') return true

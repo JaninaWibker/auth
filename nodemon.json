@@ -2,7 +2,8 @@
   "quiet": true,
   "watch": [
     "src",
-    "@types"
+    "@types",
+    ".env"
   ],
   "ignore": [
     "src/test",

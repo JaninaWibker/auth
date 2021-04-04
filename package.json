@@ -10,6 +10,7 @@
     "@types/jsonwebtoken": "^8.5.1",
     "@types/morgan": "^1.9.2",
     "@types/node": "^14.14.37",
+    "@types/pg": "^7.14.11",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "fp-ts": "^2.9.5",

@@ -1,8 +1,8 @@
 import type { Request, Response } from 'express'
-import { Strategy } from '../types/strategy'
+import { Strategy } from '../../types/strategy'
 import * as D from 'io-ts/Decoder'
 import { isLeft } from 'fp-ts/lib/Either'
-import { failure, success } from '../util/response'
+import { failure, success } from '../../util/response'
 
 const login_request = D.union(
   D.struct({

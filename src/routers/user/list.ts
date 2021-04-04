@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
-import { Adapters } from '../types/adapter'
+import { Adapters } from '../../types/adapter'
 
-import { success, failure } from '../util/response'
+import { success, failure } from '../../util/response'
 
 const list = (db: Adapters) => (req: Request, res: Response) => {
   console.log(req.user)

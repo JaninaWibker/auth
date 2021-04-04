@@ -3,7 +3,9 @@
   "watch": [
     "src",
     "@types",
-    ".env"
+    ".env",
+    ".eslintrc",
+    "tsconfig.json"
   ],
   "ignore": [
     "src/test",

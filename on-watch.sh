@@ -2,9 +2,14 @@
 
 echo $(tput reset)
 
-echo "$(tput setab 5)$(tput setaf 15)$(tput bold)running linter$(tput sgr0)"
+echo "$(tput setab 5)$(tput setaf 15)$(tput bold) running linter $(tput sgr0)"
 npm run --silent lint
 
-echo "$(tput setab 5)$(tput setaf 15)$(tput bold)running code$(tput sgr0)"
-npm run --silent start:node
+status=$?
 
+[ $status -eq 0 ] && {
+  echo "$(tput setab 5)$(tput setaf 15)$(tput bold) running code $(tput sgr0)"
+  npm run --silent start:node
+} || {
+  echo "$(tput setab 1)$(tput setaf 15)$(tput bold) linting error $(tput sgr0)"
+}

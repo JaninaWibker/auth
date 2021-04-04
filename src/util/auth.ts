@@ -1,12 +1,17 @@
 import jwt from 'jsonwebtoken'
 import Optional from './Optional'
+import * as D from 'io-ts/Decoder'
+import { isLeft } from 'fp-ts/lib/Either'
+
 import type { NextFunction, Request, Response } from 'express'
 import type { Config } from '../types/config'
 import type { Strategy } from '../types/strategy'
 import type { User } from '../types/user'
-import { JWTPayload } from '../types/JWT'
+import { user } from '../types/user'
+import type { JWTPayload } from '../types/JWT'
+import { jwt_payload } from '../types/JWT'
 
-const unauthorized = (res: Response, msg?: string) => res.status(401).end('Unauthorized' + (msg ? ': ' + msg : ''))
+const unauthorized = (res: Response, msg?: string, include_message = true) => res.status(401).end('Unauthorized' + (include_message && msg ? ': ' + msg : ''))
 
 const jwt_strategy = (config: Config): Strategy => {
 
@@ -43,14 +48,22 @@ const jwt_strategy = (config: Config): Strategy => {
   const authenticated = (req: Request, res: Response, next: NextFunction) => {
     extract_token(req)
       .then(token => verify_token(req, token))
-      .observe_catch(err => unauthorized(res, config.env === 'dev' ? err.message : undefined))
+      .observe_catch(err => unauthorized(res, err.message, config.env === 'dev'))
       .then(promise => promise
         .then(({ jwt, decoded }) => {
+
+          const result = jwt_payload(D.struct({ user: user })).decode(decoded)
+
+          if(isLeft(result)) {
+            return unauthorized(res, 'Invalid JWT structure, the following was reported:\n' + D.draw(result.left))
+          }
+
           req.jwt = jwt
+          req.user = decoded.user as User
           console.log(jwt, decoded)
           next()
         })
-        .catch(err => unauthorized(res, config.env === 'dev' ? err : undefined))
+        .catch(err => unauthorized(res, err.message, config.env === 'dev'))
       )
   }
 

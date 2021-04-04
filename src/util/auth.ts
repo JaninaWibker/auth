@@ -4,6 +4,7 @@ import type { NextFunction, Request, Response } from 'express'
 import type { Config } from '../types/config'
 import type { Strategy } from '../types/strategy'
 import type { User } from '../types/user'
+import { JWTPayload } from '../types/JWT'
 
 const unauthorized = (res: Response, msg?: string) => res.status(401).end('Unauthorized' + (msg ? ': ' + msg : ''))
 
@@ -30,12 +31,12 @@ const jwt_strategy = (config: Config): Strategy => {
     return Optional.resolve(token)
   }
 
-  const verify_token = (req: Request, token: string) => new Promise<{ decoded: Record<string, unknown>, jwt: string }>((resolve, reject) => {
+  const verify_token = (req: Request, token: string) => new Promise<{ decoded: JWTPayload<{ user: User }>, jwt: string }>((resolve, reject) => {
     jwt.verify(token, jwt_options.public_key, (err, decoded) => {
       // TODO: check if the user actually exists
       // TODO: check that the jwt isn't expired yet
       if(err) reject(err)
-      else resolve({ decoded: decoded as Record<string, unknown>, jwt: token })
+      else resolve({ decoded: decoded as JWTPayload<{ user: User }>, jwt: token })
     })
   })
 
@@ -44,7 +45,7 @@ const jwt_strategy = (config: Config): Strategy => {
       .then(token => verify_token(req, token))
       .observe_catch(err => unauthorized(res, config.env === 'dev' ? err.message : undefined))
       .then(promise => promise
-        .then(({ jwt, decoded }) => { // TODO: improve the type of decoded
+        .then(({ jwt, decoded }) => {
           req.jwt = jwt
           console.log(jwt, decoded)
           next()
@@ -70,9 +71,23 @@ const jwt_strategy = (config: Config): Strategy => {
     })
   }
 
+  const login = (username: string, password: string, is_refresh_token = false, get_refresh_token = false) => new Promise<{ user: User, access_token: string, refresh_token?: string }>((resolve, reject) => {
+    console.log('login', username, password, is_refresh_token, get_refresh_token)
+    reject(new Error('not implemented yet LUL'))
+    // TODO: implement this and call resolve({ user: user, access_token: ..., refresh_token: ... }) or reject(new Error('...'))
+  })
+
+  const logout = (username: string) => new Promise<undefined>((resolve, reject) => {
+    console.log('logout', username)
+    reject(new Error('not implemented yet LUL'))
+    // TODO: implement this and call resolve(undefined) or reject(new Error('logout failed')) (message might change)
+  })
+
   return {
     authenticated: authenticated,
-    generate: generate
+    generate: generate,
+    login: login,
+    logout: logout
   }
 }
 

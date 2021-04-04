@@ -1,7 +1,13 @@
+enum OptionalState {
+  HAS_VALUE   = 1,
+  HAS_ERROR   = 2,
+  HAS_NOTHING = 3
+}
+
 class Optional<T> {
   value:     T   | undefined = undefined
   error:     any | undefined = undefined
-  has_value                  = false
+  state: OptionalState       = OptionalState.HAS_NOTHING
 
   constructor(executor: (resolve: (value: T | Optional<T>) => void, reject: (reason?: any) => void) => void) {
     executor((value_or_optional: T | Optional<T>) => {
@@ -10,7 +16,7 @@ class Optional<T> {
       } else {
         this.value = value_or_optional
       }
-      this.has_value = true
+      this.state = OptionalState.HAS_VALUE
     }, (error_or_optional: any) => {
       if(typeof error_or_optional === 'object' && 'error' in error_or_optional) {
         this.error = error_or_optional.error
@@ -44,7 +50,7 @@ class Optional<T> {
       } else {
         throw this.error
       }
-    } else if(this.has_value) {
+    } else if(this.state === OptionalState.HAS_VALUE) {
       if(onfulfilled) {
         try {
           const value_or_optional = onfulfilled(this.value as T)
@@ -57,12 +63,14 @@ class Optional<T> {
           return Optional.reject(e)
         }
       } else {
-        // @ts-ignore: TODO
+        // TODO: figure out why this is needed / how to fix this
+        // @ts-ignore
         return this
       }
     } else {
       console.log('when does this happen exactly?')
-      // @ts-ignore: TODO
+      // TODO: figure out why this is needed / how to fix this
+      // @ts-ignore
       return this
     }
   }

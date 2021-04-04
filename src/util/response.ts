@@ -1,7 +1,7 @@
 import type { Response } from 'express'
 
 const success = <T>(res: Response, msg: string, data: T) => res.status(200).json({
-  status: 'failure',
+  status: 'success',
   message: msg,
   data: data
 })

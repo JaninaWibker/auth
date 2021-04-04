@@ -59,7 +59,26 @@ app.get('/uptime',          (_, res) => res.status(299).end(startup_time.toStrin
 
 const strategy = jwt_strategy(config)
 
-// * sub routers
-app.use('/user',       userRouter(strategy))
+Promise.all([
+  userRouter(strategy, config),
+  groupRouter(strategy, config),
+  roleRouter(strategy, config),
+  permissionRouter(strategy, config),
+  deviceRouter(strategy, config),
+  configRouter(strategy, config)
+])
+  .then(([userRouter, groupRouter, roleRouter, permissionRouter, deviceRouter, configRouter]) => {
 
-app.listen(config.port, () => console.log('HTTP server listening on port ' + config.port))
+    // * sub routers
+    app.use('/user',       userRouter)
+    app.use('/group',      groupRouter)
+    app.use('/role',       roleRouter)
+    app.use('/permission', permissionRouter)
+    app.use('/device',     deviceRouter)
+    app.use('/config',     configRouter)
+
+    app.listen(config.port, () => console.log('HTTP server listening on port ' + config.port))
+  })
+  .catch(err => console.log(
+    'couldn\'t start the server', err
+  ))

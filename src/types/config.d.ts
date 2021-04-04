@@ -6,7 +6,8 @@ type Config = {
   jwt: {
     iss: string,
     aud: string
-  }
+  },
+  db_driver: 'postgres' // TODO: add sqlite or something else here eventually
 }
 
 export {

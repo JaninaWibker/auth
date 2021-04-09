@@ -6,8 +6,8 @@ import { isLeft } from 'fp-ts/lib/Either'
 import type { NextFunction, Request, Response } from 'express'
 import type { Config } from '../types/config'
 import type { Strategy } from '../types/strategy'
-import type { User } from '../types/user'
-import { user } from '../types/user'
+import type { User, SerializedUser } from '../types/user'
+import { serialized_user } from '../types/user'
 import type { JWTPayload } from '../types/JWT'
 import { jwt_payload } from '../types/JWT'
 
@@ -36,12 +36,12 @@ const jwt_strategy = (config: Config): Strategy => {
     return Optional.resolve(token)
   }
 
-  const verify_token = (req: Request, token: string) => new Promise<{ decoded: JWTPayload<{ user: User }>, jwt: string }>((resolve, reject) => {
+  const verify_token = (req: Request, token: string) => new Promise<{ decoded: JWTPayload<{ user: SerializedUser }>, jwt: string }>((resolve, reject) => {
     jwt.verify(token, jwt_options.public_key, (err, decoded) => {
       // TODO: check if the user actually exists
       // TODO: check that the jwt isn't expired yet
       if(err) reject(err)
-      else resolve({ decoded: decoded as JWTPayload<{ user: User }>, jwt: token })
+      else resolve({ decoded: decoded as JWTPayload<{ user: SerializedUser }>, jwt: token })
     })
   })
 
@@ -52,14 +52,20 @@ const jwt_strategy = (config: Config): Strategy => {
       .then(promise => promise
         .then(({ jwt, decoded }) => {
 
-          const result = jwt_payload(D.struct({ user: user })).decode(decoded)
+          const result = jwt_payload(D.struct({ user: serialized_user })).decode(decoded)
 
           if(isLeft(result)) {
             return unauthorized(res, 'Invalid JWT structure, the following was reported:\n' + D.draw(result.left))
           }
 
+          const parsed_user: User = {
+            ...decoded.user,
+            creation_date: new Date(decoded.user.creation_date),
+            modification_date: new Date(decoded.user.modification_date)
+          }
+
           req.jwt = jwt
-          req.user = decoded.user as User
+          req.user = parsed_user
           console.log(jwt, decoded)
           next()
         })

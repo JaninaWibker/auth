@@ -114,7 +114,9 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
         fullname: row.fullname === null ? undefined : row.fullname,
         email: row.email,
         groups: [],
-        permissions: []
+        permissions: [],
+        creation_date: row.creation_date,
+        modification_date: row.modification_date
       })))
   )
 
@@ -129,7 +131,9 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
           fullname: row.fullname !== null ? row.fullname : undefined,
           email: row.email,
           groups: row.group_id,
-          permissions: row.role_permission_scope.map((scope, i) => ({ scope: scope, name: row.role_permission_name[i] }))
+          permissions: row.role_permission_scope.map((scope, i) => ({ scope: scope, name: row.role_permission_name[i] })),
+          creation_date: row.creation_date,
+          modification_date: row.modification_date
         }))
       })
       .catch(err => {

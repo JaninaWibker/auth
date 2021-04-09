@@ -1,6 +1,7 @@
 import * as D from 'io-ts/Decoder'
 
-const jwt_payload_base = D.struct({
+const jwt_payload_base = (type: 'access-token' | 'refresh-token') => D.struct({
+  type: D.literal(type),
   iat: D.number,
   exp: D.number,
   aud: D.string,
@@ -9,11 +10,12 @@ const jwt_payload_base = D.struct({
   jti: D.string
 })
 
-const jwt_payload = <T>(t: D.Decoder<unknown, T>) => D.intersect(jwt_payload_base)(t)
+const jwt_payload = <T>(t: D.Decoder<unknown, T>) => (type: 'access-token' | 'refresh-token') => D.intersect(jwt_payload_base(type))(t)
 
-export type JWTPayloadBase = D.TypeOf<typeof jwt_payload_base>
+const access_token_base = jwt_payload_base('access-token')
+const refresh_token_base = jwt_payload_base('refresh-token')
 
-export type JWTPayload2 = D.TypeOf<typeof jwt_payload>
+export type JWTPayloadBase = D.TypeOf<typeof access_token_base | typeof refresh_token_base>
 
 export type JWTPayload<T = void> = JWTPayloadBase & T
 

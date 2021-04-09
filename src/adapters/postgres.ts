@@ -2,6 +2,7 @@ import { Pool, QueryResult } from 'pg'
 import type { PoolClient } from 'pg'
 import type { Adapters, UserAdapter } from '../types/adapter'
 import type { Config } from '../types/config'
+import type { FullUser } from '../types/user'
 
 type UserRowSimple = {
   id: string,
@@ -18,7 +19,8 @@ type UserRowSimple = {
   mfa_secret: string | null,
   passwordless: boolean,
   temp_account: Date,
-  role_id: string | null
+  role_id: string | null,
+  role_name: string | null
 }
 
 type UserRowSimpleMapped = UserRowSimple & {
@@ -60,7 +62,6 @@ const user_row_detailed_inverted_keys: (keyof UserRowDetailed)[] = [
 ]
 
 const rows_to_object = <T, R>(rows: T[], keys: (keyof T)[], inverted_keys: (keyof T)[]): R[] => {
-  console.log(rows, keys, inverted_keys)
   const obj: Partial<R>[] = []
   let count = -1
   rows.forEach((row, i) => {
@@ -97,52 +98,117 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
     console.warn('An idle client has experienced an error', err)
   })
 
-  const release_then = (client: PoolClient) => () => {
-    client.release()
-  }
 
-  const release_catch = (client: PoolClient) => (err: Error) => {
-    client.release()
-    if(err) console.log(err)
-  }
+  // TODO: release clients again
 
-  const list_users_basic = () => pool.connect().then(client =>
-    client.query('SELECT * FROM auth_user')
-      .then((res: QueryResult<UserRowSimple>) => res.rows.map(row => ({
-        id: row.id,
-        username: row.username,
-        fullname: row.fullname === null ? undefined : row.fullname,
-        email: row.email,
-        groups: [],
-        permissions: [],
-        creation_date: row.creation_date,
-        modification_date: row.modification_date
-      })))
-  )
-
-  const list_users_detailed = () => pool.connect().then(client =>
-    client.query('SELECT * FROM auth_user_all')
-      .then((res: QueryResult<UserRowDetailed>) => {
-        const mapped: UserRowDetailedMapped[] = rows_to_object<UserRowDetailed, UserRowDetailedMapped>(res.rows, user_row_detailed_keys, user_row_detailed_inverted_keys)
-        console.log('blub', mapped)
-        return mapped.map(row => ({
+  const list_users_basic = (): Promise<FullUser[]> => pool.connect().then(client =>
+    client.query('SELECT A.*, B.name as role_name FROM auth_user A LEFT JOIN auth_role B ON A.role_id = B.id')
+      .then((res: QueryResult<UserRowSimple>) => res.rows.map(row => {
+        client.release()
+        return {
           id: row.id,
           username: row.username,
-          fullname: row.fullname !== null ? row.fullname : undefined,
+          fullname: row.fullname,
           email: row.email,
-          groups: row.group_id,
-          permissions: row.role_permission_scope.map((scope, i) => ({ scope: scope, name: row.role_permission_name[i] })),
+          groups: [],
+          permissions: [],
           creation_date: row.creation_date,
-          modification_date: row.modification_date
-        }))
-      })
+          modification_date: row.modification_date,
+          disabled: row.disabled,
+          role: row.role_id !== null && row.role_name !== null ? {
+            id: row.role_id,
+            name: row.role_name
+          } : null,
+          salt: row.salt,
+          password: row.password,
+          metadata: row.metadata,
+          passwordless: row.passwordless,
+          temp_account: +row.temp_account,
+          mfa: row.mfa,
+          mfa_secret: row.mfa_secret
+        }
+      }))
       .catch(err => {
+        client.release(err)
         console.warn(err)
         throw err
       })
   )
 
-  const get_user = () => Promise.reject(new Error('not implemented yet'))
+  const list_users_detailed = (): Promise<FullUser[]> => pool.connect().then(client =>
+    client.query('SELECT * FROM auth_user_all')
+      .then((res: QueryResult<UserRowDetailed>) => {
+        const mapped: UserRowDetailedMapped[] = rows_to_object<UserRowDetailed, UserRowDetailedMapped>(res.rows, user_row_detailed_keys, user_row_detailed_inverted_keys)
+        console.log('mapped', mapped)
+        client.release()
+        return mapped.map(row => ({
+          id: row.id,
+          username: row.username,
+          fullname: row.fullname,
+          email: row.email,
+          groups: row.group_id,
+          permissions: row.role_permission_scope.map((scope, i) => ({ scope: scope, name: row.role_permission_name[i] })),
+          creation_date: row.creation_date,
+          modification_date: row.modification_date,
+          disabled: row.disabled,
+          role: row.role_id !== null && row.role_name !== null ? {
+            id: row.role_id,
+            name: row.role_name
+          } : null,
+          salt: row.salt,
+          password: row.password,
+          metadata: row.metadata,
+          passwordless: row.passwordless,
+          temp_account: +row.temp_account,
+          mfa: row.mfa,
+          mfa_secret: row.mfa_secret
+        }))
+      })
+      .catch(err => {
+        client.release()
+        console.warn(err)
+        throw err
+      })
+  )
+
+  const get_user = (by: 'id' | 'username', id_or_username: string): Promise<FullUser> => pool.connect().then(client => {
+    const selector = by === 'id' ? 'id = $1::text' : by === 'username' ? 'username = $1::text' : ''
+    return client.query('SELECT * FROM auth_user_all WHERE ' + selector, [id_or_username])
+      .then((res: QueryResult<UserRowDetailed>) => {
+        if(res.rowCount === 0) throw new Error(`user not found (by ${by}: ${id_or_username})`)
+
+        const user: UserRowDetailedMapped = rows_to_object<UserRowDetailed, UserRowDetailedMapped>(res.rows, user_row_detailed_keys, user_row_detailed_inverted_keys)[0]
+        console.log('mapped', user)
+        client.release()
+        return {
+          id: user.id,
+          username: user.username,
+          fullname: user.fullname,
+          email: user.email,
+          groups: user.group_id,
+          permissions: user.role_permission_scope.map((scope, i) => ({ scope: scope, name: user.role_permission_name[i] })),
+          creation_date: user.creation_date,
+          modification_date: user.modification_date,
+          disabled: user.disabled,
+          role: user.role_id !== null && user.role_name !== null ? {
+            id: user.role_id,
+            name: user.role_name
+          } : null,
+          salt: user.salt,
+          password: user.password,
+          metadata: user.metadata,
+          passwordless: user.passwordless,
+          temp_account: +user.temp_account,
+          mfa: user.mfa,
+          mfa_secret: user.mfa_secret
+        }
+      })
+      .catch(err => {
+        client.release()
+        console.warn(err)
+        throw err
+      })
+  })
 
   const user_adapter: UserAdapter = {
     list_users_basic,

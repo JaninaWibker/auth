@@ -1,7 +1,7 @@
 version: '3.1'
 
 services:
-  postgres:
+  database:
     image: auth-postgres:0.0.1
     hostname: postgres
     environment:
@@ -15,6 +15,8 @@ services:
       - local_network
     command: ["postgres", "-c", "log_statement=all", "-c", "log_destination=stderr"] # TODO: this is for debugging
   auth:
+    depends_on:
+      - database
     image: auth-idp:0.0.1
     hostname: auth
     environment: []

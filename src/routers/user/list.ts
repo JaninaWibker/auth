@@ -8,7 +8,7 @@ const list = (db: Adapters) => (req: Request, res: Response) => {
 
   // TODO: check that the has the proper permissions (this might need to be moved somewhere else for simplicity)
 
-  db.user.list_users()
+  db.user.list_users_detailed()
     .then(list => success(res, 'successfully listed users', list))
     .catch((err: Error) => failure(res, 'failed to retrieve list of users: ' + err.message))
 

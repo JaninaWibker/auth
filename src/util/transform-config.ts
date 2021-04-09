@@ -5,7 +5,12 @@ export type Environment = Partial<{
   ISSUER: string,
   AUDIENCE: string,
   ENV: string,
-  DB_DRIVER: Config['db_driver']
+  DB_DRIVER: Config['db']['driver'],
+  DB_HOST: Config['db']['host'],
+  DB_PORT: Config['db']['port'],
+  DB_USERNAME: Config['db']['username'],
+  DB_PASSWORD: Config['db']['password'],
+  DB_USE_SSL: 'true' | 'false',
 }>
 
 const transform = (env: Environment, private_key: string, public_key: string): Config => {
@@ -18,7 +23,14 @@ const transform = (env: Environment, private_key: string, public_key: string): C
       iss: env.ISSUER || 'TODO', // TODO: what should this be if nothing is specified?
       aud: env.AUDIENCE || 'TODO'
     },
-    db_driver: env.DB_DRIVER || 'postgres'
+    db: {
+      driver: env.DB_DRIVER || 'postgres',
+      host: env.DB_HOST || '',
+      port: env.DB_PORT || 5432,
+      username: env.DB_USERNAME || 'auth',
+      password: env.DB_PASSWORD || '',
+      use_ssl: env.DB_USE_SSL === 'true'
+    }
   }
 }
 

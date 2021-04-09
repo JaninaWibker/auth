@@ -7,7 +7,14 @@ type Config = {
     iss: string,
     aud: string
   },
-  db_driver: 'postgres' // TODO: add sqlite or something else here eventually
+  db: {
+    driver: 'postgres', // TODO: add sqlite or something else here eventually
+    host: string,
+    port: number,
+    username: string,
+    password: string,
+    use_ssl: boolean
+  }
 }
 
 export {

@@ -1,21 +1,17 @@
 import { Router } from 'express'
-import adapters from '../../adapters/adapter'
+import type { Adapters } from '../../types/adapter'
 import type { Strategy } from '../../types/strategy'
-import type { Config } from '../../types/config'
 
+const roleRouter = (strategy: Strategy, db: Adapters) => {
+  const router = Router()
 
+  const role = {
 
-const roleRouter = (strategy: Strategy, config: Config) => adapters(config)
-  .then(db => {
-    const router = Router()
+  }
 
-    const role = {
+  //* role endpoints
 
-    }
-
-    //* role endpoints
-
-    return router
-  })
+  return router
+}
 
 export default roleRouter

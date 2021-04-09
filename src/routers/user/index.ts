@@ -1,31 +1,29 @@
 import { Router } from 'express'
-import adapters from '../../adapters/adapter'
 import type { Strategy } from '../../types/strategy'
-import type { Config } from '../../types/config'
+import type { Adapters } from '../../types/adapter'
 
 import {  list  } from './list'
 
 import { login  } from './login'
 import { logout } from './logout'
 
-const userRouter = (strategy: Strategy, config: Config) => adapters(config)
-  .then(db => {
-    const router = Router()
+const userRouter = (strategy: Strategy, db: Adapters) => {
+  const router = Router()
 
-    const user = {
-      list, login, logout
-    }
+  const user = {
+    list, login, logout
+  }
 
-    // * login / logout
+  // * login / logout
 
-    router.post('/login',  user.login(strategy))
-    router.post('/logout', user.logout(strategy))
+  router.post('/login',  user.login(strategy))
+  router.post('/logout', user.logout(strategy))
 
-    // * user endpoint
+  // * user endpoint
 
-    router.get('/',                      strategy.authenticated, user.list(db))
+  router.get('/',                      strategy.authenticated, user.list(db))
 
-    return router
-  })
+  return router
+}
 
 export default userRouter

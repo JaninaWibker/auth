@@ -16,6 +16,7 @@ import configRouter     from './routers/config/index'
 import transform from './util/transform-config'
 import type { Environment } from './util/transform-config'
 import jwt_strategy from './util/auth'
+import adapters from './adapters/adapter'
 
 const private_key = fs.readFileSync('./certs/auth/private.key', 'utf8')
 const public_key = fs.readFileSync('./certs/auth/public.key', 'utf8')
@@ -26,7 +27,7 @@ const startup_time = +new Date()
 const config = transform(dotenv.config().parsed as Environment, private_key, public_key)
 
 console.log('Starting the server with the following configuration:')
-console.log(Object.assign({}, config, { public_key: '<omitted>', private_key: '<omitted>' }))
+console.log(Object.assign({}, config, { public_key: '<omitted>', private_key: '<omitted>', db: { ...config.db, password: '<omitted>' } }))
 
 const app = express()
 
@@ -59,26 +60,17 @@ app.get('/uptime',          (_, res) => res.status(299).end(startup_time.toStrin
 
 const strategy = jwt_strategy(config)
 
-Promise.all([
-  userRouter(strategy, config),
-  groupRouter(strategy, config),
-  roleRouter(strategy, config),
-  permissionRouter(strategy, config),
-  deviceRouter(strategy, config),
-  configRouter(strategy, config)
-])
-  .then(([userRouter, groupRouter, roleRouter, permissionRouter, deviceRouter, configRouter]) => {
+adapters(config)
+  .then(db => {
 
     // * sub routers
-    app.use('/user',       userRouter)
-    app.use('/group',      groupRouter)
-    app.use('/role',       roleRouter)
-    app.use('/permission', permissionRouter)
-    app.use('/device',     deviceRouter)
-    app.use('/config',     configRouter)
+    app.use('/user',       userRouter(strategy, db))
+    app.use('/group',      groupRouter(strategy, db))
+    app.use('/role',       roleRouter(strategy, db))
+    app.use('/permission', permissionRouter(strategy, db))
+    app.use('/device',     deviceRouter(strategy, db))
+    app.use('/config',     configRouter(strategy, db))
 
     app.listen(config.port, () => console.log('HTTP server listening on port ' + config.port))
   })
-  .catch(err => console.log(
-    'couldn\'t start the server', err
-  ))
+  .catch(err => console.log('couldn\'t start the server', err))

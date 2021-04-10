@@ -36,7 +36,7 @@ CREATE TABLE auth_user (
   mfa_secret        VARCHAR(32) DEFAULT NULL,          -- 2fa authentication secret
   passwordless      BOOLEAN NOT NULL DEFAULT false,    -- wether or not a password is initially set; if not the password needs to be set when first login attempt happens
   temp_account      TIMESTAMPTZ NOT NULL DEFAULT to_timestamp(0), -- 0 for non-temporary accounts; non-zero values for temporary accounts which expire at a certain time (the timestamp is the time it expires)
-  role_id           VARCHAR(64) DEFAULT NULL REFERENCES auth_role(id)
+  role_id           VARCHAR(64) NOT NULL DEFAULT 'default' REFERENCES auth_role(id)
 );
 
 -- CREATE TABLE auth_ip (
@@ -108,6 +108,7 @@ LEFT JOIN auth_it_group_permission B ON A.id = B.group_id;
 -- inserting data
 
 INSERT INTO auth_role ( id, name ) VALUES ( 'admin', 'Administrator' );
+INSERT INTO auth_role ( id, name ) VALUES ( 'default', 'Default' );
 
 INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name ) VALUES ( 'admin', 'auth.config', '*' );
 INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name ) VALUES ( 'admin', 'auth.device', '*' );

@@ -18,8 +18,8 @@ type UserRowSimple = {
   mfa_secret: string | null,
   passwordless: boolean,
   temp_account: Date,
-  role_id: string | null,
-  role_name: string | null
+  role_id: string,
+  role_name: string
 }
 
 type UserRowSimpleMapped = UserRowSimple & {
@@ -111,10 +111,10 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
           creation_date: row.creation_date,
           modification_date: row.modification_date,
           disabled: row.disabled,
-          role: row.role_id !== null && row.role_name !== null ? {
+          role: {
             id: row.role_id,
             name: row.role_name
-          } : null,
+          },
           salt: row.salt,
           password: row.password,
           metadata: row.metadata,
@@ -147,10 +147,10 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
           creation_date: row.creation_date,
           modification_date: row.modification_date,
           disabled: row.disabled,
-          role: row.role_id !== null && row.role_name !== null ? {
+          role: {
             id: row.role_id,
             name: row.role_name
-          } : null,
+          },
           salt: row.salt,
           password: row.password,
           metadata: row.metadata,
@@ -186,10 +186,10 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
           creation_date: user.creation_date,
           modification_date: user.modification_date,
           disabled: user.disabled,
-          role: user.role_id !== null && user.role_name !== null ? {
+          role: {
             id: user.role_id,
             name: user.role_name
-          } : null,
+          },
           salt: user.salt,
           password: user.password,
           metadata: user.metadata,

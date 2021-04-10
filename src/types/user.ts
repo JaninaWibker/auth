@@ -39,10 +39,10 @@ const full_user = D.struct({
   temp_account: D.number,
   mfa: D.boolean,
   mfa_secret: D.nullable(D.string),
-  role: D.nullable(D.struct({
+  role: D.struct({
     id: D.string,
     name: D.string
-  })),
+  }),
 })
 
 const user_without_id = D.struct({
@@ -53,10 +53,10 @@ const user_without_id = D.struct({
   permissions: D.array(permission),
   creation_date: date,
   modification_date: date,
-  role: D.nullable(D.struct({
+  role: D.struct({
     id: D.string,
     name: D.string
-  })) // TODO: should this be nullable or should there always be a default role?
+  })
 })
 
 const serialized_user_without_id = D.struct({
@@ -67,10 +67,10 @@ const serialized_user_without_id = D.struct({
   permissions: D.array(permission),
   creation_date: date_from_iso_string,
   modification_date: date_from_iso_string,
-  role: D.nullable(D.struct({
+  role: D.struct({
     id: D.string,
     name: D.string
-  }))
+  })
 })
 
 const user = with_id(user_without_id, uuid)

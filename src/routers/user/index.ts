@@ -16,7 +16,7 @@ const userRouter = (strategy: Strategy, db: Adapters) => {
 
   // * login / logout
 
-  router.post('/login',  user.login(strategy))
+  router.post('/login',  user.login(db, strategy))
   router.post('/logout', user.logout(strategy))
 
   // * user endpoint

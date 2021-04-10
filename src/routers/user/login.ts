@@ -10,13 +10,26 @@ const login_request = D.union(
     username: D.string,
     password: D.string,
     is_refresh_token: D.literal(false),
-    get_refresh_token: D.boolean
+    is_mfa_token: D.literal(false),
+    get_refresh_token: D.boolean,
+    device_id: D.nullable(D.string),
   }),
   D.struct({
     username: D.string,
     refresh_token: D.string,
     is_refresh_token: D.literal(true),
-    get_refresh_token: D.literal(false)
+    is_mfa_token: D.literal(false),
+    get_refresh_token: D.literal(false),
+    device_id: D.nullable(D.string),
+  }),
+  D.struct({
+    username: D.string,
+    mfa_challenge: D.string,
+    mfa_token: D.string,
+    is_refresh_token: D.literal(false),
+    is_mfa_token: D.literal(true),
+    get_refresh_token: D.boolean,
+    device_id: D.nullable(D.string),
   })
 )
 
@@ -30,14 +43,22 @@ const login = (db: Adapters, strategy: Strategy) => (req: Request, res: Response
 
   const body = req.body as LoginRequest
 
-  const login_promise = body.is_refresh_token
-    ? strategy.login(db, body.username, body.refresh_token, true, body.get_refresh_token)
-    : strategy.login(db, body.username, body.password, false, body.get_refresh_token)
+  const password_like = body.is_refresh_token
+    ? body.refresh_token
+    : body.is_mfa_token
+      ? body.mfa_token
+      : body.password
 
-  login_promise
-    .then(({ user, access_token, refresh_token }) =>
-      success(res, 'successfully logged in', body.get_refresh_token ? { user, access_token, refresh_token } : { user, access_token })
-    )
+  strategy.login(db, body.username, password_like, body.is_refresh_token, body.is_mfa_token, body.get_refresh_token, body.device_id ? body.device_id : undefined, body.is_mfa_token ? body.mfa_challenge : undefined)
+    .then(tokens => {
+      if('mfa_token' in tokens) {
+        success(res, 'mfa challenge required', { mfa_token: tokens.mfa_token })
+      } else if(body.get_refresh_token) {
+        success(res, 'successfully logged in', { user: tokens.user, access_token: tokens.access_token, refresh_token: tokens.refresh_token })
+      } else {
+        success(res, 'successfully logged in', { user: tokens.user, access_token: tokens.access_token })
+      }
+    })
     .catch((err: Error) => failure(res, 'failed to log in: ' + err.message))
 }
 

@@ -29,7 +29,7 @@ export type withId<T, ID> = T & { id: ID }
  * Adds { id: ID } to the struct.
  * @note To be used with io-ts
  */
-const with_id = <T, ID>(type: D.Decoder<unknown, T>, id_type: D.Decoder<unknown, ID>) => D.intersect(type)(D.struct({ id: id_type }))
+const with_id = <T, ID>(type: D.Decoder<unknown, T>, id_type: D.Decoder<unknown, ID>): D.Decoder<unknown, T & { id: ID }> => D.intersect(type)(D.struct({ id: id_type }))
 
 export {
   with_id

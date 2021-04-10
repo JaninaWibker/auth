@@ -89,12 +89,26 @@ const full_user_to_user = (user: FullUser): User => ({
   role: user.role
 })
 
+const serialized_user_to_user = (user: SerializedUser): User => ({
+  ...user,
+  creation_date: new Date(user.creation_date),
+  modification_date: new Date(user.modification_date),
+})
+
+const user_to_serialized_user = (user: User): SerializedUser => ({
+  ...user,
+  creation_date: user.creation_date.toISOString(),
+  modification_date: user.modification_date.toISOString(),
+})
+
 export {
   user_without_id,
   serialized_user_without_id,
   user,
   serialized_user,
-  full_user_to_user
+  full_user_to_user,
+  serialized_user_to_user,
+  user_to_serialized_user,
 }
 
 export type FullUser = D.TypeOf<typeof full_user>

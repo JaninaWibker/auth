@@ -1,5 +1,4 @@
 import { Pool, QueryResult } from 'pg'
-import type { PoolClient } from 'pg'
 import type { Adapters, UserAdapter } from '../types/adapter'
 import type { Config } from '../types/config'
 import type { FullUser } from '../types/user'

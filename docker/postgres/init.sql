@@ -24,7 +24,7 @@ CREATE TABLE auth_role (
 CREATE TABLE auth_user (
   id                UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
   username          VARCHAR(128) UNIQUE NOT NULL,
-  full_name         VARCHAR(256), -- can be null if no name is every specified; shouldn't be split up into first and last name because the concept of first/last names differs around the world
+  fullname          VARCHAR(256), -- can be null if no name is every specified; shouldn't be split up into first and last name because the concept of first/last names differs around the world
   email             VARCHAR(256) NOT NULL,
   password          VARCHAR(128) NOT NULL, -- sha256 hash of the plain-text password
   salt              VARCHAR(64) NOT NULL,  -- salt that is appended to the password before it is hashed
@@ -118,7 +118,7 @@ INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name
 INSERT INTO auth_user (
   username, email, password, salt, role_id
 ) VALUES (
-  'jannik', 'auth@jannikwibker.dev', 'TODO', 'TODO', 'admin'
+  'jannik', 'auth@jannikwibker.dev', '4b7c647e94b6da76c56932c56d1a5cfa6227859afd5d93ca272aadf5d1bfca73', 'TODO', 'admin'
 );
 
 

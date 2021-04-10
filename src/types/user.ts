@@ -109,6 +109,10 @@ export {
   full_user_to_user,
   serialized_user_to_user,
   user_to_serialized_user,
+  date,
+  date_from_iso_string,
+  uuid,
+  hex,
 }
 
 export type FullUser = D.TypeOf<typeof full_user>

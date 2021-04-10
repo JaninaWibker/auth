@@ -8,8 +8,8 @@ type UserRowSimple = {
   username: string,
   fullname: string | null,
   email: string,
-  password: string, // TODO: string? isn't this maybe binary data?
-  salt: string,     // TODO: string? isn't this maybe binary data?
+  password: string,
+  salt: string,
   creation_date: Date,
   modification_date: Date,
   metadata: Record<string, unknown>,
@@ -96,9 +96,6 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
   pool.on('error', (err: Error) => {
     console.warn('An idle client has experienced an error', err)
   })
-
-
-  // TODO: release clients again
 
   const list_users_basic = (): Promise<FullUser[]> => pool.connect().then(client =>
     client.query('SELECT A.*, B.name as role_name FROM auth_user A LEFT JOIN auth_role B ON A.role_id = B.id')

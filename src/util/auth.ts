@@ -131,23 +131,6 @@ const jwt_strategy = (config: Config): Strategy => {
 
     db.user.get_user('username', username)
       .then(db_user => {
-        const user = full_user_to_user(db_user)
-
-        const accept = (user: User, get_refresh_token: boolean) => {
-
-          // TODO: should take note somehow that this user is now logged in
-          // TODO: this is a useful and absolutely needed piece of information for the bloom filter feature
-          // TODO: should also log it to the console or something like this
-
-          const access_token = generate('access-token', user, 'TODO')
-          const refresh_token = get_refresh_token ? generate('refresh-token', user, 'TODO', device_id) : undefined
-
-          return {
-            user: user,
-            access_token: access_token,
-            refresh_token: refresh_token
-          }
-        }
 
         // * Some checks need to be done regardless of `is_refresh_token`, some don't:
         // * - [both] checking if user account has been disabled
@@ -165,6 +148,24 @@ const jwt_strategy = (config: Config): Strategy => {
         // *
         // * Additionally mfa tokens also need to be handled here as well. For this the mfa_challenge
         // * parameter is used as well as the current date and the mfa_token (password_like).
+
+        const user = full_user_to_user(db_user)
+
+        const accept = (user: User, get_refresh_token: boolean) => {
+
+          // TODO: should take note somehow that this user is now logged in
+          // TODO: this is a useful and absolutely needed piece of information for the bloom filter feature
+          // TODO: should also log it to the console or something like this
+
+          const access_token = generate('access-token', user, 'TODO')
+          const refresh_token = get_refresh_token ? generate('refresh-token', user, 'TODO', device_id) : undefined
+
+          return {
+            user: user,
+            access_token: access_token,
+            refresh_token: refresh_token
+          }
+        }
 
         if(db_user.disabled)                                                return reject(new Error('user account is disabled'))
         if(db_user.temp_account !== 0 && db_user.temp_account < Date.now()) return reject(new Error('temporary account expired'))

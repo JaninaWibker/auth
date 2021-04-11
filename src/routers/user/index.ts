@@ -10,7 +10,7 @@ import { modify } from './modify'
 import { remove } from './remove'
 
 import { change_password } from './change_password'
-import { delete_account } from './delete_account'
+import { delete_account  } from './delete_account'
 
 import { login  } from './login'
 import { logout } from './logout'

@@ -28,8 +28,8 @@ CREATE TABLE auth_user (
   email             VARCHAR(256) NOT NULL,
   password          VARCHAR(128) NOT NULL, -- sha256 hash of the plain-text password
   salt              VARCHAR(64) NOT NULL,  -- salt that is appended to the password before it is hashed
-  creation_date     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  modification_date TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  creation_date     TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
+  modification_date TIMESTAMPTZ NOT NULL DEFAULT current_timestamp,
   metadata          JSONB NOT NULL DEFAULT '{}'::jsonb, -- custom metadata that can be used in the future
   disabled          BOOLEAN NOT NULL DEFAULT false,    -- wether or not the account is currently disabled
   mfa               BOOLEAN NOT NULL DEFAULT false,    -- wether or not 2fa is enabled (called mfa (multi-factor-authentication) because must start with letters)
@@ -43,9 +43,12 @@ CREATE TABLE auth_user (
 
 -- );
 
--- CREATE TABLE auth_device (
-
--- );
+CREATE TABLE auth_device (
+  id UUID NOT NULL DEFAULT uuid_generate_v4() PRIMARY KEY,
+  useragent VARCHAR(256),
+  ip VARCHAR(39) NOT NULL, -- 39 characters is the maximal length of an IPv6 address
+  creation_date TIMESTAMPTZ DEFAULT current_timestamp
+);
 
 -- CREATE TABLE auth_permission (   -- printed as '<scope>:<name>' (e.g. 'users:modify'); for nested scopes use dots ('.') (e.g. 'auth.users:modify')
 --   scope VARCHAR(64) PRIMARY KEY, -- scope for which the permission applies (e.g. 'users')
@@ -77,6 +80,12 @@ CREATE TABLE auth_it_group_permission (
   permission_scope  VARCHAR(64),
   permission_name   VARCHAR(64),
   PRIMARY KEY(group_id, permission_scope, permission_name)
+);
+
+CREATE TABLE auth_it_user_device (
+  user_id   UUID REFERENCES auth_user(id) ON DELETE CASCADE,
+  device_id UUID REFERENCES auth_device(id) ON DELETE CASCADE,
+  PRIMARY KEY(user_id, device_id)
 );
 
 
@@ -116,10 +125,20 @@ INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name
 INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name ) VALUES ( 'admin', 'auth.role',   '*' );
 INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name ) VALUES ( 'admin', 'auth.user',   '*' );
 
+INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name ) VALUES ( 'default', 'auth.user', 'modify-self'        );
+INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name ) VALUES ( 'default', 'auth.user', 'delete-own-account' );
+INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name ) VALUES ( 'default', 'auth.user', 'change-password'    );
+
 INSERT INTO auth_user (
   username, email, password, salt, role_id
 ) VALUES (
-  'jannik', 'auth@jannikwibker.dev', '4b7c647e94b6da76c56932c56d1a5cfa6227859afd5d93ca272aadf5d1bfca73', 'TODO', 'admin'
+  'jannik', 'auth+jannik@jannikwibker.dev', '4b7c647e94b6da76c56932c56d1a5cfa6227859afd5d93ca272aadf5d1bfca73', 'TODO', 'admin'
+);
+
+INSERT INTO auth_user (
+  username, email, password, salt, mfa, mfa_secret, role_id
+) VALUES (
+  'test', 'auth+test@jannikwibker.dev', '4b7c647e94b6da76c56932c56d1a5cfa6227859afd5d93ca272aadf5d1bfca73', 'TODO', false, NULL, 'default'
 );
 
 

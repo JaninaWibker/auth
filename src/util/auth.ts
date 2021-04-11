@@ -126,6 +126,10 @@ const jwt_strategy = (config: Config): Strategy => {
     })
   }
 
+  const device_id_generate = (db: Adapters, user_agent: string, ip: string): Promise<string> => {
+    return Promise.reject(new Error('not implemented yet'))
+  }
+
   const login = (db: Adapters, username: string, password_like: string, is_refresh_token = false, is_mfa_token = false, get_refresh_token = false, device_id?: string, mfa_challenge?: string) => new Promise<{ user: User, access_token: string, refresh_token?: string } | { mfa_token: string }>((resolve, reject) => {
     console.log('login', username, password_like, is_refresh_token, is_mfa_token, get_refresh_token, mfa_challenge)
 
@@ -169,6 +173,7 @@ const jwt_strategy = (config: Config): Strategy => {
 
         if(db_user.disabled)                                                return reject(new Error('user account is disabled'))
         if(db_user.temp_account !== 0 && db_user.temp_account < Date.now()) return reject(new Error('temporary account expired'))
+        if(db_user.passwordless)                                            return reject(new Error('user account is passwordless, need to set password before logging in'))
 
         if(is_mfa_token) {
           console.log('mfa: ', password_like, mfa_challenge)

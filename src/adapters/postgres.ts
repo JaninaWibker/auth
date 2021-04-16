@@ -310,23 +310,50 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
       })
   )
 
-  const update_or_create_device = (device_id: string, user_id: string, useragent: string, ip: string) => pool.connect().then(client =>
+  // TODO: if a device with useragent and ip already exists it should be chosen instead of creating a new one
+  const update_or_create_device = (device_id: string, user_id: string, useragent: string | undefined, ip: string) => pool.connect().then(client =>
     client.query('SELECT * FROM auth_it_user_device WHERE device_id = $1::uuid AND user_id = $2::uuid', [device_id, user_id])
-      .then(res => {
+      .then((res: QueryResult<{ device_id: string, user_id: string }>) => {
         if(res.rowCount === 0) {
           return client.query('INSERT INTO auth_device ( useragent, ip ) VALUES ( $1::text, $2::text ) RETURNING id', [useragent, ip])
-            .then(res => {
+            .then((res: QueryResult<{ id: string }>) => {
               if(res.rowCount === 1) {
-                return client.query('INSERT INTO auth_it_user_device ( device_id, user_id ) VALUES ( $1::text, $2::text )', [res.rows[0].id, user_id])
+                return client.query('INSERT INTO auth_it_user_device ( device_id, user_id ) VALUES ( $1::uuid, $2::uuid )', [res.rows[0].id, user_id])
+                  .then(() => res.rows[0].id)
               } else {
                 throw new Error('couldn\'t create new device')
               }
             })
         } else {
-          return client.query('UPDATE auth_device SET useragent = $1::text, ip = $2::text WHERE id = $1::uuid', [useragent, ip, device_id])
+          return client.query('UPDATE auth_device SET useragent = $1::text, ip = $2::text WHERE id = $1::uuid', [useragent || '', ip, device_id])
+            .then(() => res.rows[0].device_id)
         }
       })
-      .then(() => client.release())
+      .then(id => {
+        client.release()
+        return id
+      })
+      .catch(err => {
+        client.release()
+        throw err
+      })
+  )
+
+  // TODO: if a device with useragent and ip already exists it should be chosen instead of creating a new one
+  const create_device = (user_id: string, useragent: string | undefined, ip: string) => pool.connect().then(client =>
+    client.query('INSERT INTO auth_device ( useragent, ip ) VALUES ( $1::text, $2::text ) RETURNING id', [useragent, ip])
+      .then((res: QueryResult<{ id: string }>) => {
+        if(res.rowCount === 1) {
+          return client.query('INSERT INTO auth_it_user_device ( device_id, user_id ) VALUES ( $1::uuid, $2::uuid )', [res.rows[0].id, user_id])
+            .then(() => res.rows[0].id)
+        } else {
+          throw new Error('couldn\'t create new device')
+        }
+      })
+      .then(id => {
+        client.release()
+        return id
+      })
       .catch(err => {
         client.release()
         throw err
@@ -350,7 +377,8 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
       by_device_id: delete_device_by_device_id,
       by_user_device_id: delete_device_by_user_device_id,
     },
-    update_or_create_device: update_or_create_device
+    update_or_create_device: update_or_create_device,
+    create_device: create_device
   }
 
   resolve({ user: user_adapter, device: device_adapter })

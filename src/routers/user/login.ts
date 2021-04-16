@@ -49,14 +49,26 @@ const login = (db: Adapters, strategy: Strategy) => (req: Request, res: Response
       ? body.mfa_token
       : body.password
 
-  strategy.login(db, body.username, password_like, body.is_refresh_token, body.is_mfa_token, body.get_refresh_token, body.device_id ? body.device_id : undefined, body.is_mfa_token ? body.mfa_challenge : undefined)
+  const state = {
+    is_refresh_token: body.is_refresh_token,
+    is_mfa_token: body.is_mfa_token,
+    get_refresh_token: body.get_refresh_token
+  }
+
+  const metadata = {
+    device_id: body.device_id ? body.device_id : undefined,
+    useragent: req.headers['user-agent'],
+    ip: req.ip
+  }
+
+  strategy.login(db, body.username, password_like, state, metadata, body.is_mfa_token ? body.mfa_challenge : undefined)
     .then(tokens => {
       if('mfa_token' in tokens) {
         success(res, 'mfa challenge required', { mfa_token: tokens.mfa_token })
       } else if(body.get_refresh_token) {
-        success(res, 'successfully logged in', { user: tokens.user, access_token: tokens.access_token, refresh_token: tokens.refresh_token })
+        success(res, 'successfully logged in', { user: tokens.user, access_token: tokens.access_token, refresh_token: tokens.refresh_token, device_id: tokens.device_id })
       } else {
-        success(res, 'successfully logged in', { user: tokens.user, access_token: tokens.access_token })
+        success(res, 'successfully logged in', { user: tokens.user, access_token: tokens.access_token, device_id: tokens.device_id })
       }
     })
     .catch((err: Error) => failure(res, 'failed to log in: ' + err.message))

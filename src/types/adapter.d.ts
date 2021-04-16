@@ -17,7 +17,8 @@ export interface DeviceAdapter {
     by_user_device_id: (user_id: string, device_id: string) => Promise<void>,
     by_device_id: (device_id: string) => Promise<void>
   },
-  update_or_create_device: (device_id: string, user_id: string, useragent: string, ip: string) => Promise<void>
+  update_or_create_device: (device_id: string, user_id: string, useragent: string | undefined, ip: string) => Promise<string>,
+  create_device: (user_id: string, useragent: string | undefined, ip: string) => Promise<string>
 }
 
 export type Adapters = {

@@ -126,11 +126,7 @@ const jwt_strategy = (config: Config): Strategy => {
     })
   }
 
-  const device_id_generate = (db: Adapters, user_agent: string, ip: string): Promise<string> => {
-    return Promise.reject(new Error('not implemented yet'))
-  }
-
-  const login = (db: Adapters, username: string, password_like: string, is_refresh_token = false, is_mfa_token = false, get_refresh_token = false, device_id?: string, mfa_challenge?: string) => new Promise<{ user: User, access_token: string, refresh_token?: string } | { mfa_token: string }>((resolve, reject) => {
+  const login: Strategy['login'] = (db: Adapters, username: string, password_like: string, { is_refresh_token, is_mfa_token, get_refresh_token }, { device_id, useragent, ip }, mfa_challenge?: string) => new Promise<{ user: User, access_token: string, refresh_token?: string, device_id?: string } | { mfa_token: string }>((resolve, reject) => {
     console.log('login', username, password_like, is_refresh_token, is_mfa_token, get_refresh_token, mfa_challenge)
 
     db.user.get_user('username', username)
@@ -153,9 +149,25 @@ const jwt_strategy = (config: Config): Strategy => {
         // * Additionally mfa tokens also need to be handled here as well. For this the mfa_challenge
         // * parameter is used as well as the current date and the mfa_token (password_like).
 
+        // TODO: implement this:
+        // * Additional considerations have to be taken when it comes to devices:
+        // * The only flow which allows no device_id being set is the username/password flow, the
+        // * other ones just straight up reject the login attempt. For the username/password flow
+        // * a new device should be added (if it doesn't already exist) and the device_id returned
+        // * with the response.
+        // * The client should then always use this new device_id. For this to work the refresh-token,
+        // * as well as the mfa-token, have the device_id encoded in it which will be compared to the
+        // * ip, useragent and passed device_id. If the device_id's don't add up reject, if the useragent
+        // * or ip address doesn't add up update the device.
+        // * It is to be noted that this doesn't really enforce making each device uniquely identifiable
+        // * as it can be bypassed by just always extracting the device id from the refresh-token and
+        // * using that regardless of which device is used. The database for devices will then update lots
+        // * of times and the individual devices remain indistinguishable. Faking the user agent is also
+        // * something that can be done along side this.
+
         const user = full_user_to_user(db_user)
 
-        const accept = (user: User, get_refresh_token: boolean) => {
+        const accept = (user: User, get_refresh_token: boolean, device_id?: string) => {
 
           // TODO: should take note somehow that this user is now logged in
           // TODO: this is a useful and absolutely needed piece of information for the bloom filter feature
@@ -167,7 +179,8 @@ const jwt_strategy = (config: Config): Strategy => {
           return {
             user: user,
             access_token: access_token,
-            refresh_token: refresh_token
+            refresh_token: refresh_token,
+            device_id: device_id
           }
         }
 
@@ -187,7 +200,9 @@ const jwt_strategy = (config: Config): Strategy => {
               if(!mfa_challenge)                                            return reject(new Error('must provide a valid token for mfa challenge'))
               if(!mfa_verify(db_user.mfa_secret as string, mfa_challenge))  return reject(new Error('invalid token for mfa challenge'))
 
-              return resolve(accept(user, get_refresh_token))
+              db.device.update_or_create_device(device_id, db_user.id, useragent, ip)
+                .then(() => resolve(accept(user, get_refresh_token)))
+                .catch(err => reject(new Error('couldn\'t update device: ' + err.message)))
             })
             .catch(err => {
               console.warn(err)
@@ -204,7 +219,9 @@ const jwt_strategy = (config: Config): Strategy => {
 
               // mfa can be safely ignored now because device_id's match and refresh_tokens are generally trusted
 
-              return resolve(accept(serialized_user_to_user(decoded.user), false))
+              db.device.update_or_create_device(device_id, db_user.id, useragent, ip)
+                .then(() => resolve(accept(serialized_user_to_user(decoded.user), false)))
+                .catch(err => reject(new Error('couldn\'t update device: ' + err.message)))
             })
             .catch(err => {
               console.warn(err)
@@ -213,11 +230,13 @@ const jwt_strategy = (config: Config): Strategy => {
         } else {
           if(db_user.password !== hash_password(password_like, db_user.salt)) return reject(new Error('user doesn\'t exist or invalid password'))
           if(db_user.mfa) {
-            return resolve({
-              mfa_token: generate('mfa-token', user, 'TODO', device_id)
+            resolve({
+              mfa_token: generate('mfa-token', user, 'TODO', device_id), // TODO: change the jti to something useful
             })
           } else {
-            return resolve(accept(user, get_refresh_token))
+            db.device.create_device(db_user.id, useragent, ip)
+              .then(device_id => resolve(accept(user, get_refresh_token, device_id)))
+              .catch(err => reject(new Error('couldn\'t create device: ' + err.message)))
           }
         }
       })

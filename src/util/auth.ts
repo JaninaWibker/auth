@@ -15,6 +15,10 @@ import { serialized_user, full_user_to_user, serialized_user_to_user } from '../
 import { JWTPayload, JWTType } from '../types/JWT'
 import { jwt_payload } from '../types/JWT'
 
+import { HashMap } from '../util/HashMap'
+
+const logged_in = new HashMap<string, number>(uuid => crypto.createHash('sha1').update(uuid).digest())
+
 const hash_password = (password: string, salt: string): string => {
   const hash = crypto.createHash('sha256')
   hash.update(password)
@@ -71,6 +75,17 @@ const jwt_strategy = (config: Config): Strategy => {
       .observe_catch(err => unauthorized(res, err.message, config.env === 'dev'))
       .then(promise => promise
         .then(({ jwt, decoded }) => {
+
+          const login_time = logged_in.find(decoded.user.id)
+
+          if(login_time) {
+            if(login_time + jwt_options.expires_in > Date.now()) {
+              logged_in.remove(decoded.user.id)
+              throw new Error('invalid access-token')
+            }
+          } else {
+            throw new Error('invalid access-token')
+          }
 
           // TODO: verify that the user really exists
 
@@ -173,6 +188,9 @@ const jwt_strategy = (config: Config): Strategy => {
           // TODO: this is a useful and absolutely needed piece of information for the bloom filter feature
           // TODO: should also log it to the console or something like this
 
+          logged_in.put(user.id, Date.now())
+          console.log(logged_in)
+
           const access_token = generate('access-token', user, 'TODO')
           const refresh_token = get_refresh_token ? generate('refresh-token', user, 'TODO', device_id) : undefined
 
@@ -243,11 +261,9 @@ const jwt_strategy = (config: Config): Strategy => {
       .catch(() => reject(new Error('user doesn\'t exist or invalid password')))
   })
 
-  const logout = (username: string) => new Promise<undefined>((resolve, reject) => {
-    console.log('logout', username)
-    reject(new Error('not implemented yet LUL'))
-    // TODO: implement this and call resolve(undefined) or reject(new Error('logout failed')) (message might change)
-  })
+  const logout: Strategy['logout'] = (user_id: string) => logged_in.remove(user_id)
+    ? Promise.resolve(undefined)
+    : Promise.reject(new Error('user not logged in'))
 
   return {
     authenticated: authenticated,

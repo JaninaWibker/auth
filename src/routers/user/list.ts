@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express'
-import { Adapters } from '../../types/adapter'
+import type { Adapters } from '../../types/adapter'
 import { full_user_to_user } from '../../types/user'
 
 import { success, failure } from '../../util/response'

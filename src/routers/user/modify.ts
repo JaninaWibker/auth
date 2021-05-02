@@ -1,14 +1,13 @@
 import type { Request, Response } from 'express'
+import type { Adapters } from '../../types/adapter'
 import * as D from 'io-ts/Decoder'
 import { isLeft } from 'fp-ts/lib/Either'
 import { check_permission } from '../../util/check_permission'
 import { success, failure } from '../../util/response'
-import { uuid } from '../../types/user'
+import { full_user_to_user } from '../../types/user'
 
 const modify_request = D.struct({
-  target_id: uuid,
   changes: D.partial({
-    username: D.string,
     fullname: D.nullable(D.string),
     email: D.string,
     password: D.string,
@@ -18,7 +17,7 @@ const modify_request = D.struct({
 
 type ModifyRequest = D.TypeOf<typeof modify_request>
 
-const modify = (req: Request, res: Response) => {
+const modify = (db: Adapters) => (req: Request, res: Response) => {
 
   const result = modify_request.decode(req.body)
 
@@ -28,21 +27,16 @@ const modify = (req: Request, res: Response) => {
 
   const body = req.body as ModifyRequest
 
-  const self_modifying = body.target_id === req.user.id
-
-  if(!self_modifying && !check_permission(req.user, 'auth.user', 'modify-other')) {
-    return failure(res, 'insufficient permissions, \'auth.user:modify-other\' is required')
-  }
-
-  if(self_modifying && !check_permission(req.user, 'auth.user', 'modify-self')) {
+  if(!check_permission(req.user, 'auth.user', 'modify-self')) {
     return failure(res, 'insufficient permissions, \'auth.user:modify-self\' is required')
   }
 
-  // TODO: how should admin and normal api requests be differentiated?
+  db.user.update_user(req.user.id, body.changes)
+    .then(db_user => success(res, 'successfully modified user', full_user_to_user(db_user)))
+    .catch(err => failure(res, 'failed to update user (' + err.message + ')'))
 
   // * Q: don't know what should be allowed to be updated
   // * A: probably only allow:
-  // *    - username (if it doesn't conflict with something else; maybe even disallow it completely),
   // *    - fullname (100%; fullname shouldn't really matter),
   // *    - email    (maybe requires confirmation email potentially),
   // *    - password (maybe requires some other kind of interaction; maybe mfa)

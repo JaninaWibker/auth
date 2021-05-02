@@ -88,7 +88,6 @@ class HashMap<K, V> {
     if(found === -1) {
       return undefined
     } else {
-      console.log('should remove now', this.data, found, key)
       const rtn = this.data[found][1]
 
       // remove value

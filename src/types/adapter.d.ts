@@ -1,9 +1,12 @@
 import type { FullUser } from './user'
 
 export interface UserAdapter {
-  list_users_basic: () => Promise<Omit<FullUser, 'groups' | 'permissions'>[]>
-  list_users_detailed: () => Promise<FullUser[]>
-  get_user: (by: 'id' | 'username', id_or_username: string) => Promise<FullUser>
+  list_users_basic: () => Promise<Omit<FullUser, 'groups' | 'permissions'>[]>,
+  list_users_detailed: () => Promise<FullUser[]>,
+  get_user: (by: 'id' | 'username', id_or_username: string) => Promise<FullUser>,
+  create_user_full: (username: string, fullname: string | null, password: string, email: string, creation_date: Date | null, modification_date: Date | null, metadata: Record<string, unknown>, disabled: boolean, mfa: boolean, mfa_secret: string | null, passwordless: boolean, temp_account: number, role_id: string) => Promise<FullUser>,
+  create_user: (username: string, fullname: string | null, email: string, password: string) => Promise<FullUser>,
+  update_user: (target_id: string, changes: Partial<{ fullname: string | null, email: string, password: string, metadata: Record<string, unknown> }>) => Promise<FullUser>
 }
 
 export interface DeviceAdapter {

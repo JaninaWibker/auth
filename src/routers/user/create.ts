@@ -1,4 +1,6 @@
 import type { Request, Response } from 'express'
+import type { Adapters } from '../../types/adapter'
+import { full_user_to_user } from '../../types/user'
 import * as D from 'io-ts/Decoder'
 import { isLeft } from 'fp-ts/lib/Either'
 import { success, failure } from '../../util/response'
@@ -12,7 +14,8 @@ const create_request = D.struct({
 
 type CreateRequest = D.TypeOf<typeof create_request>
 
-const create = (req: Request, res: Response) => {
+// TODO: make an admin version of this endpoint which uses create_user_full?
+const create = (db: Adapters) => (req: Request, res: Response) => {
 
   const result = create_request.decode(req.body)
 
@@ -22,7 +25,9 @@ const create = (req: Request, res: Response) => {
 
   const body = req.body as CreateRequest
 
-  failure(res, 'not implemented yet')
+  db.user.create_user(body.username, body.fullname, body.email, body.password)
+    .then(db_user => success(res, 'successfully created user', full_user_to_user(db_user)))
+    .catch(err => failure(res, 'failed to create user (' + err.message + ')'))
 }
 
 export {

@@ -2,6 +2,7 @@ import { Pool, QueryResult } from 'pg'
 import type { Adapters, DeviceAdapter, UserAdapter } from '../types/adapter'
 import type { Config } from '../types/config'
 import type { FullUser } from '../types/user'
+import { gen_salt, hash_password } from '../util/password'
 
 type UserRowSimple = {
   id: string,
@@ -212,14 +213,141 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
       })
   })
 
+  const create_user_full = (username: string, fullname: string | null, password: string, email: string, creation_date: Date | null, modification_date: Date | null, metadata: Record<string, unknown>, disabled: boolean, mfa: boolean, mfa_secret: string | null, passwordless: boolean, temp_account: number, role_id: string): Promise<FullUser> => pool.connect().then(client => {
+    const salt = gen_salt()
+    const hashed_password = hash_password(password, salt)
+
+    const query_fields = 'username, fullname, email, password, salt, creation_date, modification_date, metadata, disabled, mfa, mfa_secret, passwordless, temp_account, role_id'
+    const query_values = '$1::text, $2::text, $3::text, $4::text, $5::text, $6::date, $7::date, $8::json, $9::bool, $10:bool, $11:date, $12::bool, $13::text'
+    const actual_values = [ username, fullname, email, hashed_password, salt, creation_date, modification_date, metadata, disabled, mfa, mfa_secret, passwordless, temp_account, role_id ]
+
+    return client.query(`INSERT INTO auth_user ( ${query_fields} ) VALUES ( ${query_values} ) RETURNING *`, actual_values)
+      .then((res: QueryResult<UserRowDetailed>) => {
+        const user: UserRowDetailedMapped = rows_to_object<UserRowDetailed, UserRowDetailedMapped>(res.rows, user_row_detailed_inverted_keys, user_row_detailed_inverted_keys)[0]
+        client.release()
+        return {
+          id: user.id,
+          username: user.username,
+          fullname: user.fullname,
+          email: user.email,
+          groups: user.group_id,
+          permissions: user.role_permission_scope.map((scope, i) => ({ scope: scope, name: user.role_permission_name[i] })),
+          creation_date: user.creation_date,
+          modification_date: user.modification_date,
+          disabled: user.disabled,
+          role: { // TODO: the query doesn't return role_name
+            id: user.role_id,
+            name: user.role_name
+          },
+          salt: user.salt,
+          password: user.password,
+          metadata: user.metadata,
+          passwordless: user.passwordless,
+          temp_account: +user.temp_account,
+          mfa: user.mfa,
+          mfa_secret: user.mfa_secret
+        }
+      })
+      .catch(err => {
+        client.release()
+        console.warn(err)
+        throw err
+      })
+  })
+
+  const create_user = (username: string, fullname: string | null, email: string, password: string): Promise<FullUser> => pool.connect().then(client => {
+    const salt = gen_salt()
+    const hashed_password = hash_password(password, salt)
+
+    const query_fields = 'username, fullname, email, password, salt'
+    const query_values = '$1::text, $2::text, $3::text, $4::text, $5::text'
+
+    return client.query(`INSERT INTO auth_user ( ${query_fields} ) VALUES ( ${query_values} ) RETURNING *`, [
+      username, fullname, email, hashed_password, salt
+    ])
+      .then((res: QueryResult<UserRowDetailed>) => {
+        const user: UserRowDetailedMapped = rows_to_object<UserRowDetailed, UserRowDetailedMapped>(res.rows, user_row_detailed_inverted_keys, user_row_detailed_inverted_keys)[0]
+        client.release()
+        return {
+          id: user.id,
+          username: user.username,
+          fullname: user.fullname,
+          email: user.email,
+          groups: user.group_id,
+          permissions: user.role_permission_scope.map((scope, i) => ({ scope: scope, name: user.role_permission_name[i] })), // TODO: this isn't avaiable with this 'RETURNING *' query
+          creation_date: user.creation_date,
+          modification_date: user.modification_date,
+          disabled: user.disabled,
+          role: {
+            id: user.role_id,
+            name: user.role_name // TODO: this isn't avaiable with this 'RETURNING *' query
+          },
+          salt: user.salt,
+          password: user.password,
+          metadata: user.metadata,
+          passwordless: user.passwordless,
+          temp_account: +user.temp_account,
+          mfa: user.mfa,
+          mfa_secret: user.mfa_secret
+        }
+      })
+      .catch(err => {
+        client.release()
+        console.warn(err)
+        throw err
+      })
+  })
+
+  const update_user = (target_id: string, changes: Partial<{ fullname: string | null, email: string, password: string, metadata: Record<string, unknown> }>): Promise<FullUser> => pool.connect().then(client => {
+
+    const query_fields: { field: string, type: string }[] = []
+    const query_values: any[] = []
+
+    if(changes.fullname !== undefined) {
+      query_fields.push({ field: 'fullname', type: 'text' })
+      query_values.push(changes.fullname)
+    }
+    if(changes.email !== undefined) {
+      query_fields.push({ field: 'email', type: 'text' })
+      query_values.push(changes.email)
+    }
+    if(changes.password !== undefined) {
+      const salt = gen_salt()
+      const hashed_password = hash_password(changes.password, salt)
+
+      query_fields.push({ field: 'salt', type: 'text' })
+      query_values.push(salt)
+      query_fields.push({ field: 'password', type: 'text' })
+      query_values.push(hashed_password)
+    }
+    if(changes.metadata !== undefined) {
+      query_fields.push({ field: 'metadata', type: 'json' })
+      query_values.push(changes.metadata)
+    }
+
+    return client.query(`UPDATE ${query_fields.map(({ field, type }, i) => `SET ${field} = $${i+1}::${type}`)} WHERE id = $${query_values.length+1}::uuid RETURNING *`, query_values)
+      .then(db_user => {
+        console.log(db_user)
+        throw new Error('idk') // TODO: do something appropriate here in order to return FullUser (will run into the same issues with permissions / role similar to create_user(_full))
+      })
+      .catch(err => {
+        client.release()
+        console.warn(err)
+        throw err
+      })
+  })
+
   const find_device_by_id = (device_id: string) => pool.connect().then(client =>
     client.query('SELECT id as device_id, useragent, ip FROM auth_device WHERE id = $1::uuid', [device_id])
       .then((res: QueryResult<DeviceRow>) => {
         if(res.rowCount === 0) throw new Error(`device not found (by id: ${device_id})`)
-
-        console.log(res.rows)
-
+        client.release()
         return res.rows[0]
+      })
+      .catch(err => {
+        client.release()
+        console.warn(err)
+        throw err
       })
   )
 
@@ -257,6 +385,7 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
       })
       .catch(err => {
         client.release()
+        console.warn(err)
         throw err
       })
   )
@@ -288,6 +417,7 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
       })
       .catch(err => {
         client.release()
+        console.warn(err)
         throw err
       })
   )
@@ -306,6 +436,7 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
       })
       .catch(err => {
         client.release()
+        console.warn(err)
         throw err
       })
   )
@@ -335,6 +466,7 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
       })
       .catch(err => {
         client.release()
+        console.warn(err)
         throw err
       })
   )
@@ -356,6 +488,7 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
       })
       .catch(err => {
         client.release()
+        console.warn(err)
         throw err
       })
   )
@@ -364,6 +497,9 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
     list_users_basic,
     list_users_detailed,
     get_user,
+    create_user_full,
+    create_user,
+    update_user,
   }
 
   const device_adapter: DeviceAdapter = {

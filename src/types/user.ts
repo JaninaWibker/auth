@@ -22,6 +22,10 @@ const hex: D.Decoder<unknown, string> = {
   decode: (u) => typeof u === 'string' && /^(?:0x)?[0-9a-f]+$/i.test(u) ? D.success(u) : D.failure(u, 'hex string')
 }
 
+const mfa_challenge: D.Decoder<unknown, string> = {
+  decode: (u) => typeof u === 'string' && /^[0-9]{6}$/.test(u) ? D.success(u) : D.failure(u, 'mfa challenge')
+}
+
 const full_user = D.struct({
   id: uuid,
   username: D.string,
@@ -113,6 +117,7 @@ export {
   date_from_iso_string,
   uuid,
   hex,
+  mfa_challenge,
 }
 
 export type FullUser = D.TypeOf<typeof full_user>

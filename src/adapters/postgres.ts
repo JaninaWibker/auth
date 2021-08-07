@@ -325,6 +325,8 @@ const postgres_adapter = (config: Config): Promise<Adapters> => new Promise((res
       query_values.push(changes.metadata)
     }
 
+    query_values.push(target_id)
+
     return client.query(`UPDATE ${query_fields.map(({ field, type }, i) => `SET ${field} = $${i+1}::${type}`)} WHERE id = $${query_values.length+1}::uuid RETURNING *`, query_values)
       .then(db_user => {
         console.log(db_user)

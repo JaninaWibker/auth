@@ -6,6 +6,8 @@ import Optional from './Optional'
 import * as D from 'io-ts/Decoder'
 import { isLeft } from 'fp-ts/lib/Either'
 
+import FEATURES from '../features'
+
 import type { Adapters } from '../types/adapter'
 import type { NextFunction, Request, Response } from 'express'
 import type { Config } from '../types/config'
@@ -76,15 +78,25 @@ const jwt_strategy = (config: Config): Strategy => {
       .then(promise => promise
         .then(({ jwt, decoded }) => {
 
-          const login_time = logged_in.find(decoded.user.id)
+          if(FEATURES.DISABLE_LOGOUT) {
 
-          if(login_time) {
-            if(login_time + jwt_options.expires_in > Date.now()) {
-              logged_in.remove(decoded.user.id)
+            if(decoded.exp > Date.now()) {
               throw new Error('invalid access-token')
             }
+
           } else {
-            throw new Error('invalid access-token')
+
+            const login_time = logged_in.find(decoded.user.id)
+
+            if(login_time) {
+              if(login_time + jwt_options.expires_in > Date.now()) {
+                logged_in.remove(decoded.user.id)
+                throw new Error('invalid access-token')
+              }
+            } else {
+              throw new Error('invalid access-token')
+            }
+
           }
 
           // TODO: verify that the user really exists
@@ -147,6 +159,8 @@ const jwt_strategy = (config: Config): Strategy => {
     db.user.get_user('username', username)
       .then(db_user => {
 
+        // * the features file might change some of this behaviour by disabling things such as mfa or refresh-tokens
+
         // * Some checks need to be done regardless of `is_refresh_token`, some don't:
         // * - [both] checking if user account has been disabled
         // * - [both] checking if user account is only temporary and expired
@@ -188,8 +202,10 @@ const jwt_strategy = (config: Config): Strategy => {
           // TODO: this is a useful and absolutely needed piece of information for the bloom filter feature
           // TODO: should also log it to the console or something like this
 
-          logged_in.put(user.id, Date.now())
-          console.log(logged_in)
+          if(!FEATURES.DISABLE_LOGOUT) {
+            logged_in.put(user.id, Date.now())
+            console.log(logged_in)
+          }
 
           const access_token = generate('access-token', user, 'TODO')
           const refresh_token = get_refresh_token ? generate('refresh-token', user, 'TODO', device_id) : undefined
@@ -207,6 +223,8 @@ const jwt_strategy = (config: Config): Strategy => {
         if(db_user.passwordless)                                            return reject(new Error('user account is passwordless, need to set password before logging in'))
 
         if(is_mfa_token) {
+          if(FEATURES.DISABLE_MFA)                                          return reject(new Error('mfa is disabled'))
+          if(FEATURES.DISABLE_DEVICE_IDS)                                   return reject(new Error('must enable device ids for mfa to work'))
           console.log('mfa: ', password_like, mfa_challenge)
 
           verify_token(D.struct({ user: serialized_user, device_id: D.string, type: D.literal('mfa-token') }), password_like)
@@ -227,6 +245,7 @@ const jwt_strategy = (config: Config): Strategy => {
               reject(err)
             })
         } else if(is_refresh_token) {
+          if(FEATURES.DISABLE_REFRESH_TOKENS)         return reject(new Error('refresh-tokens are disabled'))
           verify_token(D.struct({ user: serialized_user, device_id: D.string, type: D.literal('refresh-token') }), password_like)
             .then(({ decoded }) => {
               console.log(decoded)
@@ -252,18 +271,28 @@ const jwt_strategy = (config: Config): Strategy => {
               mfa_token: generate('mfa-token', user, 'TODO', device_id), // TODO: change the jti to something useful
             })
           } else {
-            db.device.create_device(db_user.id, useragent, ip)
-              .then(device_id => resolve(accept(user, get_refresh_token, device_id)))
-              .catch(err => reject(new Error('couldn\'t create device: ' + err.message)))
+            if(FEATURES.DISABLE_DEVICE_IDS) {
+              resolve(accept(user, get_refresh_token))
+            } else {
+              db.device.create_device(db_user.id, useragent, ip)
+                .then(device_id => resolve(accept(user, get_refresh_token, device_id)))
+                .catch(err => reject(new Error('couldn\'t create device: ' + err.message)))
+            }
           }
         }
       })
       .catch(() => reject(new Error('user doesn\'t exist or invalid password')))
   })
 
-  const logout: Strategy['logout'] = (user_id: string) => logged_in.remove(user_id)
-    ? Promise.resolve(undefined)
-    : Promise.reject(new Error('user not logged in'))
+  const logout: Strategy['logout'] = (user_id: string) => {
+    if(FEATURES.DISABLE_LOGOUT) {
+      return Promise.reject(new Error('logout is disabled'))
+    } else {
+      return logged_in.remove(user_id)
+        ? Promise.resolve(undefined)
+        : Promise.reject(new Error('user not logged in'))
+    }
+  }
 
   return {
     authenticated: authenticated,

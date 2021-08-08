@@ -2,3 +2,5 @@ babel.config.js
 jest.config.ts
 src/test
 dist
+dashboard
+static

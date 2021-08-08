@@ -10,6 +10,7 @@ import {  test  } from './test'
 import { create } from './create'
 import { modify } from './modify'
 import { admin_modify } from './admin_modify'
+import { admin_delete } from './admin_delete'
 
 import { change_password } from './change_password'
 import { delete_account  } from './delete_account'
@@ -21,7 +22,7 @@ const userRouter = (strategy: Strategy, db: Adapters) => {
   const router = Router()
 
   const user = {
-    list, info, test, create, modify, admin_modify, login, logout, change_password, delete_account
+    list, info, test, create, modify, admin_modify, admin_delete, login, logout, change_password, delete_account
   }
 
   // * login / logout
@@ -46,10 +47,11 @@ const userRouter = (strategy: Strategy, db: Adapters) => {
     router.patch('/',                   strategy.authenticated, user.modify)
   }
   router.patch('/admin/',               strategy.authenticated, user.admin_modify)
+  router.delete('/admin/',              strategy.authenticated, user.admin_delete)
 
   if(!FEATURES.DISABLE_ACCOUNT_MODIFICATION) {
     router.patch('/change-password',    strategy.authenticated, user.change_password(strategy, db))
-    router.delete('/delete-account',    strategy.authenticated, user.delete_account(db))
+    router.delete('/delete-account',    strategy.authenticated, user.delete_account(strategy, db))
   }
 
   // user.get('/username-already-taken/:username', strategy.authenticated, user.username_already_taken)

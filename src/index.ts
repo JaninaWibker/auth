@@ -18,6 +18,8 @@ import type { Environment } from './util/transform-config'
 import jwt_strategy from './util/auth'
 import adapters from './adapters/adapter'
 
+import FEATURES from './features'
+
 const private_key = fs.readFileSync('./certs/auth/private.key', 'utf8')
 const public_key = fs.readFileSync('./certs/auth/public.key', 'utf8')
 
@@ -27,7 +29,7 @@ const startup_time = +new Date()
 const config = transform(dotenv.config().parsed as Environment, private_key, public_key)
 
 console.log('Starting the server with the following configuration:')
-console.log(Object.assign({}, config, { public_key: '<omitted>', private_key: '<omitted>', db: { ...config.db, password: '<omitted>' } }))
+console.log(Object.assign({}, config, { _public_key: '<omitted>', _private_key: '<omitted>', db: { ...config.db, password: '<omitted>' } }))
 
 const app = express()
 
@@ -57,6 +59,10 @@ app.use(express.json())
 
 app.get('/current-version', (_, res) => res.status(200).end(version))
 app.get('/uptime',          (_, res) => res.status(299).end(startup_time.toString()))
+
+if(!FEATURES.DISABLE_WEBINTERFACE) {
+  app.use('/dashboard', express.static('static'))
+}
 
 const strategy = jwt_strategy(config)
 

@@ -1,6 +1,6 @@
-FROM node:15 as build
+FROM auth-dashboard:0.0.1 as build_dashboard
 
-# TODO: what about the auth dashboard?
+FROM node:15 as build_auth
 
 WORKDIR /auth
 
@@ -11,20 +11,28 @@ COPY package-lock.json /auth/package-lock.json
 # install node modules
 RUN npm install
 
-# copy over rest of the files (exludes hidden files)
+# copy over rest of the files (excludes hidden files and node_modules)
 COPY . /auth
 
 # copy over dotenv file # TODO: will dotenv be used?
-COPY .env /auth/.env
+COPY .env.prod /auth/.env
+
 
 RUN npm run build
 
 FROM node:15
 
-COPY --from=build /auth/dist /auth
-COPY --from=build /auth/.env /auth/.env
+# copy over build of dashboard
+COPY --from=build_dashboard /dashboard/build /auth/static/
+
+# copy over build of auth
+COPY --from=build_auth /auth/             /auth/
+COPY --from=build_auth /auth/.env         /auth/.env
+COPY --from=build_auth /auth/package.json /auth/package.json
+COPY --from=build_auth /auth/certs        /auth/certs
+COPY --from=build_auth /auth/node_modules /auth/node_modules
 
 WORKDIR /auth
 
-CMD node index.js
-
+# run auth
+CMD node dist/index.js

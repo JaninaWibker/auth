@@ -58,7 +58,8 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 
 app.get('/current-version', (_, res) => res.status(200).end(version))
-app.get('/uptime',          (_, res) => res.status(299).end(startup_time.toString()))
+app.get('/uptime',          (_, res) => res.status(200).end(startup_time.toString()))
+app.get('/public-key',      (_, res) => res.status(200).end(public_key))
 
 if(!FEATURES.DISABLE_WEBINTERFACE) {
   app.use('/dashboard', express.static('static'))

@@ -73,7 +73,7 @@ const jwt_strategy = (config: Config): Strategy => {
 
   const authenticated = (req: Request, res: Response, next: NextFunction) => {
     extract_token(req)
-      .then(token => verify_token(D.struct({ user: serialized_user, type: D.literal('access-token') }), token))
+      .then(token => verify_token(D.struct({ user: serialized_user, type: D.literal('access-token'), azp: D.nullable(D.string) }), token))
       .observe_catch(err => unauthorized(res, err.message, config.env === 'dev'))
       .then(promise => promise
         .then(({ jwt, decoded }) => {
@@ -110,7 +110,7 @@ const jwt_strategy = (config: Config): Strategy => {
       )
   }
 
-  const generate = (type: JWTType, user: User, jti: string, device_id?: string) => {
+  const generate = (type: JWTType, user: User, jti: string, azp: string | null, device_id?: string) => {
 
     // const jti = 'idk' // TODO: this should be something unique per jwt; this can then be used with a bloom filter potentially
     const sub = 'TODO'   // TODO: what should this be?
@@ -126,6 +126,7 @@ const jwt_strategy = (config: Config): Strategy => {
     return jwt.sign({
       user: user,
       type: type,
+      azp: azp,
       device_id: device_id
     }, jwt_options.private_key, {
       algorithm: jwt_options.algorithm,
@@ -153,7 +154,7 @@ const jwt_strategy = (config: Config): Strategy => {
     })
   }
 
-  const login: Strategy['login'] = (db: Adapters, username: string, password_like: string, { is_refresh_token, is_mfa_token, get_refresh_token }, { device_id, useragent, ip }, mfa_challenge?: string) => new Promise<{ user: User, access_token: string, refresh_token?: string, device_id?: string } | { mfa_token: string }>((resolve, reject) => {
+  const login: Strategy['login'] = (db: Adapters, username: string, password_like: string, { is_refresh_token, is_mfa_token, get_refresh_token }, { device_id, useragent, ip, azp }, mfa_challenge?: string) => new Promise<{ user: User, access_token: string, refresh_token?: string, device_id?: string } | { mfa_token: string }>((resolve, reject) => {
     console.log('login', username, password_like, is_refresh_token, is_mfa_token, get_refresh_token, mfa_challenge)
 
     db.user.get_user('username', username)
@@ -178,6 +179,11 @@ const jwt_strategy = (config: Config): Strategy => {
         // * Additionally mfa tokens also need to be handled here as well. For this the mfa_challenge
         // * parameter is used as well as the current date and the mfa_token (password_like).
 
+        // * when sending a username/password login request you can set the azp value if needed.
+        // * this value will then be included in the access-token, refresh-token and mfa-token if needed
+        // * and future access-tokens generated from either refresh-tokens or mfa-tokens will also include
+        // * the azp value.
+
         // TODO: implement this:
         // * Additional considerations have to be taken when it comes to devices:
         // * The only flow which allows no device_id being set is the username/password flow, the
@@ -196,7 +202,7 @@ const jwt_strategy = (config: Config): Strategy => {
 
         const user = full_user_to_user(db_user)
 
-        const accept = (user: User, get_refresh_token: boolean, device_id?: string) => {
+        const accept = (user: User, get_refresh_token: boolean, azp: string | null, device_id?: string) => {
 
           // TODO: should take note somehow that this user is now logged in
           // TODO: this is a useful and absolutely needed piece of information for the bloom filter feature
@@ -207,8 +213,8 @@ const jwt_strategy = (config: Config): Strategy => {
             console.log(logged_in)
           }
 
-          const access_token = generate('access-token', user, 'TODO')
-          const refresh_token = get_refresh_token ? generate('refresh-token', user, 'TODO', device_id) : undefined
+          const access_token = generate('access-token', user, 'TODO', azp)
+          const refresh_token = get_refresh_token ? generate('refresh-token', user, 'TODO', azp, device_id) : undefined
 
           return {
             user: user,
@@ -227,7 +233,7 @@ const jwt_strategy = (config: Config): Strategy => {
           if(FEATURES.DISABLE_DEVICE_IDS)                                   return reject(new Error('must enable device ids for mfa to work'))
           console.log('mfa: ', password_like, mfa_challenge)
 
-          verify_token(D.struct({ user: serialized_user, device_id: D.string, type: D.literal('mfa-token') }), password_like)
+          verify_token(D.struct({ user: serialized_user, device_id: D.string, type: D.literal('mfa-token'), azp: D.nullable(D.string) }), password_like)
             .then(({ decoded }) => {
 
               if(decoded.user.username !== username)                        return reject(new Error('provided mfa-token is ment for another user'))
@@ -237,7 +243,7 @@ const jwt_strategy = (config: Config): Strategy => {
               if(!mfa_verify(db_user.mfa_secret as string, mfa_challenge))  return reject(new Error('invalid token for mfa challenge'))
 
               db.device.update_or_create_device(device_id, db_user.id, useragent, ip)
-                .then(() => resolve(accept(user, get_refresh_token)))
+                .then(() => resolve(accept(user, get_refresh_token, decoded.azp)))
                 .catch(err => reject(new Error('couldn\'t update device: ' + err.message)))
             })
             .catch(err => {
@@ -246,7 +252,7 @@ const jwt_strategy = (config: Config): Strategy => {
             })
         } else if(is_refresh_token) {
           if(FEATURES.DISABLE_REFRESH_TOKENS)         return reject(new Error('refresh-tokens are disabled'))
-          verify_token(D.struct({ user: serialized_user, device_id: D.string, type: D.literal('refresh-token') }), password_like)
+          verify_token(D.struct({ user: serialized_user, device_id: D.string, type: D.literal('refresh-token'), azp: D.nullable(D.string) }), password_like)
             .then(({ decoded }) => {
               console.log(decoded)
 
@@ -257,7 +263,7 @@ const jwt_strategy = (config: Config): Strategy => {
               // mfa can be safely ignored now because device_id's match and refresh_tokens are generally trusted
 
               db.device.update_or_create_device(device_id, db_user.id, useragent, ip)
-                .then(() => resolve(accept(serialized_user_to_user(decoded.user), false)))
+                .then(() => resolve(accept(serialized_user_to_user(decoded.user), false, decoded.azp)))
                 .catch(err => reject(new Error('couldn\'t update device: ' + err.message)))
             })
             .catch(err => {
@@ -268,11 +274,11 @@ const jwt_strategy = (config: Config): Strategy => {
           if(db_user.password !== hash_password(password_like, db_user.salt)) return reject(new Error('user doesn\'t exist or invalid password'))
           if(db_user.mfa) {
             resolve({
-              mfa_token: generate('mfa-token', user, 'TODO', device_id), // TODO: change the jti to something useful
+              mfa_token: generate('mfa-token', user, 'TODO', azp, device_id), // TODO: change the jti to something useful
             })
           } else {
             if(FEATURES.DISABLE_DEVICE_IDS) {
-              resolve(accept(user, get_refresh_token))
+              resolve(accept(user, get_refresh_token, azp))
             } else {
               db.device.create_device(db_user.id, useragent, ip)
                 .then(device_id => resolve(accept(user, get_refresh_token, device_id)))

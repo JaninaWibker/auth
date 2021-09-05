@@ -13,6 +13,7 @@ const login_request = D.union(
     is_mfa_token: D.literal(false),
     get_refresh_token: D.boolean,
     device_id: D.nullable(D.string),
+    azp: D.nullable(D.string),
   }),
   D.struct({
     username: D.string,
@@ -21,6 +22,7 @@ const login_request = D.union(
     is_mfa_token: D.literal(false),
     get_refresh_token: D.literal(false),
     device_id: D.nullable(D.string),
+    azp: D.literal(null),
   }),
   D.struct({
     username: D.string,
@@ -30,6 +32,7 @@ const login_request = D.union(
     is_mfa_token: D.literal(true),
     get_refresh_token: D.boolean,
     device_id: D.nullable(D.string),
+    azp: D.literal(null),
   })
 )
 
@@ -58,7 +61,8 @@ const login = (db: Adapters, strategy: Strategy) => (req: Request, res: Response
   const metadata = {
     device_id: body.device_id ? body.device_id : undefined,
     useragent: req.headers['user-agent'],
-    ip: req.ip
+    ip: req.ip,
+    azp: body.azp
   }
 
   strategy.login(db, body.username, password_like, state, metadata, body.is_mfa_token ? body.mfa_challenge : undefined)

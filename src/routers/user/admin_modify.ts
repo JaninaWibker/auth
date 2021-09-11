@@ -24,7 +24,7 @@ const admin_modify = (req: Request, res: Response) => {
   const result = admin_modify_request.decode(req.body)
 
   if(isLeft(result)) {
-    return failure(res, 'invalid structure. The following was reported:\n' + D.draw(result.left))
+    return failure(res, 'invalid JSON body structure. The following was reported:\n' + D.draw(result.left))
   }
 
   const body = req.body as AdminModifyRequest

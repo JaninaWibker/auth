@@ -22,7 +22,7 @@ const modify = (db: Adapters) => (req: Request, res: Response) => {
   const result = modify_request.decode(req.body)
 
   if(isLeft(result)) {
-    return failure(res, 'invalid structure. The following was reported:\n' + D.draw(result.left))
+    return failure(res, 'invalid JSON body structure. The following was reported:\n' + D.draw(result.left))
   }
 
   const body = req.body as ModifyRequest

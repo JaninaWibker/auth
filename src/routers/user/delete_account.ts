@@ -20,7 +20,7 @@ const delete_account = (strategy: Strategy, db: Adapters) => (req: Request, res:
   const result = delete_account_request.decode(req.body)
 
   if(isLeft(result)) {
-    return failure(res, 'invalid structure. The following was reported:\n' + D.draw(result.left))
+    return failure(res, 'invalid JSON body structure. The following was reported:\n' + D.draw(result.left))
   }
 
   if(check_permission(req.user, 'auth.user', 'delete-own-account')) {

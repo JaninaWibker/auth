@@ -20,16 +20,20 @@ import adapters from './adapters/adapter'
 
 import FEATURES from './features'
 
-const private_key = fs.readFileSync('./certs/auth/private.key', 'utf8')
-const public_key = fs.readFileSync('./certs/auth/public.key', 'utf8')
+dotenv.config()
 
 // npm exposes values from the package.json file as environment variables
 const version = process.env.npm_package_version
 const startup_time = +new Date()
-const config = transform(dotenv.config().parsed as Environment, private_key, public_key)
+const partial_config = transform(process.env as Environment)
+
+const public_key = fs.readFileSync(partial_config.cert_files.public_key, 'utf8')
+const private_key = fs.readFileSync(partial_config.cert_files.private_key, 'utf8')
+
+const config = Object.assign(partial_config, { public_key: public_key, private_key: private_key })
 
 console.log('Starting the server with the following configuration:')
-console.log(Object.assign({}, config, { _public_key: '<omitted>', _private_key: '<omitted>', db: { ...config.db, password: '<omitted>' } }))
+console.log(Object.assign({}, config, { public_key: '<omitted>', private_key: '<omitted>', db: { ...config.db, password: '<omitted>' } }))
 
 const app = express()
 

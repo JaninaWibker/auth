@@ -55,6 +55,10 @@ const jwt_strategy = (config: Config): Strategy => {
     return Optional.resolve(token)
   }
 
+  const access_token_payload  = D.struct(Object.assign({ user: serialized_user, type: D.literal('access-token'),  azp: D.nullable(D.string) }, {}))
+  const refresh_token_payload = D.struct(Object.assign({ user: serialized_user, type: D.literal('refresh-token'), azp: D.nullable(D.string) }, FEATURES.DISABLE_DEVICE_IDS ? {} : { device_id: D.string }))
+  const mfa_token_payload     = D.struct(Object.assign({ user: serialized_user, type: D.literal('mfa-token'),     azp: D.nullable(D.string) }, FEATURES.DISABLE_DEVICE_IDS ? {} : { device_id: D.string }))
+
   const verify_token = <T>(decoder: D.Decoder<unknown, T>, token: string) => new Promise<{ decoded: JWTPayload<T>, jwt: string }>((resolve, reject) => {
     jwt.verify(token, jwt_options.public_key, (err, decoded) => {
       if(err) {
@@ -73,7 +77,7 @@ const jwt_strategy = (config: Config): Strategy => {
 
   const authenticated = (req: Request, res: Response, next: NextFunction) => {
     extract_token(req)
-      .then(token => verify_token(D.struct({ user: serialized_user, type: D.literal('access-token'), azp: D.nullable(D.string) }), token))
+      .then(token => verify_token(access_token_payload, token))
       .observe_catch(err => unauthorized(res, err.message, config.env === 'dev'))
       .then(promise => promise
         .then(({ jwt, decoded }) => {
@@ -233,18 +237,24 @@ const jwt_strategy = (config: Config): Strategy => {
           if(FEATURES.DISABLE_DEVICE_IDS)                                   return reject(new Error('must enable device ids for mfa to work'))
           console.log('mfa: ', password_like, mfa_challenge)
 
-          verify_token(D.struct({ user: serialized_user, device_id: D.string, type: D.literal('mfa-token'), azp: D.nullable(D.string) }), password_like)
+          verify_token(mfa_token_payload, password_like)
             .then(({ decoded }) => {
 
               if(decoded.user.username !== username)                        return reject(new Error('provided mfa-token is ment for another user'))
-              if(!device_id)                                                return reject(new Error('must provide device_id when using mfa'))
-              if(decoded.device_id !== device_id)                           return reject(new Error('mfa_token device_id must equal device_id'))
               if(!mfa_challenge)                                            return reject(new Error('must provide a valid token for mfa challenge'))
               if(!mfa_verify(db_user.mfa_secret as string, mfa_challenge))  return reject(new Error('invalid token for mfa challenge'))
 
-              db.device.update_or_create_device(device_id, db_user.id, useragent, ip)
-                .then(() => resolve(accept(user, get_refresh_token, decoded.azp)))
-                .catch(err => reject(new Error('couldn\'t update device: ' + err.message)))
+              if(!FEATURES.DISABLE_DEVICE_IDS) {
+                if(!device_id)                                                return reject(new Error('must provide device_id when using mfa'))
+                if(decoded.device_id !== device_id)                           return reject(new Error('mfa_token device_id must equal device_id'))
+
+                db.device.update_or_create_device(device_id, db_user.id, useragent, ip)
+                  .then(() => resolve(accept(user, get_refresh_token, decoded.azp)))
+                  .catch(err => reject(new Error('couldn\'t update device: ' + err.message)))
+              } else {
+                resolve(accept(user, get_refresh_token, decoded.azp))
+              }
+
             })
             .catch(err => {
               console.warn(err)
@@ -252,19 +262,23 @@ const jwt_strategy = (config: Config): Strategy => {
             })
         } else if(is_refresh_token) {
           if(FEATURES.DISABLE_REFRESH_TOKENS)         return reject(new Error('refresh-tokens are disabled'))
-          verify_token(D.struct({ user: serialized_user, device_id: D.string, type: D.literal('refresh-token'), azp: D.nullable(D.string) }), password_like)
+          verify_token(refresh_token_payload, password_like)
             .then(({ decoded }) => {
               console.log(decoded)
 
               if(decoded.user.username !== username)  return reject(new Error('provided refresh-token is ment for another user'))
-              if(!device_id)                          return reject(new Error('must provide device_id when using refresh_token'))
-              if(decoded.device_id !== device_id)     return reject(new Error('refresh_token device_id must equal device_id'))
+              if(!FEATURES.DISABLE_DEVICE_IDS) {
+                if(!device_id)                          return reject(new Error('must provide device_id when using refresh_token'))
+                if(decoded.device_id !== device_id)     return reject(new Error('refresh_token device_id must equal device_id'))
 
-              // mfa can be safely ignored now because device_id's match and refresh_tokens are generally trusted
+                // mfa can be safely ignored now because device_id's match and refresh_tokens are generally trusted
 
-              db.device.update_or_create_device(device_id, db_user.id, useragent, ip)
-                .then(() => resolve(accept(serialized_user_to_user(decoded.user), false, decoded.azp)))
-                .catch(err => reject(new Error('couldn\'t update device: ' + err.message)))
+                db.device.update_or_create_device(device_id, db_user.id, useragent, ip)
+                  .then(() => resolve(accept(serialized_user_to_user(decoded.user), false, decoded.azp)))
+                  .catch(err => reject(new Error('couldn\'t update device: ' + err.message)))
+              } else {
+                resolve(accept(serialized_user_to_user(decoded.user), false, decoded.azp))
+              }
             })
             .catch(err => {
               console.warn(err)

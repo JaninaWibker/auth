@@ -7,6 +7,10 @@ type Config = {
     iss: string,
     aud: string
   },
+  cert_files: {
+    public_key: string,
+    private_key: string
+  },
   db: {
     driver: 'postgres', // TODO: add sqlite or something else here eventually
     host: string,

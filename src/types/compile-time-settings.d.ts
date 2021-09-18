@@ -23,6 +23,8 @@ export type CompileTimeSettings = {
    * - the refresh token was generated automatically and it would be suspicious if it were to leave the device
    *   it was generated on
    * - the devices can only be told apart if device ids are used
+   *
+   * if you turn off device id's refresh-tokens can still be used, as well as 2fa
    */
   DISABLE_DEVICE_IDS: boolean,
   /**

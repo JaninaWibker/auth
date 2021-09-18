@@ -29,7 +29,6 @@ COPY --from=build_dashboard /dashboard/build /auth/static/
 COPY --from=build_auth /auth/             /auth/
 COPY --from=build_auth /auth/.env         /auth/.env
 COPY --from=build_auth /auth/package.json /auth/package.json
-COPY --from=build_auth /auth/certs        /auth/certs
 COPY --from=build_auth /auth/node_modules /auth/node_modules
 
 WORKDIR /auth

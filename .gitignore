@@ -14,3 +14,4 @@ dist
 # secrets
 .env
 certs
+sensitive

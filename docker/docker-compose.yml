@@ -19,16 +19,31 @@ services:
       - database
     image: auth-idp:0.0.1
     hostname: auth
-    environment: []
-    secrets: []
+    environment:
+      PORT: 3003
+      DB_DRIVER: postgres
+      DB_HOST: postgres
+      DB_USERNAME: postgres
+      DB_PORT: 5432
+      DB_PASSWORD_FILE: /run/secrets/postgres_password
+      CERTS_PUBLIC_KEY: /run/secrets/auth_public_key
+      CERTS_PRIVATE_KEY: /run/secrets/auth_private_key
+    secrets:
+      - postgres_password
+      - auth_private_key
+      - auth_public_key
     ports:
       - 3003:3003
     networks:
       - local_network
 
-secrets: # TODO: what should docker passwords be used for aswell? maybe certs?
+secrets: # TODO: probably better to put the certs in a different folder (like the docker folder; maybe add a 'sensitive'-folder inside the docker directory)
   postgres_password:
-    file: postgres_password.txt
+    file: ../sensitive/postgres_password.txt
+  auth_public_key:
+    file: ../sensitive/ec-secp256k1-pub-key.pem
+  auth_private_key:
+    file: ../sensitive/ec-secp256k1-priv-key.pem
 
 networks:
   local_network:

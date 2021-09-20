@@ -14,6 +14,7 @@ services:
     networks:
       - local_network
     command: ["postgres", "-c", "log_statement=all", "-c", "log_destination=stderr"] # TODO: this is for debugging
+
   auth:
     depends_on:
       - database

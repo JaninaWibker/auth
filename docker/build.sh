@@ -31,7 +31,7 @@ function create_user() {
     while read -r username email password role
     do
       salt=$(LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 16 ; echo)
-      password=$(echo -n $password$salt | openssl dgst -sha256)
+      password=$(echo -n $password$salt | openssl dgst -sha256 | sed 's/^.* //')
       [ -z "$email" ] && email=NULL || email="'$email'"
 
       echo -e "\

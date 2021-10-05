@@ -33,7 +33,11 @@ const private_key = fs.readFileSync(partial_config.cert_files.private_key, 'utf8
 const config = Object.assign(partial_config, { public_key: public_key, private_key: private_key })
 
 console.log('Starting the server with the following configuration:')
-console.log(Object.assign({}, config, { public_key: '<omitted>', private_key: '<omitted>', db: { ...config.db, password: '<omitted>' } }))
+if(config.env === 'dev') {
+  console.log(config)
+} else {
+  console.log(Object.assign({}, config, { public_key: '<omitted>', private_key: '<omitted>', db: { ...config.db, password: '<omitted>' } }))
+}
 
 const app = express()
 

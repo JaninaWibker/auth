@@ -129,18 +129,18 @@ INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name
 INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name ) VALUES ( 'default', 'auth.user', 'delete-own-account' );
 INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name ) VALUES ( 'default', 'auth.user', 'change-password'    );
 
+-- %START USER ACCOUNT SECTION%
 INSERT INTO auth_user (
   username, email, password, salt, role_id
 ) VALUES (
-  'jannik', 'auth+jannik@jannikwibker.dev', '4b7c647e94b6da76c56932c56d1a5cfa6227859afd5d93ca272aadf5d1bfca73', 'TODO', 'admin'
+  'jannik', NULL, '612e4e53fa32b3bf675f5541d5a1fed84d600c219008e8ab853ad7d5e041e7ee', 'vpcOwHltF4Jyu3oV', 'admin'
 );
-
 INSERT INTO auth_user (
-  username, email, password, salt, mfa, mfa_secret, role_id
+  username, email, password, salt, role_id
 ) VALUES (
-  'test', 'auth+test@jannikwibker.dev', '4b7c647e94b6da76c56932c56d1a5cfa6227859afd5d93ca272aadf5d1bfca73', 'TODO', false, NULL, 'default'
+  'test', NULL, '7d8f7f7227472ccd275db1750b3e128efad7e51598ce37adb0c565a987abe7ad', 'sTw2GVNrFnYLHFOs', 'default'
 );
-
+-- %END USER ACCOUNT SECTION%
 
 -- grant auth user proper permissions
 

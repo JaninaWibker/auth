@@ -20,7 +20,7 @@ export type Environment = Partial<{
 const transform = (env: Environment): Omit<Config, 'public_key' | 'private_key'> => {
 
   const password = env.DB_PASSWORD_FILE && !env.DB_PASSWORD
-    ? fs.readFileSync(env.DB_PASSWORD_FILE, 'utf8')
+    ? fs.readFileSync(env.DB_PASSWORD_FILE, 'utf8').trim()
     : (env.DB_PASSWORD || '')
 
   return {

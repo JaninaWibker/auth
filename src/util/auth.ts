@@ -301,7 +301,10 @@ const jwt_strategy = (config: Config): Strategy => {
           }
         }
       })
-      .catch(() => reject(new Error('user doesn\'t exist or invalid password')))
+      .catch((err) => {
+        console.log('Unhandled error occured while authenticating: ' + err.message)
+        reject(new Error('user doesn\'t exist or invalid password'))
+      })
   })
 
   const logout: Strategy['logout'] = (user_id: string) => {

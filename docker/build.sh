@@ -14,6 +14,9 @@ PRIV_KEY_LOCATION="../sensitive/ec-secp256k1-priv-key.pem"
 PUB_KEY_LOCATION="../sensitive/ec-secp256k1-pub-key.pem"
 POSTGRES_PW_LOCATION="../sensitive/postgres_password.txt"
 
+# if you pass any kind of arguments to this script it will exit before starting to build the docker containers
+SHOULD_BUILD_DOCKER_CONTAINERS=$1
+
 function error_occurred() {
   echo "${BOLD}{$RED}something went wrong, exiting"
   exit
@@ -55,7 +58,23 @@ replace_in_file users.csv postgres/init.sql
 # create folder for public/private keys and postgres password if it doesn't already exist
 mkdir ../sensitive &> /dev/null
 
-echo -e "${PINK}${BOLD}[2]${WHITE}${BOLD} generating docker images${RESET}"
+echo -e "${PINK}${BOLD}[2]${WHITE}${BOLD} generating docker secrets${RESET}"
+
+echo -e "${BLUE}${BOLD}-${RESET}${BLUE} generating public/private key pair ${RESET}(can be found at ${YELLOW}\"${PRIV_KEY_LOCATION}\"${RESET} & ${YELLOW}\"${PUB_KEY_LOCATION}\"${RESET})${RESET}"
+
+openssl ecparam -name secp256k1 -genkey -noout -out $PRIV_KEY_LOCATION &> /dev/null
+openssl ec -in $PRIV_KEY_LOCATION -pubout > $PUB_KEY_LOCATION &> /dev/null
+
+echo -e "${BLUE}${BOLD}-${RESET}${BLUE} generating postgres password ${RESET}(can be found at ${YELLOW}\"${POSTGRES_PW_LOCATION}\"${RESET})${RESET}"
+
+# taken from https://unix.stackexchange.com/a/230676 and modified slightly
+password=$(LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 16 ; echo)
+
+echo -n $password > $POSTGRES_PW_LOCATION
+
+[ -n "$SHOULD_BUILD_DOCKER_CONTAINERS" ] && exit 0
+
+echo -e "${PINK}${BOLD}[3]${WHITE}${BOLD} generating docker images${RESET}"
 
 echo -e "${BLUE}${BOLD}-${RESET}${BLUE} generating auth-dashboard image ${RESET}(auth-dashboard:0.0.1; required by auth-idp)${RESET}"
 
@@ -71,20 +90,3 @@ echo -e "${BLUE}${BOLD}-${RESET}${BLUE} generating postgres image ${RESET}(auth-
 
 cd docker
 docker build -t auth-postgres:0.0.1 -f postgres/Dockerfile . || error_occurred
-
-
-
-
-echo -e "${PINK}${BOLD}[3]${WHITE}${BOLD} generating docker secrets${RESET}"
-
-echo -e "${BLUE}${BOLD}-${RESET}${BLUE} generating public/private key pair ${RESET}(can be found at ${YELLOW}\"${PRIV_KEY_LOCATION}\"${RESET} & ${YELLOW}\"${PUB_KEY_LOCATION}\"${RESET})${RESET}"
-
-openssl ecparam -name secp256k1 -genkey -noout -out $PRIV_KEY_LOCATION &> /dev/null
-openssl ec -in $PRIV_KEY_LOCATION -pubout > $PUB_KEY_LOCATION &> /dev/null
-
-echo -e "${BLUE}${BOLD}-${RESET}${BLUE} generating postgres password ${RESET}(can be found at ${YELLOW}\"${POSTGRES_PW_LOCATION}\"${RESET})${RESET}"
-
-# taken from https://unix.stackexchange.com/a/230676 and modified slightly
-password=$(LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 16 ; echo)
-
-echo -n $password > $POSTGRES_PW_LOCATION

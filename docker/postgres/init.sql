@@ -133,12 +133,12 @@ INSERT INTO auth_it_role_permission ( role_id, permission_scope, permission_name
 INSERT INTO auth_user (
   username, email, password, salt, role_id
 ) VALUES (
-  'jannik', NULL, '612e4e53fa32b3bf675f5541d5a1fed84d600c219008e8ab853ad7d5e041e7ee', 'vpcOwHltF4Jyu3oV', 'admin'
+  'jannik', 'jannik.org', 'f5fb18650f831c95aa796f17a7fcbe7acfb5dc4f0aa8beb2bb71f60d871cb985', 'cv3EHQlGUxc5wAAF', 'admin'
 );
 INSERT INTO auth_user (
   username, email, password, salt, role_id
 ) VALUES (
-  'test', NULL, '7d8f7f7227472ccd275db1750b3e128efad7e51598ce37adb0c565a987abe7ad', 'sTw2GVNrFnYLHFOs', 'default'
+  'test', 'test.org', '5a59efac80fe6b92bbd66de0b16eaaf5cf735fca7c29499f94cb27207513245e', 'YAc9fo6rQNhKdZY0', 'default'
 );
 -- %END USER ACCOUNT SECTION%
 

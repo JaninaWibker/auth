@@ -19,7 +19,7 @@
     "io-ts": "^2.2.16",
     "jsonwebtoken": "^8.5.1",
     "morgan": "^1.10.0",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^2.6.7",
     "pg": "^8.5.1",
     "qrcode": "^1.4.4",
     "speakeasy": "^2.0.0",
